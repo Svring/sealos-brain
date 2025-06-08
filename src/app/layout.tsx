@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
+
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/providers/app-sidebar-provider";
+
 import "./globals.css";
 import '@xyflow/react/dist/style.css';
 
@@ -21,7 +25,12 @@ export default function RootLayout({
       >
         <ThemeProvider
         >
-          {children}
+          <SidebarProvider>
+            <AppSidebar />
+            <main>
+              {children}
+            </main>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>

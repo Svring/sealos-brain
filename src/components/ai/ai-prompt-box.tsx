@@ -360,13 +360,13 @@ interface PromptInputTextareaProps {
   disableAutosize?: boolean;
   placeholder?: string;
 }
-const PromptInputTextarea: React.FC<PromptInputTextareaProps & React.ComponentProps<typeof Textarea>> = ({
+const PromptInputTextarea = React.forwardRef<HTMLTextAreaElement, PromptInputTextareaProps & React.ComponentProps<typeof Textarea>>(({
   className,
   onKeyDown,
   disableAutosize = false,
   placeholder,
   ...props
-}) => {
+}, ref) => {
   const { value, setValue, maxHeight, onSubmit, disabled } = usePromptInput();
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
@@ -384,12 +384,19 @@ const PromptInputTextarea: React.FC<PromptInputTextareaProps & React.ComponentPr
       e.preventDefault();
       onSubmit?.();
     }
+    if (e.key === "Escape") {
+      textareaRef.current?.blur();
+    }
     onKeyDown?.(e);
   };
 
   return (
     <Textarea
-      ref={textareaRef}
+      ref={(node) => {
+        textareaRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLTextAreaElement | null>).current = node;
+      }}
       value={value}
       onChange={(e) => setValue(e.target.value)}
       onKeyDown={handleKeyDown}
@@ -399,7 +406,8 @@ const PromptInputTextarea: React.FC<PromptInputTextareaProps & React.ComponentPr
       {...props}
     />
   );
-};
+});
+PromptInputTextarea.displayName = "PromptInputTextarea";
 
 interface PromptInputActionsProps extends React.HTMLAttributes<HTMLDivElement> {}
 const PromptInputActions: React.FC<PromptInputActionsProps> = ({ children, className, ...props }) => (
@@ -452,9 +460,10 @@ interface PromptInputBoxProps {
   isLoading?: boolean;
   placeholder?: string;
   className?: string;
+  textareaRef?: React.Ref<HTMLTextAreaElement>;
 }
 export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref: React.Ref<HTMLDivElement>) => {
-  const { onSend = () => {}, isLoading = false, placeholder = "Type your message here...", className } = props;
+  const { onSend = () => {}, isLoading = false, placeholder = "Type your message here...", className, textareaRef } = props;
   const [input, setInput] = React.useState("");
   const [files, setFiles] = React.useState<File[]>([]);
   const [filePreviews, setFilePreviews] = React.useState<{ [key: string]: string }>({});
@@ -621,6 +630,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
           )}
         >
           <PromptInputTextarea
+            ref={textareaRef}
             placeholder={
               showSearch
                 ? "Search the web..."
