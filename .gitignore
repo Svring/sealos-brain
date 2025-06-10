@@ -47,3 +47,5 @@ agent/.vscode
 agent/sample_agent.egg-info
 
 .gitignore
+
+cypress/fixtures

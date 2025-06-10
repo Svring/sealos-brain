@@ -222,24 +222,6 @@ export function AppSidebar() {
     },
   ];
 
-  // Define devbox sub-items
-  const devboxItems = [
-    {
-      title: 'Terminal',
-      icon: Terminal,
-      path: '/sidebar/devbox/terminal' as SidebarPath,
-    },
-    {
-      title: 'Database',
-      icon: Database,
-      path: '/sidebar/devbox/database' as SidebarPath,
-    },
-    {
-      title: 'Code Editor',
-      icon: Code,
-      path: '/sidebar/devbox/code-editor' as SidebarPath,
-    },
-  ];
 
   // Render main sidebar content
   const renderMainSidebarContent = () => (
