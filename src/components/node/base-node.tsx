@@ -1,48 +1,38 @@
-import { useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { useDetailsPanel } from "@/provider/details-provider";
 
 interface BaseNodeProps {
+  id: string | null;
   children: React.ReactNode;
   details?: React.ReactNode;
   className?: string;
 }
 
 export default function BaseNode({
+  id,
   children,
   details,
   className = "",
 }: BaseNodeProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const { showDetails, hideDetails, activeDetailsId } = useDetailsPanel();
+
+  const isMyDetailsShowing = activeDetailsId === id && id !== null;
+
+  const handleClick = () => {
+    if (isMyDetailsShowing) {
+      hideDetails();
+    } else if (details && id) {
+      showDetails(id, details);
+    }
+  };
 
   return (
-    <>
-      <div
-        className={`bg-background/50 rounded-lg p-1 w-80 h-40 border border-border ${className} cursor-pointer`}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div className="relative flex flex-col bg-background w-full h-full rounded-lg p-2">
-          {children}
-        </div>
-      </div>
-
-      <Sheet open={isOpen} onOpenChange={setIsOpen} modal={false}>
-        {details && (
-          <SheetContent
-            nonModal
-            onInteractOutside={(event) => {
-              event.preventDefault();
-            }}
-            className="p-4"
-          >
-            {details}
-          </SheetContent>
-        )}
-      </Sheet>
-    </>
+    <div
+      className={`border-border bg-card rounded-lg p-2 w-60 min-h-30 border ${className} cursor-pointer`}
+      onClick={handleClick}
+    >
+      {/* <div className="relative flex flex-col bg-[#1F2023] border-[#444444] w-full h-full rounded-lg p-2"> */}
+        {children}
+      {/* </div> */}
+    </div>
   );
 }

@@ -15,17 +15,35 @@ import {
   type Edge,
   type OnConnect,
   BackgroundVariant,
+  useReactFlow,
+  ReactFlowProvider,
 } from "@xyflow/react";
 
 import { invokeAgentChat } from "@/provider/backbone/backbone-provider";
+import {
+  getDevboxList,
+  getUserToken,
+  checkDevboxReady,
+} from "@/provider/devbox/devbox-provider";
+import { getCurrentUser } from "@/database/actions/user-actions";
+import {
+  DataSchema,
+  DevboxSchema,
+  TemplateSchema,
+} from "@/provider/devbox/schemas/devbox-list-schema";
+import { ServiceDataSchema } from "@/provider/devbox/schemas/devbox-check-ready-schema";
+import { z } from "zod";
 
-import { motion, AnimatePresence, type PanInfo } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-
-import { ChevronUp, ChevronDown } from "lucide-react";
 
 import nodeTypes from "@/components/node/node-types";
 import edgeTypes from "@/components/edge/edge-types";
+import {
+  DetailsProvider,
+  useDetailsPanel,
+} from "@/provider/details-provider";
+import DevboxDetails from "@/components/node/details/devbox-details";
 
 interface Message {
   id: string;
@@ -194,36 +212,16 @@ const menuItems = [
   },
 ];
 
-const initialNodes: Node[] = [
-  { id: "1", position: { x: 0, y: 0 }, data: { label: "1" } },
-  { id: "2", position: { x: 0, y: 100 }, data: { label: "2" } },
-  { id: "3", type: "devbox", position: { x: 0, y: 200 }, data: { label: "3" } },
-];
-const initialEdges: Edge[] = [
-  { id: "e1-2", type: "step-edge", source: "1", target: "2", animated: true },
-];
+const initialNodes: Node[] = [];
+const initialEdges: Edge[] = [];
 
-export default function App() {
+function FlowContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "example-1",
-      content:
-        "Welcome! I'm your AI assistant. I can help you with various tasks. Feel free to ask me anything!",
-      role: "assistant",
-      timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-    },
-    {
-      id: "example-3",
-      content:
-        "Of course! I'd be happy to help. What kind of project are you working on? I can assist with coding, design, planning, or any other aspects you need help with.",
-      role: "assistant",
-      timestamp: new Date(Date.now() - 1000 * 60 * 2), // 2 minutes ago
-    },
-  ]);
+  const { setCenter, getZoom, setViewport } = useReactFlow();
+  const { showDetails, hideDetails, activeDetailsId } = useDetailsPanel();
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const messageContentRef = useRef<HTMLDivElement>(null);
@@ -235,9 +233,7 @@ export default function App() {
     if (messages.length > prevMessagesLength.current) {
       setCurrentMessageIndex(messages.length - 1);
       setIsExpanded(true);
-      const timer = setTimeout(() => {
-        setIsExpanded(false);
-      }, 3000);
+      const timer = setTimeout(() => setIsExpanded(false), 3000);
       return () => clearTimeout(timer);
     }
     prevMessagesLength.current = messages.length;
@@ -245,13 +241,17 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !e.repeat && document.activeElement === document.body) {
+      if (
+        e.code === "Space" &&
+        !e.repeat &&
+        document.activeElement === document.body
+      ) {
         setIsInputExpanded((prev) => !prev);
         e.preventDefault();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   useEffect(() => {
@@ -268,10 +268,8 @@ export default function App() {
   const onMessageSend = useCallback(async (message: string, files?: File[]) => {
     setIsExpanded(true);
     setIsLoading(true);
-
     try {
       const response = await invokeAgentChat("1", message, files);
-
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         content: response.response,
@@ -281,41 +279,128 @@ export default function App() {
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        content: "Sorry, there was an error processing your request.",
-        role: "assistant",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  useEffect(() => {
+    const fetchDevboxData = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (!user) return;
+
+        const kubeconfig = await getUserToken(user, "kubeconfig");
+        const devboxToken = await getUserToken(user, "app_token");
+        if (!kubeconfig || !devboxToken) return;
+
+        const regionUrl = "devbox.bja.sealos.run";
+        const rawData = await getDevboxList(regionUrl, kubeconfig, devboxToken);
+        const parsedData = DataSchema.parse(rawData);
+
+        const devboxPromises = parsedData.map(async (pair, index) => {
+          const devbox = pair.find(
+            (item: any) => item.kind === "Devbox"
+          ) as z.infer<typeof DevboxSchema> | undefined;
+
+          if (devbox) {
+            let readyData = null;
+            try {
+              const rawReadyData = await checkDevboxReady(
+                regionUrl,
+                devbox.metadata.name,
+                kubeconfig,
+                devboxToken
+              );
+              readyData = ServiceDataSchema.parse({ data: rawReadyData }).data;
+            } catch (error) {
+              console.error(
+                `Error fetching ready data for ${devbox.metadata.name}:`,
+                error
+              );
+            }
+
+            const nodeData = {
+              devbox,
+              readyData: readyData,
+              templateInfo: pair.find(
+                (item: any) => "templateRepository" in item
+              ),
+              details: <DevboxDetails devbox={devbox} readyData={readyData} />,
+            };
+
+            return {
+              id: `devbox-${devbox.metadata.name}`,
+              type: "devbox",
+              position: { x: 300 + index * 280, y: 200 },
+              data: nodeData,
+            };
+          }
+          return null;
+        });
+
+        const devboxNodes = (await Promise.all(devboxPromises)).filter(
+          Boolean
+        ) as Node[];
+        setNodes(devboxNodes);
+      } catch (error) {
+        console.error("Error fetching devbox data:", error);
+      }
+    };
+    fetchDevboxData();
+  }, [setNodes]);
+
   return (
-    <div className="w-screen h-screen">
+    <>
       <ReactFlow
-        colorMode="dark"
+        panOnScroll
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        panOnScroll
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onPaneClick={hideDetails}
+        onNodeClick={(_, node) => {
+          showDetails(node.id, node.data.details as React.ReactNode);
+          const screenWidth = window.innerWidth;
+          const leftAreaCenter = screenWidth * 0.3;
+          const finalZoom = Math.max(Math.min(getZoom(), 1.0), 0.6);
+          setCenter(
+            node.position.x + (node.width || 200) / 2,
+            node.position.y + (node.height || 100) / 2,
+            { zoom: finalZoom, duration: 800 }
+          );
+          setTimeout(() => {
+            const viewport = {
+              x:
+                leftAreaCenter -
+                (node.position.x + (node.width || 200) / 2) * finalZoom,
+              y:
+                window.innerHeight / 2 -
+                (node.position.y + (node.height || 100) / 2) * finalZoom,
+              zoom: finalZoom,
+            };
+            setViewport(viewport, { duration: 400 });
+          }, 100);
+        }}
       >
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>
 
       <AnimatePresence>
         {isInputExpanded && (
-          <motion.div 
+          <motion.div
             key="input-box"
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[35%] min-w-[400px] max-w-[600px] z-50 flex flex-col gap-0 bg-transparent p-4 rounded-lg"
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+            className="fixed bottom-0 w-[35%] min-w-[400px] max-w-[600px] z-50 flex flex-col gap-0 bg-transparent p-4 rounded-lg"
+            initial={{ y: 100, opacity: 0, x: "-50%", left: "50%" }}
+            animate={{
+              y: 0,
+              opacity: 1,
+              x: "-50%",
+              left: activeDetailsId ? "30%" : "50%",
+            }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
@@ -323,51 +408,46 @@ export default function App() {
               <motion.div
                 className="overflow-hidden transform translate-y-3 relative z-0"
                 initial={false}
-                animate={{ height: isExpanded ? 'auto' : 45 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-                style={{ maxHeight: isExpanded ? '300px' : '45px' }}
+                animate={{ height: isExpanded ? "auto" : 45 }}
               >
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`${currentMessageIndex}-${messages.length}`}
-                    ref={messageContentRef}
-                    initial={{ y: 30, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -30, opacity: 0 }}
-                    transition={{ 
-                      type: "spring", 
-                      stiffness: 400, 
-                      damping: 30,
-                      duration: 0.4
-                    }}
-                  >
-                    <MessageSwiper 
-                      messages={messages}
-                      currentIndex={currentMessageIndex}
-                      onIndexChange={setCurrentMessageIndex}
-                      isExpanded={isExpanded}
-                    />
-                  </motion.div>
-                </AnimatePresence>
+                <MessageSwiper
+                  messages={messages}
+                  currentIndex={currentMessageIndex}
+                  onIndexChange={setCurrentMessageIndex}
+                  isExpanded={isExpanded}
+                />
               </motion.div>
             )}
-            <motion.div
-              className="relative z-10"
-            >
-              <PromptInputBox ref={undefined} textareaRef={promptTextareaRef} onSend={onMessageSend} isLoading={isLoading} />
+            <motion.div className="relative z-10">
+              <PromptInputBox
+                textareaRef={promptTextareaRef}
+                onSend={onMessageSend}
+                isLoading={isLoading}
+              />
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
       <motion.div
         className="fixed top-5 right-5 z-10"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
+        transition={{ delay: 0.2 }}
       >
         <MenuBar items={menuItems} />
       </motion.div>
-    </div>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <DetailsProvider>
+      <div className="w-screen h-screen">
+        <ReactFlowProvider>
+          <FlowContent />
+        </ReactFlowProvider>
+      </div>
+    </DetailsProvider>
   );
 }
