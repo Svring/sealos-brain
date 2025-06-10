@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent
+__pycache__
+agent/.venv
+agent/.vscode
+agent/sample_agent.egg-info
+
+.gitignore
