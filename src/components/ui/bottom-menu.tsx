@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 export interface MenuBarItem {
-  icon: (props: React.SVGProps<SVGSVGElement>) => JSX.Element
+  icon: (props: React.SVGProps<SVGSVGElement>) => React.JSX.Element
   label: string
+  onClick?: () => void
 }
 
 interface MenuBarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -45,11 +46,11 @@ export function MenuBar({ items, className, ...props }: MenuBarProps) {
       <AnimatePresence>
         {activeIndex !== null && (
           <motion.div
-            initial={{ opacity: 0, y: 5 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 5 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={springConfig}
-            className="absolute left-0 right-0 -top-[31px] pointer-events-none z-50"
+            className="absolute left-0 right-0 top-[41px] pointer-events-none z-50"
           >
             <motion.div
               ref={tooltipRef}
@@ -89,6 +90,7 @@ export function MenuBar({ items, className, ...props }: MenuBarProps) {
             className="w-8 h-8 px-3 py-1 rounded-full flex justify-center items-center gap-2 hover:bg-muted/80 transition-colors"
             onMouseEnter={() => setActiveIndex(index)}
             onMouseLeave={() => setActiveIndex(null)}
+            onClick={item.onClick}
           >
             <div className="flex justify-center items-center">
               <div className="w-[18px] h-[18px] flex justify-center items-center overflow-hidden">

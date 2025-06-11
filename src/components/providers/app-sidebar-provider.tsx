@@ -7,9 +7,19 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { UserCenter } from "@/components/ui/user-center";
 import { getCurrentUser } from "@/database/actions/user-actions";
 import { User } from "@/payload-types";
-import { getDevboxList, getUserToken } from "@/provider/devbox/devbox-provider";
+import {
+  createDevboxContext,
+} from "@/provider/devbox/devbox-provider";
+import {
+  buildDevboxUrls,
+  createDevboxFetchOptions,
+  createDevboxApiContext,
+  transformDevboxList,
+} from "@/provider/devbox/devbox-utils";
+import { runWake } from "@/lib/wake";
 import { DataSchema, DevboxSchema, TemplateSchema } from "@/provider/devbox/schemas/devbox-list-schema";
 import { z } from "zod";
+import { useSealosStore } from "@/store/sealos-store";
 
 type SidebarPath = '/sidebar' | '/sidebar/user-center' | '/sidebar/settings' | '/sidebar/documents' | '/sidebar/devbox' | '/sidebar/devbox/terminal' | '/sidebar/devbox/database' | '/sidebar/devbox/code-editor';
 
@@ -24,7 +34,6 @@ export function AppSidebar() {
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(280);
-  const [user, setUser] = useState<User | null>(null);
   const [currentPath, setCurrentPath] = useState<SidebarPath>('/sidebar');
   const [devboxExpanded, setDevboxExpanded] = useState(false);
   const [devboxData, setDevboxData] = useState<any>(null);
@@ -33,21 +42,47 @@ export function AppSidebar() {
   const [parsedDevboxes, setParsedDevboxes] = useState<DevboxItem[]>([]);
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
   const resizing = useRef(false);
+  const dataFetchedRef = useRef(false);
+
+  // Sealos store
+  const {
+    currentUser,
+    regionUrl,
+    setCurrentUser,
+    setRegionUrl,
+    getDevboxList,
+    setDevboxList,
+    isDevboxListValid,
+    hasRequiredTokens,
+    debugPrintState,
+  } = useSealosStore();
 
   // Fetch user data on component mount
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const currentUser = await getCurrentUser();
-        setUser(currentUser);
+        setCurrentUser(currentUser);
+        
+        // If user exists, update tokens in store
+        if (currentUser) {
+          console.log("Setting user tokens in Sealos store");
+          // The store will automatically extract and set tokens when setCurrentUser is called
+          
+          // Debug: Print store state after setting user
+          setTimeout(() => {
+            console.log("📊 Store state after setting user:");
+            debugPrintState();
+          }, 100);
+        }
       } catch (error) {
         console.error('Error fetching user:', error);
-        setUser(null);
+        setCurrentUser(null);
       }
     };
 
     fetchUser();
-  }, []);
+  }, [setCurrentUser, debugPrintState]);
 
   // Open sidebar when mouse enters hot zone
   const handleHotZoneEnter = () => {
@@ -93,43 +128,94 @@ export function AppSidebar() {
     setCurrentPath(path);
     
     // If navigating to devbox, fetch devbox list
-    if (path === '/sidebar/devbox' && user) {
+    if (path === '/sidebar/devbox' && currentUser) {
       fetchDevboxList();
     }
   };
 
-  // Fetch devbox list function
+  // Fetch devbox list function using wake module
   const fetchDevboxList = async () => {
-    if (!user) return;
+    if (!currentUser) return;
 
     try {
       setDevboxLoading(true);
       setDevboxError(null);
 
-      const kubeconfig = await getUserToken(user, 'kubeconfig');
-      const devboxToken = await getUserToken(user, 'app_token');
+      const currentRegionUrl = regionUrl;
+      setRegionUrl(currentRegionUrl);
 
-      if (!kubeconfig) {
-        throw new Error('Kubeconfig token not found');
+      // Check if we have valid cached data
+      const cachedDevboxList = getDevboxList(currentRegionUrl);
+      if (cachedDevboxList && isDevboxListValid(currentRegionUrl)) {
+        console.log("Using cached devbox data in sidebar");
+        setDevboxData(cachedDevboxList);
+        
+        // Parse cached data
+        try {
+          const devboxItems: DevboxItem[] = [];
+          
+          cachedDevboxList.forEach((pair: any) => {
+            type DevboxType = z.infer<typeof DevboxSchema>;
+            type TemplateType = z.infer<typeof TemplateSchema>;
+            
+            const isDevbox = (item: any): item is DevboxType => item && item.kind === "Devbox";
+            const isTemplate = (item: any): item is TemplateType => item && "templateRepository" in item;
+
+            const devbox = pair.find(isDevbox);
+            const template = pair.find(isTemplate);
+
+            if (devbox && template) {
+              devboxItems.push({
+                name: devbox.metadata.name,
+                namespace: devbox.metadata.namespace,
+                state: devbox.spec.state,
+                phase: devbox.status.phase,
+              });
+            }
+          });
+          
+          setParsedDevboxes(devboxItems);
+        } catch (e) {
+          console.error('Cached devbox data schema validation failed:', e);
+          setParsedDevboxes([]);
+        }
+        
+        setDevboxLoading(false);
+        return;
       }
 
-      if (!devboxToken) {
-        throw new Error('Devbox token not found');
+      // Check if user has required tokens
+      if (!hasRequiredTokens('devbox')) {
+        throw new Error('User missing required tokens for devbox operations');
       }
 
-      const regionUrl = 'devbox.bja.sealos.run';
-      const data = await getDevboxList(regionUrl, kubeconfig, devboxToken);
+      console.log("Fetching fresh devbox data in sidebar");
+
+      const devboxContext = await createDevboxContext(currentUser, currentRegionUrl);
+      if (!devboxContext) {
+        throw new Error('Failed to create devbox context - missing tokens');
+      }
+
+      const urls = buildDevboxUrls();
+      const apiContext = createDevboxApiContext(devboxContext);
+
+      const [data] = await runWake({
+        urls: [urls.list],
+        transformations: [transformDevboxList],
+        fetchOptions: createDevboxFetchOptions("GET", { region_url: currentRegionUrl }),
+        context: apiContext,
+      });
       
+      // Cache the fetched data
+      setDevboxList(data, currentRegionUrl);
       setDevboxData(data);
       console.log('Devbox List Result:', data);
       
       // Parse and extract devbox names
       try {
-        const parsedData = DataSchema.parse(data);
         const devboxItems: DevboxItem[] = [];
         
-        parsedData.forEach((pair) => {
-          // Type guards using proper schema types
+        data.forEach((pair: any) => {
           type DevboxType = z.infer<typeof DevboxSchema>;
           type TemplateType = z.infer<typeof TemplateSchema>;
           
@@ -243,7 +329,7 @@ export function AppSidebar() {
             <SidebarMenuButton 
               onClick={() => {
                 setDevboxExpanded(!devboxExpanded);
-                if (!devboxExpanded && user && parsedDevboxes.length === 0) {
+                if (!devboxExpanded && currentUser && parsedDevboxes.length === 0) {
                   fetchDevboxList();
                 }
               }}
@@ -309,7 +395,7 @@ export function AppSidebar() {
       case '/sidebar':
         return renderMainSidebarContent();
       case '/sidebar/user-center':
-        return <UserCenter user={user} />;
+        return <UserCenter user={currentUser} />;
       case '/sidebar/settings':
         return (
           <div className="p-4">
@@ -410,11 +496,12 @@ export function AppSidebar() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (currentUser && !dataFetchedRef.current) {
+      dataFetchedRef.current = true;
       fetchDevboxList();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [currentUser]);
 
   return (
     <>
@@ -486,7 +573,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={() => handleNavigate('/sidebar/user-center')}>
                   <User2 className="w-4 h-4" />
-                  <span>{user?.username || user?.email || 'User'}</span>
+                  <span>{currentUser?.username || currentUser?.email || 'User'}</span>
                   <ChevronUp className="ml-auto w-4 h-4" />
                 </SidebarMenuButton>
               </SidebarMenuItem>
