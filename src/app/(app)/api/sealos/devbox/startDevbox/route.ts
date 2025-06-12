@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  makeAuthApiRequest,
+  makeDevboxApiRequest,
   validateHeaders,
   validateQueryParams,
 } from "@/lib/sealos-api";
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     const region_url = req.nextUrl.searchParams.get("region_url");
     const authorization = req.headers.get("Authorization");
+    const authorizationBearer = req.headers.get("Authorization-Bearer");
+
+    // Parse request body
+    const body = await req.json();
+    const { devboxName } = body;
 
     // Validate query parameters
     const paramValidation = validateQueryParams({ region_url }, ["region_url"]);
@@ -20,7 +25,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Validate headers
-    const headerValidation = validateHeaders(authorization);
+    const headerValidation = validateHeaders(
+      authorization,
+      authorizationBearer
+    );
     if (!headerValidation.isValid) {
       return NextResponse.json(
         { message: headerValidation.errorMessage },
@@ -28,10 +36,28 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Validate devboxName
+    if (!devboxName) {
+      return NextResponse.json(
+        { message: "devboxName is required" },
+        { status: 400 }
+      );
+    }
+
     // Make API request
-    const result = await makeAuthApiRequest(region_url!, "info", {
-      authorization: authorization!,
-    });
+    const result = await makeDevboxApiRequest(
+      region_url!,
+      "startDevbox",
+      {
+        authorization: authorization!,
+        authorizationBearer: authorizationBearer!,
+      },
+      undefined,
+      {
+        method: "POST",
+        data: { devboxName },
+      }
+    );
 
     if (result.data) {
       return NextResponse.json(result.data);

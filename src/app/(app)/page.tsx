@@ -25,7 +25,6 @@ import {
   transformToNodeData,
 } from "@/provider/devbox/devbox-utils";
 import { runWake } from "@/lib/wake";
-import { useSealosDevbox } from "@/hooks/use-sealos-devbox";
 import { useSealosStore } from "@/store/sealos-store";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -61,15 +60,11 @@ function FlowContent() {
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
   const dataLoadedRef = useRef(false);
 
-  // Sealos Devbox
+  // Sealos Store - only consume data, don't fetch
   const {
+    devbox,
     regionUrl,
-    fetchDevboxList,
-    fetchDevboxReadyStatus,
-    hasRequiredTokens,
-    getCachedDevboxList,
-    isDevboxListValid,
-  } = useSealosDevbox();
+  } = useSealosStore();
 
   // Get debug function from store
   const { debugPrintState } = useSealosStore();
@@ -209,75 +204,37 @@ function FlowContent() {
   );
 
   const refreshDevboxData = useCallback(() => {
-    dataLoadedRef.current = false;
-    // Trigger a re-fetch by calling the effect logic directly
-    const fetchDevboxData = async () => {
-      try {
-        const currentRegionUrl = regionUrl;
+    console.log("🔄 Refreshing devbox data from store");
+    
+    const devboxListData = devbox.getDevboxList?.data;
+    if (!devboxListData || devboxListData.length === 0) {
+      console.log("⚠️ No devbox data available in store");
+      setNodes([]);
+      return;
+    }
 
-        // Check if user has required tokens
-        if (!hasRequiredTokens("devbox")) {
-          console.error("User missing required tokens for devbox operations");
-          return;
-        }
+    try {
+      const nodeData = transformToNodeData(devboxListData);
+      const nodesWithDetails = nodeData.map((node: any) => ({
+        ...node,
+        data: {
+          ...node.data,
+          details: (
+            <DevboxDetails
+              devbox={node.data.devbox}
+              readyData={node.data.readyData}
+            />
+          ),
+        },
+      }));
 
-        console.log("Refreshing devbox data");
-
-        const devboxListData = await fetchDevboxList(true); // Force refresh
-
-        const devboxes = devboxListData
-          .map((pair: any) => pair.find((item: any) => item.kind === "Devbox"))
-          .filter(Boolean);
-
-        if (devboxes.length === 0) {
-          setNodes([]);
-          dataLoadedRef.current = true;
-          return;
-        }
-
-        // Fetch ready status for each devbox
-        const readyDataResults = await Promise.all(
-          devboxes.map((devbox: any) =>
-            fetchDevboxReadyStatus(devbox.metadata.name).catch(() => null)
-          )
-        );
-
-        const readyDataMap = new Map();
-        devboxes.forEach((devbox: any, index: number) => {
-          if (readyDataResults[index]) {
-            readyDataMap.set(devbox.metadata.name, readyDataResults[index]);
-          }
-        });
-
-        const nodeData = transformToNodeData(devboxListData, readyDataMap);
-        const nodesWithDetails = nodeData.map((node: any) => ({
-          ...node,
-          data: {
-            ...node.data,
-            details: (
-              <DevboxDetails
-                devbox={node.data.devbox}
-                readyData={node.data.readyData}
-              />
-            ),
-          },
-        }));
-
-        setNodes(nodesWithDetails);
-        dataLoadedRef.current = true;
-      } catch (error) {
-        console.error("Error refreshing devbox data:", error);
-      }
-    };
-
-    fetchDevboxData();
-  }, [
-    regionUrl,
-    hasRequiredTokens,
-    fetchDevboxList,
-    fetchDevboxReadyStatus,
-    setNodes,
-  ]);
+      setNodes(nodesWithDetails);
+      console.log("✅ Nodes updated from store data");
+    } catch (error) {
+      console.error("❌ Error processing devbox data from store:", error);
+      setNodes([]);
+    }
+  }, [devbox.getDevboxList?.data, setNodes]);
 
   const onMessageSend = useCallback(async (message: string, files?: File[]) => {
     setIsExpanded(true);
@@ -298,129 +255,48 @@ function FlowContent() {
     }
   }, []);
 
-  // Data fetching effect
+  // Data consumption effect - only consume data from store
   useEffect(() => {
-    console.log("🔄 Data fetching effect triggered");
-    console.log("📊 dataLoadedRef.current:", dataLoadedRef.current);
-    console.log("📊 regionUrl:", regionUrl);
+    console.log("🔄 Data consumption effect triggered");
+    console.log("📊 devbox.getDevboxList:", devbox.getDevboxList);
 
-    // Skip if data is already loaded and we have valid cache
-    if (dataLoadedRef.current) {
-      const cachedDevboxList = getCachedDevboxList(regionUrl);
-      console.log("📊 cachedDevboxList:", cachedDevboxList);
-      console.log("📊 isDevboxListValid:", isDevboxListValid(regionUrl));
-
-      if (cachedDevboxList && isDevboxListValid(regionUrl)) {
-        console.log("✅ Using cached data, skipping fetch");
-        return;
-      } else {
-        console.log("🔄 Cache invalid or missing, will fetch fresh data");
-        dataLoadedRef.current = false; // Reset to allow fresh fetch
-      }
+    const devboxListData = devbox.getDevboxList?.data;
+    if (!devboxListData || devboxListData.length === 0) {
+      console.log("⚠️ No devbox data available in store yet");
+      return;
     }
 
-    const fetchDevboxData = async () => {
-      try {
-        console.log("🚀 Starting fetchDevboxData");
-        const currentRegionUrl = regionUrl;
+    if (dataLoadedRef.current) {
+      console.log("✅ Data already processed, skipping");
+      return;
+    }
 
-        // Check if we have valid cached data
-        const cachedDevboxList = getCachedDevboxList(currentRegionUrl);
-        if (cachedDevboxList && isDevboxListValid(currentRegionUrl)) {
-          console.log("✅ Using cached devbox data");
+    try {
+      console.log("🚀 Processing devbox data from store");
+      
+      const nodeData = transformToNodeData(devboxListData);
+      console.log("📊 Processed nodeData:", nodeData);
 
-          // Transform cached data to nodes
-          const nodeData = transformToNodeData(cachedDevboxList);
-          console.log("📊 Cached nodeData:", nodeData);
+      const nodesWithDetails = nodeData.map((node: any) => ({
+        ...node,
+        data: {
+          ...node.data,
+          details: (
+            <DevboxDetails
+              devbox={node.data.devbox}
+              readyData={node.data.readyData}
+            />
+          ),
+        },
+      }));
 
-          const nodesWithDetails = nodeData.map((node: any) => ({
-            ...node,
-            data: {
-              ...node.data,
-              details: (
-                <DevboxDetails
-                  devbox={node.data.devbox}
-                  readyData={node.data.readyData}
-                />
-              ),
-            },
-          }));
-
-          console.log("📊 Setting nodes from cache:", nodesWithDetails);
-          setNodes(nodesWithDetails);
-          dataLoadedRef.current = true;
-          return;
-        }
-
-        // Check if user has required tokens
-        if (!hasRequiredTokens("devbox")) {
-          console.error(
-            "❌ User missing required tokens for devbox operations"
-          );
-          return;
-        }
-
-        console.log("🔄 Fetching fresh devbox data");
-
-        const devboxListData = await fetchDevboxList();
-        console.log("📊 Fresh devboxListData:", devboxListData);
-
-        const devboxes = devboxListData
-          .map((pair: any) => pair.find((item: any) => item.kind === "Devbox"))
-          .filter(Boolean);
-
-        console.log("📊 Extracted devboxes:", devboxes);
-
-        if (devboxes.length === 0) {
-          console.log("⚠️ No devboxes found, setting empty nodes");
-          setNodes([]);
-          dataLoadedRef.current = true;
-          return;
-        }
-
-        // Fetch ready status for each devbox
-        console.log("🔄 Fetching ready status for devboxes");
-        const readyDataResults = await Promise.all(
-          devboxes.map((devbox: any) =>
-            fetchDevboxReadyStatus(devbox.metadata.name).catch(() => null)
-          )
-        );
-
-        console.log("📊 Ready data results:", readyDataResults);
-
-        const readyDataMap = new Map();
-        devboxes.forEach((devbox: any, index: number) => {
-          if (readyDataResults[index]) {
-            readyDataMap.set(devbox.metadata.name, readyDataResults[index]);
-          }
-        });
-
-        const nodeData = transformToNodeData(devboxListData, readyDataMap);
-        console.log("📊 Fresh nodeData:", nodeData);
-
-        const nodesWithDetails = nodeData.map((node: any) => ({
-          ...node,
-          data: {
-            ...node.data,
-            details: (
-              <DevboxDetails
-                devbox={node.data.devbox}
-                readyData={node.data.readyData}
-              />
-            ),
-          },
-        }));
-
-        console.log("📊 Setting fresh nodes:", nodesWithDetails);
-        setNodes(nodesWithDetails);
-        dataLoadedRef.current = true;
-      } catch (error) {
-        console.error("❌ Error fetching devbox data:", error);
-      }
-    };
-
-    fetchDevboxData();
-  }, []); // Empty dependency array to run only once on mount
+      console.log("📊 Setting nodes from store data:", nodesWithDetails);
+      setNodes(nodesWithDetails);
+      dataLoadedRef.current = true;
+    } catch (error) {
+      console.error("❌ Error processing devbox data from store:", error);
+    }
+  }, [devbox.getDevboxList?.data, devbox.getDevboxList?.timestamp]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {

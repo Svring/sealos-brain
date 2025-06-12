@@ -18,6 +18,8 @@ export function buildDevboxUrls() {
     byName: "/api/sealos/devbox/getDevboxByName",
     sshInfo: "/api/sealos/devbox/getSSHConnectionInfo",
     checkReady: "/api/sealos/devbox/checkReady",
+    start: "/api/sealos/devbox/startDevbox",
+    shutdown: "/api/sealos/devbox/shutdownDevbox",
   };
 }
 
@@ -139,11 +141,49 @@ export const transformToNodeData = (
 };
 
 /**
+ * Transform start devbox response
+ */
+export const transformStartDevbox = (rawData: any) => {
+  try {
+    return rawData; // Add specific transformation if needed
+  } catch (error) {
+    console.error("Error parsing start devbox data:", error);
+    throw new Error("Invalid start devbox data format");
+  }
+};
+
+/**
+ * Transform shutdown devbox response
+ */
+export const transformShutdownDevbox = (rawData: any) => {
+  try {
+    return rawData; // Add specific transformation if needed
+  } catch (error) {
+    console.error("Error parsing shutdown devbox data:", error);
+    throw new Error("Invalid shutdown devbox data format");
+  }
+};
+
+/**
  * Create fetch options for devbox API calls (GET requests with query params)
  */
 export function createDevboxFetchOptions(method: "GET" = "GET", params?: any) {
   return {
     method,
+    params,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+}
+
+/**
+ * Create fetch options for devbox POST API calls with data payload
+ */
+export function createDevboxPostFetchOptions(data: any, params?: any) {
+  return {
+    method: "POST" as const,
+    data,
     params,
     headers: {
       "Content-Type": "application/json",

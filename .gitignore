@@ -49,3 +49,5 @@ agent/sample_agent.egg-info
 .gitignore
 
 cypress/fixtures
+
+system-prompt.txt

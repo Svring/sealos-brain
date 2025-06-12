@@ -2,6 +2,7 @@
 import json
 import uuid
 import asyncio
+from typing import Any
 
 from copilotkit import CopilotKitState
 
@@ -20,7 +21,7 @@ from src.provider.backbone.backbone_provider import get_sealos_model
 
 
 class ChatAgentState(CopilotKitState):
-    topic: str = "travel"
+    devbox_list: Any = None
     remaining_steps: RemainingSteps = RemainingSteps  # required by create_react_agent
 
 
@@ -40,7 +41,7 @@ def make_chat_agent_state(topic: str) -> ChatAgentState:
 
 
 def build_chat_agent_prompt(state: ChatAgentState, config: RunnableConfig):
-    topic_str = state["topic"]
+    devbox_list_str = state["devbox_list"]
 
     return [
         SystemMessage(
@@ -51,7 +52,7 @@ def build_chat_agent_prompt(state: ChatAgentState, config: RunnableConfig):
             - Answering the question based on the topic
             - Following best practices and maintaining chat quality"""
         ),
-        HumanMessage(content=f"Current topic is {topic_str}"),
+        HumanMessage(content=f"Current devbox list is {devbox_list_str}"),
         *state["messages"],
     ]
 

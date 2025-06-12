@@ -3,7 +3,9 @@
   "dockerfile_lines": [],
   "dependencies": ["."],
   "graphs": {
-    "copilot": "./src/agent/chat_agent.py:graph"
+    "copilot": "./src/agent/chat_agent.py:graph",
+    "sealos": "./src/agent/sealos_agent.py:graph",
+    "sample_agent": "./src/agent/sample_agent.py:graph"
   },
   "env": ".env"
 }

@@ -10,17 +10,25 @@ interface UserTokens {
 }
 
 // Types for cached API responses
-interface DevboxListData {
-  data: any[];
+interface CachedData {
+  data: any;
   timestamp: number;
   regionUrl: string;
 }
 
-interface AccountData {
-  amount?: any;
-  authInfo?: any;
-  timestamp: number;
-  regionUrl: string;
+interface DevboxEndpoints {
+  getDevboxList: CachedData | null;
+  checkReady: CachedData | null;
+  getDevboxByName: CachedData | null;
+  getSSHConnectionInfo: CachedData | null;
+}
+
+interface AccountEndpoints {
+  getAmount: CachedData | null;
+}
+
+interface AuthEndpoints {
+  info: CachedData | null;
 }
 
 interface SealosStore {
@@ -30,8 +38,9 @@ interface SealosStore {
   tokens: UserTokens;
 
   // Cached API responses
-  devboxList: DevboxListData | null;
-  accountData: AccountData | null;
+  devbox: DevboxEndpoints;
+  account: AccountEndpoints;
+  auth: AuthEndpoints;
 
   // Cache settings
   cacheTimeout: number; // in milliseconds
@@ -41,19 +50,27 @@ interface SealosStore {
   setCurrentUser: (user: User | null) => void;
   setTokens: (tokens: UserTokens) => void;
 
-  // Actions for devbox data
-  setDevboxList: (data: any[], regionUrl: string) => void;
-  getDevboxList: (regionUrl: string) => any[] | null;
-  isDevboxListValid: (regionUrl: string) => boolean;
-  clearDevboxList: () => void;
-
-  // Actions for account data
-  setAccountAmount: (data: any, regionUrl: string) => void;
-  getAccountAmount: (regionUrl: string) => any | null;
-  setAuthInfo: (data: any, regionUrl: string) => void;
-  getAuthInfo: (regionUrl: string) => any | null;
-  isAccountDataValid: (regionUrl: string) => boolean;
-  clearAccountData: () => void;
+  // Generic actions for API data
+  setApiData: (
+    apiGroup: "devbox" | "account" | "auth",
+    endpoint: string,
+    data: any,
+    regionUrl: string
+  ) => void;
+  getApiData: (
+    apiGroup: "devbox" | "account" | "auth",
+    endpoint: string,
+    regionUrl: string
+  ) => any | null;
+  isApiDataValid: (
+    apiGroup: "devbox" | "account" | "auth",
+    endpoint: string,
+    regionUrl: string
+  ) => boolean;
+  clearApiData: (
+    apiGroup: "devbox" | "account" | "auth",
+    endpoint?: string
+  ) => void;
 
   // Utility actions
   clearAllCache: () => void;
@@ -65,6 +82,17 @@ interface SealosStore {
   // Token management
   updateTokenFromUser: (user: User) => void;
   hasRequiredTokens: (type: "devbox" | "account") => boolean;
+
+  // Copilot aggregated data
+  copilotData: {
+    devbox_data: any[];
+    account_data: any;
+    auth_data: any;
+    timestamp: number;
+  };
+
+  // Action to refresh copilotData based on current store
+  updateCopilotData: () => void;
 }
 
 export const useSealosStore = create<SealosStore>((set, get) => ({
@@ -72,9 +100,27 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
   regionUrl: "bja.sealos.run", // Set default region URL
   currentUser: null,
   tokens: {},
-  devboxList: null,
-  accountData: null,
+  devbox: {
+    getDevboxList: null,
+    checkReady: null,
+    getDevboxByName: null,
+    getSSHConnectionInfo: null,
+  },
+  account: {
+    getAmount: null,
+  },
+  auth: {
+    info: null,
+  },
   cacheTimeout: 5 * 60 * 1000, // 5 minutes
+
+  // Aggregated data for Copilot. Initialized with empty values and timestamp 0.
+  copilotData: {
+    devbox_data: [],
+    account_data: {},
+    auth_data: {},
+    timestamp: 0,
+  },
 
   // Region and user actions
   setRegionUrl: (regionUrl) => set({ regionUrl }),
@@ -88,98 +134,89 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
 
   setTokens: (tokens) => set({ tokens }),
 
-  // Devbox data actions
-  setDevboxList: (data, regionUrl) =>
-    set({
-      devboxList: {
-        data,
-        timestamp: Date.now(),
-        regionUrl,
+  // Generic API data actions
+  setApiData: (apiGroup, endpoint, data, regionUrl) => {
+    set((state) => ({
+      [apiGroup]: {
+        ...state[apiGroup],
+        [endpoint]: {
+          data,
+          timestamp: Date.now(),
+          regionUrl,
+        },
       },
-    }),
+    }));
 
-  getDevboxList: (regionUrl) => {
-    const { devboxList } = get();
+    // Refresh aggregated Copilot data after setting API data
+    get().updateCopilotData();
+  },
+
+  getApiData: (apiGroup, endpoint, regionUrl) => {
+    const state = get();
+    const apiData = (state[apiGroup] as any)[endpoint];
     if (
-      devboxList &&
-      devboxList.regionUrl === regionUrl &&
-      get().isDevboxListValid(regionUrl)
+      apiData &&
+      apiData.regionUrl === regionUrl &&
+      get().isApiDataValid(apiGroup, endpoint, regionUrl)
     ) {
-      return devboxList.data;
+      return apiData.data;
     }
     return null;
   },
 
-  isDevboxListValid: (regionUrl) => {
-    const { devboxList } = get();
-    if (!devboxList || devboxList.regionUrl !== regionUrl) {
+  isApiDataValid: (apiGroup, endpoint, regionUrl) => {
+    const state = get();
+    const apiData = (state[apiGroup] as any)[endpoint];
+    if (!apiData || apiData.regionUrl !== regionUrl) {
       return false;
     }
-    return !get().isDataExpired(devboxList.timestamp);
+    return !get().isDataExpired(apiData.timestamp);
   },
 
-  clearDevboxList: () => set({ devboxList: null }),
-
-  // Account data actions
-  setAccountAmount: (data, regionUrl) =>
-    set((state) => ({
-      accountData: {
-        ...state.accountData,
-        amount: data,
-        timestamp: Date.now(),
-        regionUrl,
-      },
-    })),
-
-  getAccountAmount: (regionUrl) => {
-    const { accountData } = get();
-    if (
-      accountData &&
-      accountData.regionUrl === regionUrl &&
-      get().isAccountDataValid(regionUrl)
-    ) {
-      return accountData.amount;
+  clearApiData: (apiGroup, endpoint) => {
+    if (endpoint) {
+      set((state) => ({
+        [apiGroup]: {
+          ...state[apiGroup],
+          [endpoint]: null,
+        },
+      }));
+    } else {
+      // Clear all endpoints for the API group
+      const clearedGroup = Object.keys(get()[apiGroup]).reduce((acc, key) => {
+        acc[key] = null;
+        return acc;
+      }, {} as any);
+      set((state) => ({
+        [apiGroup]: clearedGroup,
+      }));
     }
-    return null;
+
+    // Keep Copilot data in sync
+    get().updateCopilotData();
   },
-
-  setAuthInfo: (data, regionUrl) =>
-    set((state) => ({
-      accountData: {
-        ...state.accountData,
-        authInfo: data,
-        timestamp: Date.now(),
-        regionUrl,
-      },
-    })),
-
-  getAuthInfo: (regionUrl) => {
-    const { accountData } = get();
-    if (
-      accountData &&
-      accountData.regionUrl === regionUrl &&
-      get().isAccountDataValid(regionUrl)
-    ) {
-      return accountData.authInfo;
-    }
-    return null;
-  },
-
-  isAccountDataValid: (regionUrl) => {
-    const { accountData } = get();
-    if (!accountData || accountData.regionUrl !== regionUrl) {
-      return false;
-    }
-    return !get().isDataExpired(accountData.timestamp);
-  },
-
-  clearAccountData: () => set({ accountData: null }),
 
   // Utility actions
   clearAllCache: () =>
     set({
-      devboxList: null,
-      accountData: null,
+      devbox: {
+        getDevboxList: null,
+        checkReady: null,
+        getDevboxByName: null,
+        getSSHConnectionInfo: null,
+      },
+      account: {
+        getAmount: null,
+      },
+      auth: {
+        info: null,
+      },
+      copilotData: {
+        devbox_data: [],
+        account_data: {},
+        auth_data: {},
+        timestamp: Date.now(),
+      },
     }),
 
   isDataExpired: (timestamp) => {
@@ -201,23 +238,9 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
           }
         : null,
       tokens: state.tokens,
-      devboxList: state.devboxList
-        ? {
-            dataLength: state.devboxList.data.length,
-            timestamp: new Date(state.devboxList.timestamp).toISOString(),
-            regionUrl: state.devboxList.regionUrl,
-            isValid: !state.isDataExpired(state.devboxList.timestamp),
-          }
-        : null,
-      accountData: state.accountData
-        ? {
-            hasAmount: !!state.accountData.amount,
-            hasAuthInfo: !!state.accountData.authInfo,
-            timestamp: new Date(state.accountData.timestamp).toISOString(),
-            regionUrl: state.accountData.regionUrl,
-            isValid: !state.isDataExpired(state.accountData.timestamp),
-          }
-        : null,
+      devbox: state.devbox,
+      account: state.account,
+      auth: state.auth,
       cacheTimeout: state.cacheTimeout,
     });
     return state;
@@ -229,6 +252,9 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
 
     if (user.tokens) {
       user.tokens.forEach((token) => {
+        console.log(
+          `🔑 Processing token: ${token.type} = ${token.value ? "present" : "missing"}`
+        );
         switch (token.type) {
           case "kubeconfig":
             tokens.kubeconfig = token.value;
@@ -246,19 +272,50 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
       });
     }
 
+    console.log("🔑 Final tokens object:", {
+      kubeconfig: tokens.kubeconfig ? "present" : "missing",
+      regionToken: tokens.regionToken ? "present" : "missing",
+      appToken: tokens.appToken ? "present" : "missing",
+      customToken: tokens.customToken ? "present" : "missing",
+    });
+
     set({ tokens });
   },
 
   hasRequiredTokens: (type) => {
     const { tokens } = get();
 
+    console.log(`🔍 Checking required tokens for ${type}:`, {
+      kubeconfig: tokens.kubeconfig ? "present" : "missing",
+      customToken: tokens.customToken ? "present" : "missing",
+      regionToken: tokens.regionToken ? "present" : "missing",
+    });
+
     switch (type) {
       case "devbox":
-        return !!(tokens.kubeconfig && tokens.customToken);
+        const hasDevboxTokens = !!(tokens.kubeconfig && tokens.customToken);
+        console.log(`✅ Has devbox tokens: ${hasDevboxTokens}`);
+        return hasDevboxTokens;
       case "account":
-        return !!tokens.regionToken;
+        const hasAccountTokens = !!tokens.regionToken;
+        console.log(`✅ Has account tokens: ${hasAccountTokens}`);
+        return hasAccountTokens;
       default:
         return false;
     }
+  },
+
+  // Implementation of updateCopilotData
+  updateCopilotData: () => {
+    const { devbox, account, auth } = get();
+
+    set({
+      copilotData: {
+        devbox_data: devbox.getDevboxList?.data || [],
+        account_data: account.getAmount?.data || {},
+        auth_data: auth.info?.data || {},
+        timestamp: Date.now(),
+      },
+    });
   },
 }));

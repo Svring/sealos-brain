@@ -33,26 +33,58 @@ export async function makeAccountApiRequest(
   };
 }
 
+// Pure function for making auth API requests
+export async function makeAuthApiRequest(
+  regionUrl: string,
+  endpoint: string,
+  headers: Pick<RequestHeaders, "authorization">
+): Promise<ApiResponse> {
+  const backendUrl = `https://${regionUrl}/api/auth/${endpoint}`;
+
+  const response = await fetch(backendUrl, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: headers.authorization,
+    },
+  });
+
+  const data = await response.json();
+  return {
+    data: response.ok ? data : undefined,
+    message: !response.ok ? data.message || data.detail : undefined,
+    status: response.status,
+  };
+}
+
 // Pure function for making devbox API requests
 export async function makeDevboxApiRequest(
   regionUrl: string,
   endpoint: string,
   headers: RequestHeaders,
-  queryParams?: Record<string, string>
+  queryParams?: Record<string, string>,
+  options?: { method?: "GET" | "POST"; data?: any }
 ): Promise<ApiResponse> {
   const baseUrl = `https://devbox.${regionUrl}/api/${endpoint}`;
   const url = queryParams
     ? `${baseUrl}?${new URLSearchParams(queryParams).toString()}`
     : baseUrl;
 
-  const response = await fetch(url, {
-    method: "GET",
+  const method = options?.method || "GET";
+  const requestInit: RequestInit = {
+    method,
     headers: {
       "Content-Type": "application/json",
       Authorization: headers.authorization,
       "Authorization-Bearer": headers.authorizationBearer!,
     },
-  });
+  };
+
+  if (method === "POST" && options?.data) {
+    requestInit.body = JSON.stringify(options.data);
+  }
+
+  const response = await fetch(url, requestInit);
 
   const data = await response.json();
   return {

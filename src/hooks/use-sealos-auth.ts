@@ -6,11 +6,11 @@ import {
   buildAccountUrls,
   createAccountFetchOptions,
   createAccountApiContext,
-  transformAccountAmount,
+  transformAuthInfo,
 } from "@/provider/account/account-utils";
 import { runWake } from "@/lib/wake";
 
-export function useSealosAccount() {
+export function useSealosAuth() {
   const {
     currentUser,
     regionUrl,
@@ -22,7 +22,7 @@ export function useSealosAccount() {
     hasRequiredTokens,
   } = useSealosStore();
 
-  const fetchAccountAmount = useCallback(
+  const fetchAuthInfo = useCallback(
     async (forceRefresh = false) => {
       try {
         // Get current user if not in store
@@ -40,28 +40,22 @@ export function useSealosAccount() {
 
         // Check if we have valid cached data and not forcing refresh
         if (!forceRefresh) {
-          const cachedAmount = getApiData(
-            "account",
-            "getAmount",
-            currentRegionUrl
-          );
+          const cachedAuthInfo = getApiData("auth", "info", currentRegionUrl);
           if (
-            cachedAmount &&
-            isApiDataValid("account", "getAmount", currentRegionUrl)
+            cachedAuthInfo &&
+            isApiDataValid("auth", "info", currentRegionUrl)
           ) {
-            console.log("Using cached account amount data");
-            return cachedAmount;
+            console.log("Using cached auth info data");
+            return cachedAuthInfo;
           }
         }
 
         // Check if user has required tokens
         if (!hasRequiredTokens("account")) {
-          throw new Error(
-            "User missing required tokens for account operations"
-          );
+          throw new Error("User missing required tokens for auth operations");
         }
 
-        console.log("Fetching fresh account amount data");
+        console.log("Fetching fresh auth info data");
 
         const accountContext = await createAccountContext(
           user,
@@ -74,9 +68,9 @@ export function useSealosAccount() {
         const urls = buildAccountUrls();
         const apiContext = createAccountApiContext(accountContext);
 
-        const [amountData] = await runWake({
-          urls: [urls.getAmount],
-          transformations: [transformAccountAmount],
+        const [authInfoData] = await runWake({
+          urls: [urls.authInfo],
+          transformations: [transformAuthInfo],
           fetchOptions: createAccountFetchOptions("GET", {
             region_url: currentRegionUrl,
           }),
@@ -84,11 +78,11 @@ export function useSealosAccount() {
         });
 
         // Cache the fetched data
-        setApiData("account", "getAmount", amountData, currentRegionUrl);
+        setApiData("auth", "info", authInfoData, currentRegionUrl);
 
-        return amountData;
+        return authInfoData;
       } catch (error) {
-        console.error("Error fetching account amount:", error);
+        console.error("Error fetching auth info:", error);
         throw error;
       }
     },
@@ -107,11 +101,11 @@ export function useSealosAccount() {
   return {
     currentUser,
     regionUrl,
-    fetchAccountAmount,
+    fetchAuthInfo,
     hasRequiredTokens: (type: "devbox" | "account") => hasRequiredTokens(type),
-    getCachedAccountAmount: (regionUrl: string) =>
-      getApiData("account", "getAmount", regionUrl),
-    isAccountDataValid: (regionUrl: string) =>
-      isApiDataValid("account", "getAmount", regionUrl),
+    getCachedAuthInfo: (regionUrl: string) =>
+      getApiData("auth", "info", regionUrl),
+    isAuthDataValid: (regionUrl: string) =>
+      isApiDataValid("auth", "info", regionUrl),
   };
 }

@@ -1,61 +1,76 @@
 'use client'
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarHeader, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Pin, PinOff, User2, ChevronUp, ArrowLeft, Home, Settings, FileText, Box, ChevronRight, Terminal, Database, Code } from "lucide-react";
+import { Pin, PinOff, User2, ChevronUp, ArrowLeft, Home, Settings, FileText, Box, ChevronRight, Terminal, Database, Code, CreditCard } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { UserCenter } from "@/components/ui/user-center";
 import { getCurrentUser } from "@/database/actions/user-actions";
 import { User } from "@/payload-types";
-import {
-  createDevboxContext,
-} from "@/provider/devbox/devbox-provider";
-import {
-  buildDevboxUrls,
-  createDevboxFetchOptions,
-  createDevboxApiContext,
-  transformDevboxList,
-} from "@/provider/devbox/devbox-utils";
-import { runWake } from "@/lib/wake";
-import { DataSchema, DevboxSchema, TemplateSchema } from "@/provider/devbox/schemas/devbox-list-schema";
-import { z } from "zod";
+
 import { useSealosStore } from "@/store/sealos-store";
-
-type SidebarPath = '/sidebar' | '/sidebar/user-center' | '/sidebar/settings' | '/sidebar/documents' | '/sidebar/devbox' | '/sidebar/devbox/terminal' | '/sidebar/devbox/database' | '/sidebar/devbox/code-editor';
-
-interface DevboxItem {
-  name: string;
-  namespace: string;
-  state: string;
-  phase: string;
-}
+import { useSealosAccount } from "@/hooks/use-sealos-account";
+import { useSealosAuth } from "@/hooks/use-sealos-auth";
+import { useDevboxSidebar } from "@/hooks/use-devbox-sidebar";
+import { useSidebarResize } from "@/hooks/use-sidebar-resize";
+import { useSidebarVisibility } from "@/hooks/use-sidebar-visibility";
+import { SidebarPath } from "@/components/providers/sidebar/types";
 
 export function AppSidebar() {
-  const [open, setOpen] = useState(false);
-  const [pinned, setPinned] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(280);
-  const [currentPath, setCurrentPath] = useState<SidebarPath>('/sidebar');
-  const [devboxExpanded, setDevboxExpanded] = useState(false);
-  const [devboxData, setDevboxData] = useState<any>(null);
-  const [devboxLoading, setDevboxLoading] = useState(false);
-  const [devboxError, setDevboxError] = useState<string | null>(null);
-  const [parsedDevboxes, setParsedDevboxes] = useState<DevboxItem[]>([]);
-  const closeTimeout = useRef<NodeJS.Timeout | null>(null);
-  const resizing = useRef(false);
-  const dataFetchedRef = useRef(false);
-
   // Sealos store
   const {
     currentUser,
     regionUrl,
     setCurrentUser,
     setRegionUrl,
-    getDevboxList,
-    setDevboxList,
-    isDevboxListValid,
+    getApiData,
+    setApiData,
+    isApiDataValid,
     hasRequiredTokens,
     debugPrintState,
   } = useSealosStore();
+
+  // Sealos hooks
+  const {
+    fetchAccountAmount,
+    getCachedAccountAmount,
+    isAccountDataValid,
+  } = useSealosAccount();
+
+  const {
+    fetchAuthInfo,
+    getCachedAuthInfo,
+    isAuthDataValid,
+  } = useSealosAuth();
+
+  // DevBox sidebar data managed via dedicated hook
+  const {
+    devboxes: parsedDevboxes,
+    rawData: devboxData,
+    loading: devboxLoading,
+    error: devboxError,
+    refresh: refreshDevboxList,
+  } = useDevboxSidebar();
+
+  // --- Behaviour hooks ---
+  const {
+    width: sidebarWidth,
+    handleMouseDown: handleResizeMouseDown,
+  } = useSidebarResize();
+
+  const {
+    open,
+    setOpen,
+    pinned,
+    togglePin: handlePinClick,
+    enterHotZone: handleHotZoneEnter,
+    leaveSidebar: handleSidebarLeave,
+    enterSidebar: handleSidebarEnter,
+  } = useSidebarVisibility();
+
+  const [currentPath, setCurrentPath] = useState<SidebarPath>('/sidebar');
+  const [devboxExpanded, setDevboxExpanded] = useState(false);
+  const dataFetchedRef = React.useRef(false);
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -64,7 +79,7 @@ export function AppSidebar() {
         const currentUser = await getCurrentUser();
         setCurrentUser(currentUser);
         
-        // If user exists, update tokens in store
+        // If user exists, update tokens in store and fetch account data
         if (currentUser) {
           console.log("Setting user tokens in Sealos store");
           // The store will automatically extract and set tokens when setCurrentUser is called
@@ -74,6 +89,11 @@ export function AppSidebar() {
             console.log("📊 Store state after setting user:");
             debugPrintState();
           }, 100);
+
+          // Fetch account data after user is set
+          setTimeout(async () => {
+            await fetchAccountData();
+          }, 200);
         }
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -84,39 +104,34 @@ export function AppSidebar() {
     fetchUser();
   }, [setCurrentUser, debugPrintState]);
 
-  // Open sidebar when mouse enters hot zone
-  const handleHotZoneEnter = () => {
-    if (closeTimeout.current) {
-      clearTimeout(closeTimeout.current);
-      closeTimeout.current = null;
-    }
-    setOpen(true);
-  };
+  // Fetch account data function
+  const fetchAccountData = async () => {
+    if (!currentUser) return;
 
-  // Start close timer when mouse leaves both sidebar and hot zone
-  const handleSidebarLeave = () => {
-    if (pinned) return;
-    if (closeTimeout.current) clearTimeout(closeTimeout.current);
-    closeTimeout.current = setTimeout(() => setOpen(false), 100);
-  };
+    try {
+      console.log("🏦 Fetching account data in sidebar");
+      
+      // Fetch both account amount and auth info
+      const [accountAmount, authInfo] = await Promise.allSettled([
+        fetchAccountAmount(),
+        fetchAuthInfo(),
+      ]);
 
-  // Cancel close if mouse re-enters sidebar
-  const handleSidebarEnter = () => {
-    if (closeTimeout.current) {
-      clearTimeout(closeTimeout.current);
-      closeTimeout.current = null;
-    }
-  };
-
-  // Pin/unpin handler
-  const handlePinClick = () => {
-    setPinned((prev) => {
-      const isNowPinned = !prev;
-      if (isNowPinned) {
-        setOpen(true);
+      if (accountAmount.status === 'fulfilled') {
+        console.log("✅ Account amount fetched successfully:", accountAmount.value);
+      } else {
+        console.error("❌ Failed to fetch account amount:", accountAmount.reason);
       }
-      return isNowPinned;
-    });
+
+      if (authInfo.status === 'fulfilled') {
+        console.log("✅ Auth info fetched successfully:", authInfo.value);
+      } else {
+        console.error("❌ Failed to fetch auth info:", authInfo.reason);
+      }
+
+    } catch (error) {
+      console.error('Error fetching account data:', error);
+    }
   };
 
   // Navigation handlers
@@ -129,139 +144,12 @@ export function AppSidebar() {
     
     // If navigating to devbox, fetch devbox list
     if (path === '/sidebar/devbox' && currentUser) {
-      fetchDevboxList();
+      refreshDevboxList();
     }
-  };
-
-  // Fetch devbox list function using wake module
-  const fetchDevboxList = async () => {
-    if (!currentUser) return;
-
-    try {
-      setDevboxLoading(true);
-      setDevboxError(null);
-
-      const currentRegionUrl = regionUrl;
-      setRegionUrl(currentRegionUrl);
-
-      // Check if we have valid cached data
-      const cachedDevboxList = getDevboxList(currentRegionUrl);
-      if (cachedDevboxList && isDevboxListValid(currentRegionUrl)) {
-        console.log("Using cached devbox data in sidebar");
-        setDevboxData(cachedDevboxList);
-        
-        // Parse cached data
-        try {
-          const devboxItems: DevboxItem[] = [];
-          
-          cachedDevboxList.forEach((pair: any) => {
-            type DevboxType = z.infer<typeof DevboxSchema>;
-            type TemplateType = z.infer<typeof TemplateSchema>;
-            
-            const isDevbox = (item: any): item is DevboxType => item && item.kind === "Devbox";
-            const isTemplate = (item: any): item is TemplateType => item && "templateRepository" in item;
-
-            const devbox = pair.find(isDevbox);
-            const template = pair.find(isTemplate);
-
-            if (devbox && template) {
-              devboxItems.push({
-                name: devbox.metadata.name,
-                namespace: devbox.metadata.namespace,
-                state: devbox.spec.state,
-                phase: devbox.status.phase,
-              });
-            }
-          });
-          
-          setParsedDevboxes(devboxItems);
-        } catch (e) {
-          console.error('Cached devbox data schema validation failed:', e);
-          setParsedDevboxes([]);
-        }
-        
-        setDevboxLoading(false);
-        return;
-      }
-
-      // Check if user has required tokens
-      if (!hasRequiredTokens('devbox')) {
-        throw new Error('User missing required tokens for devbox operations');
-      }
-
-      console.log("Fetching fresh devbox data in sidebar");
-
-      const devboxContext = await createDevboxContext(currentUser, currentRegionUrl);
-      if (!devboxContext) {
-        throw new Error('Failed to create devbox context - missing tokens');
-      }
-
-      const urls = buildDevboxUrls();
-      const apiContext = createDevboxApiContext(devboxContext);
-
-      const [data] = await runWake({
-        urls: [urls.list],
-        transformations: [transformDevboxList],
-        fetchOptions: createDevboxFetchOptions("GET", { region_url: currentRegionUrl }),
-        context: apiContext,
-      });
-      
-      // Cache the fetched data
-      setDevboxList(data, currentRegionUrl);
-      setDevboxData(data);
-      console.log('Devbox List Result:', data);
-      
-      // Parse and extract devbox names
-      try {
-        const devboxItems: DevboxItem[] = [];
-        
-        data.forEach((pair: any) => {
-          type DevboxType = z.infer<typeof DevboxSchema>;
-          type TemplateType = z.infer<typeof TemplateSchema>;
-          
-          const isDevbox = (item: any): item is DevboxType => item && item.kind === "Devbox";
-          const isTemplate = (item: any): item is TemplateType => item && "templateRepository" in item;
-
-          const devbox = pair.find(isDevbox);
-          const template = pair.find(isTemplate);
-
-          if (devbox && template) {
-            devboxItems.push({
-              name: devbox.metadata.name,
-              namespace: devbox.metadata.namespace,
-              state: devbox.spec.state,
-              phase: devbox.status.phase,
-            });
-            
-            console.log({
-              name: devbox.metadata.name,
-              namespace: devbox.metadata.namespace,
-              state: devbox.spec.state,
-              phase: devbox.status.phase,
-              image: devbox.spec.image,
-              cpu: devbox.spec.resource.cpu,
-              memory: devbox.spec.resource.memory,
-              nodePort: devbox.status.network.nodePort,
-              lastCommitStatus: devbox.status.commitHistory[0]?.status,
-              lastCommitTime: devbox.status.commitHistory[0]?.time,
-              template: template.templateRepository.iconId,
-            });
-          }
-        });
-        
-        setParsedDevboxes(devboxItems);
-      } catch (e) {
-        console.error('Devbox data schema validation failed:', e);
-        setParsedDevboxes([]);
-      }
-      
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setDevboxError(errorMessage);
-      setParsedDevboxes([]);
-      console.error('Error fetching devbox list:', error);
-    } finally {
-      setDevboxLoading(false);
+    
+    // If navigating to account, fetch account data
+    if (path === '/sidebar/account' && currentUser) {
+      fetchAccountData();
     }
   };
 
@@ -272,6 +160,8 @@ export function AppSidebar() {
         return 'Sidebar';
       case '/sidebar/user-center':
         return 'User Center';
+      case '/sidebar/account':
+        return 'Account';
       case '/sidebar/settings':
         return 'Settings';
       case '/sidebar/documents':
@@ -295,6 +185,11 @@ export function AppSidebar() {
       title: 'User Center',
       icon: User2,
       path: '/sidebar/user-center' as SidebarPath,
+    },
+    {
+      title: 'Account',
+      icon: CreditCard,
+      path: '/sidebar/account' as SidebarPath,
     },
     {
       title: 'Settings',
@@ -330,7 +225,7 @@ export function AppSidebar() {
               onClick={() => {
                 setDevboxExpanded(!devboxExpanded);
                 if (!devboxExpanded && currentUser && parsedDevboxes.length === 0) {
-                  fetchDevboxList();
+                  refreshDevboxList();
                 }
               }}
               className="w-full"
@@ -396,6 +291,35 @@ export function AppSidebar() {
         return renderMainSidebarContent();
       case '/sidebar/user-center':
         return <UserCenter user={currentUser} />;
+      case '/sidebar/account':
+        return (
+          <div className="p-4">
+            <h3 className="text-lg font-semibold mb-4">Account Information</h3>
+            
+            <div className="space-y-4">
+              <div className="bg-black p-3 rounded-md">
+                <h4 className="text-sm font-medium mb-2">Account Amount:</h4>
+                <pre className="text-xs overflow-auto max-h-32">
+                  {JSON.stringify(getCachedAccountAmount(regionUrl), null, 2)}
+                </pre>
+              </div>
+              
+              <div className="bg-black p-3 rounded-md">
+                <h4 className="text-sm font-medium mb-2">Auth Info:</h4>
+                <pre className="text-xs overflow-auto max-h-32">
+                  {JSON.stringify(getCachedAuthInfo(regionUrl), null, 2)}
+                </pre>
+              </div>
+              
+              <button 
+                onClick={fetchAccountData}
+                className="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+              >
+                Refresh Account Data
+              </button>
+            </div>
+          </div>
+        );
       case '/sidebar/settings':
         return (
           <div className="p-4">
@@ -472,33 +396,28 @@ export function AppSidebar() {
     }
   };
 
-  // --- Resize logic ---
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    resizing.current = true;
-    document.body.style.cursor = 'ew-resize';
-    const startX = e.clientX;
-    const startWidth = sidebarWidth;
-
-    const onMouseMove = (moveEvent: MouseEvent) => {
-      if (!resizing.current) return;
-      const newWidth = Math.max(180, startWidth + (moveEvent.clientX - startX));
-      setSidebarWidth(newWidth);
-    };
-    const onMouseUp = () => {
-      resizing.current = false;
-      document.body.style.cursor = '';
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-  };
-
+  // Centralized data fetching effect - fetch all API data when user is available
   useEffect(() => {
     if (currentUser && !dataFetchedRef.current) {
       dataFetchedRef.current = true;
-      fetchDevboxList();
+      console.log("🚀 Sidebar: Starting centralized data fetch");
+      
+      // Fetch all three API data types
+      Promise.allSettled([
+        refreshDevboxList(),
+        fetchAccountAmount(),
+        fetchAuthInfo(),
+      ]).then((results) => {
+        results.forEach((result, index) => {
+          const apiNames = ['devbox', 'account', 'auth'];
+          if (result.status === 'fulfilled') {
+            console.log(`✅ Sidebar: ${apiNames[index]} data fetched successfully`);
+          } else {
+            console.error(`❌ Sidebar: ${apiNames[index]} data fetch failed:`, result.reason);
+          }
+        });
+        console.log("🏁 Sidebar: Centralized data fetch completed");
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
