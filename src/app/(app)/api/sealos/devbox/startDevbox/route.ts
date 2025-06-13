@@ -7,7 +7,7 @@ import {
 
 export async function POST(req: NextRequest) {
   try {
-    const region_url = req.nextUrl.searchParams.get("region_url");
+    const regionUrl = req.nextUrl.searchParams.get("regionUrl");
     const authorization = req.headers.get("Authorization");
     const authorizationBearer = req.headers.get("Authorization-Bearer");
 
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const { devboxName } = body;
 
     // Validate query parameters
-    const paramValidation = validateQueryParams({ region_url }, ["region_url"]);
+    const paramValidation = validateQueryParams({ regionUrl }, ["regionUrl"]);
     if (!paramValidation.isValid) {
       return NextResponse.json(
         { message: paramValidation.errorMessage },
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     // Make API request
     const result = await makeDevboxApiRequest(
-      region_url!,
+      regionUrl!,
       "startDevbox",
       {
         authorization: authorization!,

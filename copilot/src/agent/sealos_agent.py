@@ -63,7 +63,7 @@ async def sealos_agent_node(
     # Build messages with system prompt and optional Sealos data
     system_prompt = config.get("configurable", {}).get(
         "system_prompt",
-        "You are a helpful Sealos assistant. You can help users with Sealos operations and answer questions about their Sealos data.",
+        "",
     )
 
     messages = [SystemMessage(content=system_prompt)]

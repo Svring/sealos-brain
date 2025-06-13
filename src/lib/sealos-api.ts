@@ -63,7 +63,7 @@ export async function makeDevboxApiRequest(
   endpoint: string,
   headers: RequestHeaders,
   queryParams?: Record<string, string>,
-  options?: { method?: "GET" | "POST"; data?: any }
+  options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
 ): Promise<ApiResponse> {
   const baseUrl = `https://devbox.${regionUrl}/api/${endpoint}`;
   const url = queryParams
@@ -115,6 +115,42 @@ export function validateHeaders(
   }
 
   return { isValid: true };
+}
+
+// Pure function for making platform API requests
+export async function makePlatformApiRequest(
+  regionUrl: string,
+  endpoint: string,
+  headers: Pick<RequestHeaders, "authorization">,
+  queryParams?: Record<string, string>,
+  options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
+): Promise<ApiResponse> {
+  const baseUrl = `https://devbox.${regionUrl}/api/platform/${endpoint}`;
+  const url = queryParams
+    ? `${baseUrl}?${new URLSearchParams(queryParams).toString()}`
+    : baseUrl;
+
+  const method = options?.method || "GET";
+  const requestInit: RequestInit = {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: headers.authorization,
+    },
+  };
+
+  if (method === "POST" && options?.data) {
+    requestInit.body = JSON.stringify(options.data);
+  }
+
+  const response = await fetch(url, requestInit);
+
+  const data = await response.json();
+  return {
+    data: response.ok ? data : undefined,
+    message: !response.ok ? data.message || data.detail : undefined,
+    status: response.status,
+  };
 }
 
 // Pure function for validating required query parameters

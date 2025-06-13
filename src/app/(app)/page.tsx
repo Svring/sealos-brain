@@ -19,11 +19,8 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 
-import { invokeAgentChat } from "@/provider/backbone/backbone-provider";
-import {
-  transformCheckReady,
-  transformToNodeData,
-} from "@/provider/devbox/devbox-utils";
+import { invokeAgentChat } from "@/lib/backbone/backbone-provider";
+import { transformToNodeData } from "@/lib/devbox/devbox-utils";
 import { runWake } from "@/lib/wake";
 import { useSealosStore } from "@/store/sealos-store";
 
@@ -32,8 +29,12 @@ import { cn } from "@/lib/utils";
 
 import nodeTypes from "@/components/node/node-types";
 import edgeTypes from "@/components/edge/edge-types";
-import { DetailsProvider, useDetailsPanel } from "@/provider/details-provider";
-import DevboxDetails from "@/components/node/details/devbox-details";
+import {
+  NodeViewProvider,
+  useNodeView,
+} from "@/components/node/node-view-provider";
+import DevboxDetails from "@/components/node/devbox/detail/view/devbox-detail-view";
+import { useSealosDevbox } from "@/hooks/use-sealos-devbox";
 
 interface Message {
   id: string;
@@ -49,7 +50,7 @@ function FlowContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const { setCenter, getZoom, setViewport } = useReactFlow();
-  const { showDetails, hideDetails, activeDetailsId } = useDetailsPanel();
+  const { showDetails, hideDetails, activeDetailsId } = useNodeView();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -59,12 +60,10 @@ function FlowContent() {
   const [isInputExpanded, setIsInputExpanded] = useState(true);
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
   const dataLoadedRef = useRef(false);
+  const { fetchDevboxReadyStatus } = useSealosDevbox();
 
   // Sealos Store - only consume data, don't fetch
-  const {
-    devbox,
-    regionUrl,
-  } = useSealosStore();
+  const { devbox, regionUrl } = useSealosStore();
 
   // Get debug function from store
   const { debugPrintState } = useSealosStore();
@@ -205,7 +204,7 @@ function FlowContent() {
 
   const refreshDevboxData = useCallback(() => {
     console.log("🔄 Refreshing devbox data from store");
-    
+
     const devboxListData = devbox.getDevboxList?.data;
     if (!devboxListData || devboxListData.length === 0) {
       console.log("⚠️ No devbox data available in store");
@@ -213,28 +212,41 @@ function FlowContent() {
       return;
     }
 
-    try {
-      const nodeData = transformToNodeData(devboxListData);
-      const nodesWithDetails = nodeData.map((node: any) => ({
-        ...node,
-        data: {
-          ...node.data,
-          details: (
-            <DevboxDetails
-              devbox={node.data.devbox}
-              readyData={node.data.readyData}
-            />
-          ),
-        },
-      }));
+    (async () => {
+      try {
+        // Fetch ready status for each devbox to get their public URL
+        const readyDataMap = new Map<string, any>();
+        await Promise.all(
+          devboxListData.map(async (pair: any) => {
+            const devboxItem = pair.find((item: any) => item.kind === "Devbox");
+            if (devboxItem) {
+              const name = devboxItem.metadata.name;
+              try {
+                const ready = await fetchDevboxReadyStatus(name);
+                readyDataMap.set(name, ready);
+              } catch (err) {
+                console.error(`Error fetching ready status for ${name}:`, err);
+              }
+            }
+          })
+        );
 
-      setNodes(nodesWithDetails);
-      console.log("✅ Nodes updated from store data");
-    } catch (error) {
-      console.error("❌ Error processing devbox data from store:", error);
-      setNodes([]);
-    }
-  }, [devbox.getDevboxList?.data, setNodes]);
+        const nodeData = transformToNodeData(devboxListData, readyDataMap);
+        console.log("📊 Processed lightweight nodeData with URLs:", nodeData);
+
+        setNodes(nodeData);
+        console.log("✅ Nodes updated from store data");
+      } catch (error) {
+        console.error("❌ Error processing devbox data from store:", error);
+        setNodes([]);
+      }
+    })();
+  }, [
+    devbox.getDevboxList?.data,
+    devbox.getDevboxList?.timestamp,
+    fetchDevboxReadyStatus,
+    setNodes,
+  ]);
 
   const onMessageSend = useCallback(async (message: string, files?: File[]) => {
     setIsExpanded(true);
@@ -271,36 +283,21 @@ function FlowContent() {
       return;
     }
 
-    try {
-      console.log("🚀 Processing devbox data from store");
-      
-      const nodeData = transformToNodeData(devboxListData);
-      console.log("📊 Processed nodeData:", nodeData);
-
-      const nodesWithDetails = nodeData.map((node: any) => ({
-        ...node,
-        data: {
-          ...node.data,
-          details: (
-            <DevboxDetails
-              devbox={node.data.devbox}
-              readyData={node.data.readyData}
-            />
-          ),
-        },
-      }));
-
-      console.log("📊 Setting nodes from store data:", nodesWithDetails);
-      setNodes(nodesWithDetails);
-      dataLoadedRef.current = true;
-    } catch (error) {
-      console.error("❌ Error processing devbox data from store:", error);
-    }
-  }, [devbox.getDevboxList?.data, devbox.getDevboxList?.timestamp]);
+    refreshDevboxData();
+    dataLoadedRef.current = true;
+  }, [
+    devbox.getDevboxList?.data,
+    devbox.getDevboxList?.timestamp,
+    refreshDevboxData,
+  ]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      showDetails(node.id, node.data.details as React.ReactNode);
+      // Create DevboxDetails component with devboxName from node data
+      const devboxName = (node.data as any).devboxName;
+      const detailsComponent = <DevboxDetails devboxName={devboxName} />;
+
+      showDetails(node.id, detailsComponent);
       const screenWidth = window.innerWidth;
       const leftAreaCenter = screenWidth * 0.3;
       const finalZoom = Math.max(Math.min(getZoom(), 1.0), 0.6);
@@ -341,7 +338,6 @@ function FlowContent() {
       >
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>
-
       <AnimatePresence>
         {isInputExpanded && (
           <motion.div
@@ -395,12 +391,10 @@ function FlowContent() {
 
 export default function App() {
   return (
-    <DetailsProvider>
-      <div className="w-screen h-screen">
-        <ReactFlowProvider>
-          <FlowContent />
-        </ReactFlowProvider>
-      </div>
-    </DetailsProvider>
+    <ReactFlowProvider>
+      <NodeViewProvider>
+        <FlowContent />
+      </NodeViewProvider>
+    </ReactFlowProvider>
   );
 }

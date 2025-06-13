@@ -21,6 +21,32 @@ interface DevboxEndpoints {
   checkReady: CachedData | null;
   getDevboxByName: CachedData | null;
   getSSHConnectionInfo: CachedData | null;
+  createDevbox: CachedData | null;
+  delDevbox: CachedData | null;
+  delDevboxVersionByName: CachedData | null;
+  editDevboxVersion: CachedData | null;
+  execCommandInDevboxPod: CachedData | null;
+  getAppsByDevboxId: CachedData | null;
+  getDevboxPodsByDevboxName: CachedData | null;
+  getDevboxVersionList: CachedData | null;
+  getEnv: CachedData | null;
+  releaseDevbox: CachedData | null;
+  restartDevbox: CachedData | null;
+  startDevbox: CachedData | null;
+  shutdownDevbox: CachedData | null;
+  updateDevbox: CachedData | null;
+  templateRepositoryDelete: CachedData | null;
+  templateRepositoryGet: CachedData | null;
+  templateRepositoryList: CachedData | null;
+  templateRepositoryListOfficial: CachedData | null;
+  templateRepositoryListPrivate: CachedData | null;
+  templateRepositoryTagList: CachedData | null;
+  templateRepositoryTemplateDelete: CachedData | null;
+  templateRepositoryTemplateGetConfig: CachedData | null;
+  templateRepositoryTemplateList: CachedData | null;
+  templateRepositoryUpdate: CachedData | null;
+  templateRepositoryWithTemplateCreate: CachedData | null;
+  templateRepositoryWithTemplateUpdate: CachedData | null;
 }
 
 interface AccountEndpoints {
@@ -29,6 +55,13 @@ interface AccountEndpoints {
 
 interface AuthEndpoints {
   info: CachedData | null;
+}
+
+interface PlatformEndpoints {
+  authCname: CachedData | null;
+  getDebt: CachedData | null;
+  getQuota: CachedData | null;
+  resourcePrice: CachedData | null;
 }
 
 interface SealosStore {
@@ -41,6 +74,7 @@ interface SealosStore {
   devbox: DevboxEndpoints;
   account: AccountEndpoints;
   auth: AuthEndpoints;
+  platform: PlatformEndpoints;
 
   // Cache settings
   cacheTimeout: number; // in milliseconds
@@ -52,23 +86,23 @@ interface SealosStore {
 
   // Generic actions for API data
   setApiData: (
-    apiGroup: "devbox" | "account" | "auth",
+    apiGroup: "devbox" | "account" | "auth" | "platform",
     endpoint: string,
     data: any,
     regionUrl: string
   ) => void;
   getApiData: (
-    apiGroup: "devbox" | "account" | "auth",
+    apiGroup: "devbox" | "account" | "auth" | "platform",
     endpoint: string,
     regionUrl: string
   ) => any | null;
   isApiDataValid: (
-    apiGroup: "devbox" | "account" | "auth",
+    apiGroup: "devbox" | "account" | "auth" | "platform",
     endpoint: string,
     regionUrl: string
   ) => boolean;
   clearApiData: (
-    apiGroup: "devbox" | "account" | "auth",
+    apiGroup: "devbox" | "account" | "auth" | "platform",
     endpoint?: string
   ) => void;
 
@@ -93,6 +127,10 @@ interface SealosStore {
 
   // Action to refresh copilotData based on current store
   updateCopilotData: () => void;
+
+  // Data selectors for efficient access
+  getDevboxByName: (devboxName: string) => any | null;
+  getDevboxDataMap: () => Map<string, any> | null;
 }
 
 export const useSealosStore = create<SealosStore>((set, get) => ({
@@ -105,12 +143,44 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
     checkReady: null,
     getDevboxByName: null,
     getSSHConnectionInfo: null,
+    createDevbox: null,
+    delDevbox: null,
+    delDevboxVersionByName: null,
+    editDevboxVersion: null,
+    execCommandInDevboxPod: null,
+    getAppsByDevboxId: null,
+    getDevboxPodsByDevboxName: null,
+    getDevboxVersionList: null,
+    getEnv: null,
+    releaseDevbox: null,
+    restartDevbox: null,
+    startDevbox: null,
+    shutdownDevbox: null,
+    updateDevbox: null,
+    templateRepositoryDelete: null,
+    templateRepositoryGet: null,
+    templateRepositoryList: null,
+    templateRepositoryListOfficial: null,
+    templateRepositoryListPrivate: null,
+    templateRepositoryTagList: null,
+    templateRepositoryTemplateDelete: null,
+    templateRepositoryTemplateGetConfig: null,
+    templateRepositoryTemplateList: null,
+    templateRepositoryUpdate: null,
+    templateRepositoryWithTemplateCreate: null,
+    templateRepositoryWithTemplateUpdate: null,
   },
   account: {
     getAmount: null,
   },
   auth: {
     info: null,
+  },
+  platform: {
+    authCname: null,
+    getDebt: null,
+    getQuota: null,
+    resourcePrice: null,
   },
   cacheTimeout: 5 * 60 * 1000, // 5 minutes
 
@@ -204,12 +274,44 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
         checkReady: null,
         getDevboxByName: null,
         getSSHConnectionInfo: null,
+        createDevbox: null,
+        delDevbox: null,
+        delDevboxVersionByName: null,
+        editDevboxVersion: null,
+        execCommandInDevboxPod: null,
+        getAppsByDevboxId: null,
+        getDevboxPodsByDevboxName: null,
+        getDevboxVersionList: null,
+        getEnv: null,
+        releaseDevbox: null,
+        restartDevbox: null,
+        startDevbox: null,
+        shutdownDevbox: null,
+        updateDevbox: null,
+        templateRepositoryDelete: null,
+        templateRepositoryGet: null,
+        templateRepositoryList: null,
+        templateRepositoryListOfficial: null,
+        templateRepositoryListPrivate: null,
+        templateRepositoryTagList: null,
+        templateRepositoryTemplateDelete: null,
+        templateRepositoryTemplateGetConfig: null,
+        templateRepositoryTemplateList: null,
+        templateRepositoryUpdate: null,
+        templateRepositoryWithTemplateCreate: null,
+        templateRepositoryWithTemplateUpdate: null,
       },
       account: {
         getAmount: null,
       },
       auth: {
         info: null,
+      },
+      platform: {
+        authCname: null,
+        getDebt: null,
+        getQuota: null,
+        resourcePrice: null,
       },
       copilotData: {
         devbox_data: [],
@@ -317,5 +419,59 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
         timestamp: Date.now(),
       },
     });
+  },
+
+  // Data selectors for efficient access
+  getDevboxByName: (devboxName: string) => {
+    const { devbox, regionUrl } = get();
+    const devboxListData = devbox.getDevboxList?.data;
+
+    if (!devboxListData || devboxListData.length === 0) {
+      return null;
+    }
+
+    // Find the devbox by name in the parsed data
+    for (const pair of devboxListData) {
+      const devboxItem = pair.find((item: any) => item.kind === "Devbox");
+      if (devboxItem && devboxItem.metadata.name === devboxName) {
+        const templateInfo = pair.find(
+          (item: any) => "templateRepository" in item
+        );
+        return {
+          devbox: devboxItem,
+          templateInfo,
+          // Note: readyData would need to be fetched separately if needed
+        };
+      }
+    }
+
+    return null;
+  },
+
+  getDevboxDataMap: () => {
+    const { devbox } = get();
+    const devboxListData = devbox.getDevboxList?.data;
+
+    if (!devboxListData || devboxListData.length === 0) {
+      return null;
+    }
+
+    const dataMap = new Map();
+
+    devboxListData.forEach((pair: any) => {
+      const devboxItem = pair.find((item: any) => item.kind === "Devbox");
+      const templateInfo = pair.find(
+        (item: any) => "templateRepository" in item
+      );
+
+      if (devboxItem) {
+        dataMap.set(devboxItem.metadata.name, {
+          devbox: devboxItem,
+          templateInfo,
+        });
+      }
+    });
+
+    return dataMap;
   },
 }));

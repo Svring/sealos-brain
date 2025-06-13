@@ -7,11 +7,11 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    const region_url = req.nextUrl.searchParams.get("region_url");
+    const regionUrl = req.nextUrl.searchParams.get("regionUrl");
     const authorization = req.headers.get("Authorization");
 
     // Validate query parameters
-    const paramValidation = validateQueryParams({ region_url }, ["region_url"]);
+    const paramValidation = validateQueryParams({ regionUrl }, ["regionUrl"]);
     if (!paramValidation.isValid) {
       return NextResponse.json(
         { message: paramValidation.errorMessage },
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Make API request
-    const result = await makeAuthApiRequest(region_url!, "info", {
+    const result = await makeAuthApiRequest(regionUrl!, "info", {
       authorization: authorization!,
     });
 

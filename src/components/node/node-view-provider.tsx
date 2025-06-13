@@ -5,23 +5,23 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
-interface DetailsContextType {
+interface NodeViewContextType {
   showDetails: (id: string, content: ReactNode) => void;
   hideDetails: () => void;
   activeDetailsId: string | null;
 }
 
-const DetailsContext = createContext<DetailsContextType | undefined>(undefined);
+const NodeViewContext = createContext<NodeViewContextType | undefined>(undefined);
 
-export const useDetailsPanel = () => {
-  const context = useContext(DetailsContext);
+export const useNodeView = () => {
+  const context = useContext(NodeViewContext);
   if (!context) {
-    throw new Error('useDetailsPanel must be used within a DetailsProvider');
+    throw new Error('useNodeView must be used within a NodeViewProvider');
   }
   return context;
 };
 
-export const DetailsProvider = ({ children }: { children: ReactNode }) => {
+export const NodeViewProvider = ({ children }: { children: ReactNode }) => {
   const [detailsContent, setDetailsContent] = useState<ReactNode | null>(null);
   const [activeDetailsId, setActiveDetailsId] = useState<string | null>(null);
 
@@ -35,7 +35,7 @@ export const DetailsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <DetailsContext.Provider value={{ showDetails, hideDetails, activeDetailsId }}>
+    <NodeViewContext.Provider value={{ showDetails, hideDetails, activeDetailsId }}>
       {children}
       <AnimatePresence>
         {activeDetailsId && detailsContent && (
@@ -59,6 +59,6 @@ export const DetailsProvider = ({ children }: { children: ReactNode }) => {
           </motion.div>
         )}
       </AnimatePresence>
-    </DetailsContext.Provider>
+    </NodeViewContext.Provider>
   );
 }; 

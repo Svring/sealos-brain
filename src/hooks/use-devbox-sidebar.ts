@@ -4,7 +4,7 @@ import { useSealosDevbox } from "@/hooks/use-sealos-devbox";
 import {
   DevboxSchema,
   TemplateSchema,
-} from "@/provider/devbox/schemas/devbox-list-schema";
+} from "@/lib/devbox/schemas/devbox-list-schema";
 
 // Type representing a simplified DevBox for sidebar usage
 export interface SidebarDevboxItem {
@@ -106,3 +106,7 @@ export function useDevboxSidebar(): UseDevboxSidebarReturn {
     refresh,
   };
 }
+
+export type DevboxWithTemplate = {
+  // ... existing code ...
+};

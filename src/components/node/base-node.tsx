@@ -1,4 +1,6 @@
-import { useDetailsPanel } from "@/provider/details-provider";
+import { useNodeView } from "@/components/node/node-view-provider";
+import { cn } from "@/lib/utils";
+import { type Node } from "@xyflow/react";
 
 interface BaseNodeProps {
   id: string | null;
@@ -13,22 +15,17 @@ export default function BaseNode({
   details,
   className = "",
 }: BaseNodeProps) {
-  const { showDetails, hideDetails, activeDetailsId } = useDetailsPanel();
+  if (!id) return null;
+  const { showDetails } = useNodeView();
 
-  const isMyDetailsShowing = activeDetailsId === id && id !== null;
-
-  const handleClick = () => {
-    if (isMyDetailsShowing) {
-      hideDetails();
-    } else if (details && id) {
-      showDetails(id, details);
-    }
+  const handleShowDetails = () => {
+    showDetails(id, details);
   };
 
   return (
     <div
       className={`border-border bg-card rounded-lg p-2 w-60 min-h-30 border ${className} cursor-pointer`}
-      onClick={handleClick}
+      onClick={handleShowDetails}
     >
       {/* <div className="relative flex flex-col bg-[#1F2023] border-[#444444] w-full h-full rounded-lg p-2"> */}
         {children}

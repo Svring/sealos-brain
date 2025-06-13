@@ -1,13 +1,13 @@
 import { useCallback } from "react";
 import { useSealosStore } from "@/store/sealos-store";
 import { getCurrentUser } from "@/database/actions/user-actions";
-import { createAccountContext } from "@/provider/account/account-provider";
+import { createAccountContext } from "@/lib/account/account-provider";
 import {
   buildAccountUrls,
   createAccountFetchOptions,
   createAccountApiContext,
   transformAccountAmount,
-} from "@/provider/account/account-utils";
+} from "@/lib/account/account-utils";
 import { runWake } from "@/lib/wake";
 
 export function useSealosAccount() {
@@ -78,7 +78,7 @@ export function useSealosAccount() {
           urls: [urls.getAmount],
           transformations: [transformAccountAmount],
           fetchOptions: createAccountFetchOptions("GET", {
-            region_url: currentRegionUrl,
+            regionUrl: currentRegionUrl,
           }),
           context: apiContext,
         });

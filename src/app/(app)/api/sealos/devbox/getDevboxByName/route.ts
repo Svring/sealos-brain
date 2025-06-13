@@ -7,16 +7,16 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    const region_url = req.nextUrl.searchParams.get("region_url");
-    const devbox_name = req.nextUrl.searchParams.get("devbox_name");
+    const regionUrl = req.nextUrl.searchParams.get("regionUrl");
+    const devboxName = req.nextUrl.searchParams.get("devboxName");
     const mock = req.nextUrl.searchParams.get("mock");
     const authorization = req.headers.get("Authorization");
     const authorizationBearer = req.headers.get("Authorization-Bearer");
 
     // Validate query parameters
     const paramValidation = validateQueryParams(
-      { region_url, devbox_name, mock },
-      ["region_url", "devbox_name", "mock"]
+      { regionUrl, devboxName, mock },
+      ["regionUrl", "devboxName", "mock"]
     );
     if (!paramValidation.isValid) {
       return NextResponse.json(
@@ -39,14 +39,14 @@ export async function GET(req: NextRequest) {
 
     // Make API request
     const result = await makeDevboxApiRequest(
-      region_url!,
+      regionUrl!,
       "getDevboxByName",
       {
         authorization: authorization!,
         authorizationBearer: authorizationBearer!,
       },
       {
-        devboxName: devbox_name!,
+        devboxName: devboxName!,
         mock: mock!,
       }
     );

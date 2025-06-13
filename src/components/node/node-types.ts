@@ -1,7 +1,7 @@
-import DevboxNode from "./devbox-node";
+import DevboxNode from "./devbox/devbox-node";
 
 const nodeTypes = {
-  devbox: DevboxNode
+  devbox: DevboxNode,
 };
 
 export default nodeTypes;
