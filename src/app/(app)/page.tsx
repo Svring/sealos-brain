@@ -34,7 +34,10 @@ import {
   useNodeView,
 } from "@/components/node/node-view-provider";
 import DevboxDetails from "@/components/node/devbox/detail/view/devbox-detail-view";
+import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create-view";
+import NodeCreateView from "@/components/node/create/node-create-view";
 import { useSealosDevbox } from "@/hooks/use-sealos-devbox";
+import { devboxEvents } from "@/hooks/use-devbox-sidebar";
 
 interface Message {
   id: string;
@@ -60,7 +63,7 @@ function FlowContent() {
   const [isInputExpanded, setIsInputExpanded] = useState(true);
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
   const dataLoadedRef = useRef(false);
-  const { fetchDevboxReadyStatus } = useSealosDevbox();
+  const { fetchDevboxList, fetchDevboxReadyStatus } = useSealosDevbox();
 
   // Sealos Store - only consume data, don't fetch
   const { devbox, regionUrl } = useSealosStore();
@@ -68,8 +71,134 @@ function FlowContent() {
   // Get debug function from store
   const { debugPrintState } = useSealosStore();
 
-  // Create debug menu items with access to component functions
-  const debugMenuItems = [
+  // Function to delete a node by ID
+  const deleteNode = useCallback((nodeId: string) => {
+    setNodes((prevNodes) => prevNodes.filter(node => node.id !== nodeId));
+  }, [setNodes]);
+
+  // Function to create a new node
+  const createNewNode = useCallback((nodeType: string) => {
+    const newNodeId = `${nodeType}-${Date.now()}`;
+    const viewport = { x: 0, y: 0, zoom: 1 };
+    
+    // Calculate position for new node (center of viewport)
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const nodePosition = {
+      x: centerX - 150, // Offset by half node width
+      y: centerY - 100, // Offset by half node height
+    };
+
+    const newNode: Node = {
+      id: newNodeId,
+      type: nodeType === 'devbox' ? 'devbox' : 'devbox', // For now, all nodes are devbox type
+      position: nodePosition,
+      data: {
+        id: newNodeId,
+        name: `New ${nodeType}`,
+        state: "Creating",
+        devboxName: `new-${nodeType}-${Date.now()}`,
+        iconId: null,
+        url: null,
+        isNew: true, // Flag to indicate this is a new node
+      },
+    };
+
+    // Add the new node to the graph
+    setNodes((prevNodes) => [...prevNodes, newNode]);
+
+    // Focus on the new node
+    const finalZoom = Math.max(Math.min(getZoom(), 1.0), 0.6);
+    setCenter(
+      newNode.position.x + 150, // Node center
+      newNode.position.y + 100,
+      { zoom: finalZoom, duration: 800 }
+    );
+
+    // Show creation interface based on node type
+    let creationComponent;
+    if (nodeType === 'devbox') {
+      creationComponent = <DevboxCreateView onComplete={() => hideDetails()} />;
+    } else {
+      // For other node types, show a placeholder for now
+      creationComponent = (
+        <div className="p-4">
+          <h3 className="text-lg font-semibold mb-4">Create {nodeType}</h3>
+          <p className="text-muted-foreground">
+            Creation interface for {nodeType} coming soon...
+          </p>
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              hideDetails();
+            }}
+            className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+          >
+            Cancel
+          </button>
+        </div>
+      );
+    }
+
+    showDetails(newNodeId, creationComponent);
+
+    // Position the viewport to show both the node and the details panel
+    setTimeout(() => {
+      const screenWidth = window.innerWidth;
+      const leftAreaCenter = screenWidth * 0.3;
+      const viewport = {
+        x: leftAreaCenter - (newNode.position.x + 150) * finalZoom,
+        y: window.innerHeight / 2 - (newNode.position.y + 100) * finalZoom,
+        zoom: finalZoom,
+      };
+      setViewport(viewport, { duration: 400 });
+    }, 100);
+
+    // Return the node ID so we can track it
+    return newNodeId;
+  }, [setNodes, getZoom, setCenter, showDetails, setViewport, hideDetails]);
+
+  // Function to handle node type selection from NodeCreateView
+  const handleNodeTypeSelection = useCallback((nodeType: string) => {
+    hideDetails(); // Close the node type selection
+    setTimeout(() => {
+      createNewNode(nodeType);
+    }, 200); // Small delay to allow the details panel to close
+  }, [createNewNode, hideDetails]);
+
+  // Create menu items with plus button and debug items
+  const menuItems = [
+    {
+      icon: (props: React.SVGProps<SVGSVGElement>) => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 18 18"
+          {...props}
+        >
+          <title>add-node</title>
+          <g
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="1.5"
+            stroke="currentColor"
+          >
+            <path d="M9 3.75v10.5" />
+            <path d="M3.75 9h10.5" />
+          </g>
+        </svg>
+      ),
+      label: "Add Node",
+      onClick: () => {
+        console.log("➕ Creating new node");
+        const nodeCreateComponent = (
+          <NodeCreateView onCreateNode={handleNodeTypeSelection} />
+        );
+        showDetails("node-create", nodeCreateComponent);
+      },
+    },
     {
       icon: (props: React.SVGProps<SVGSVGElement>) => (
         <svg
@@ -158,9 +287,6 @@ function FlowContent() {
       },
     },
   ];
-
-  // Combine base menu items with debug items
-  const menuItems = [...debugMenuItems];
 
   // Combined effect for message handling and auto-expansion
   useEffect(() => {
@@ -322,8 +448,48 @@ function FlowContent() {
     [showDetails, getZoom, setCenter, setViewport]
   );
 
+  // Listen for devbox action events to ensure nodes are up to date
+  useEffect(() => {
+    const unsubscribe = devboxEvents.on("devbox-action-completed", async () => {
+      console.log("🔔 Devbox action event received in FlowContent. Refetching devbox list...");
+      try {
+        const latestList = await fetchDevboxList(true); // Force fresh data and get result
+
+        if (!latestList || latestList.length === 0) {
+          console.warn("⚠️ Latest devbox list is empty after action – keeping existing nodes");
+          return;
+        }
+
+        // Build nodes from the latest list (replicating refreshDevboxData logic without clearing first)
+        const readyDataMap = new Map<string, any>();
+        await Promise.all(
+          latestList.map(async (pair: any) => {
+            const devboxItem = pair.find((item: any) => item.kind === "Devbox");
+            if (devboxItem) {
+              const name = devboxItem.metadata.name;
+              try {
+                const ready = await fetchDevboxReadyStatus(name);
+                readyDataMap.set(name, ready);
+              } catch (err) {
+                console.error(`Error fetching ready status for ${name}:`, err);
+              }
+            }
+          })
+        );
+
+        const nodeData = transformToNodeData(latestList, readyDataMap);
+        setNodes(nodeData);
+        console.log("✅ Nodes updated after devbox action", nodeData);
+      } catch (err) {
+        console.error("❌ Failed to refresh devbox data after action:", err);
+      }
+    });
+
+    return unsubscribe;
+  }, [fetchDevboxList, fetchDevboxReadyStatus, setNodes]);
+
   return (
-    <>
+    <div className="h-screen w-screen">
       <ReactFlow
         panOnScroll
         nodes={nodes}
@@ -336,7 +502,7 @@ function FlowContent() {
         onPaneClick={hideDetails}
         onNodeClick={handleNodeClick}
       >
-        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+        <Background variant={BackgroundVariant.Dots} gap={60} size={1} />
       </ReactFlow>
       <AnimatePresence>
         {isInputExpanded && (
@@ -385,7 +551,7 @@ function FlowContent() {
       >
         <MenuBar items={menuItems} />
       </motion.div>
-    </>
+    </div>
   );
 }
 

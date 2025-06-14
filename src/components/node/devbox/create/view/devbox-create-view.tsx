@@ -26,7 +26,11 @@ const stepDefinitions = [
 
 const { Scoped, useStepper, steps, utils } = defineStepper(...stepDefinitions);
 
-export default function DevboxCreateView() {
+interface DevboxCreateViewProps {
+  onComplete?: (success: boolean) => void;
+}
+
+export default function DevboxCreateView({ onComplete }: DevboxCreateViewProps) {
   const { switch: switchStep, next, prev, current, isFirst, isLast } = useStepper();
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
 
@@ -45,6 +49,13 @@ export default function DevboxCreateView() {
 
   const onSubmit = (data: DevboxFormValues) => {
     console.log("Form data:", data);
+    // TODO: Implement actual devbox creation logic here
+    // For now, we'll just call onComplete with success
+    onComplete?.(true);
+  };
+
+  const handleCancel = () => {
+    onComplete?.(false);
   };
 
   const getFieldsToValidate = (stepId: string): (keyof DevboxFormValues)[] => {
@@ -99,7 +110,7 @@ export default function DevboxCreateView() {
   return (
     <Scoped>
       <FormProvider {...methods}>
-        <div className="max-w-4xl mx-auto">
+        <div className="w-full">
           {/* Step Indicator */}
           <div className="mb-8 px-6 pt-6">
             <StepIndicator
@@ -122,7 +133,10 @@ export default function DevboxCreateView() {
 
             {/* Navigation Buttons */}
             <div className="flex justify-between items-center px-6 pb-6">
-              <div>
+              <div className="flex gap-2">
+                <Button type="button" variant="ghost" onClick={handleCancel}>
+                  Cancel
+                </Button>
                 {!isFirst && (
                   <Button type="button" variant="outline" onClick={handlePrev}>
                     Previous

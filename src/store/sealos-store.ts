@@ -35,6 +35,7 @@ interface DevboxEndpoints {
   startDevbox: CachedData | null;
   shutdownDevbox: CachedData | null;
   updateDevbox: CachedData | null;
+  getMonitorData: CachedData | null;
   templateRepositoryDelete: CachedData | null;
   templateRepositoryGet: CachedData | null;
   templateRepositoryList: CachedData | null;
@@ -157,6 +158,7 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
     startDevbox: null,
     shutdownDevbox: null,
     updateDevbox: null,
+    getMonitorData: null,
     templateRepositoryDelete: null,
     templateRepositoryGet: null,
     templateRepositoryList: null,
@@ -288,6 +290,7 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
         startDevbox: null,
         shutdownDevbox: null,
         updateDevbox: null,
+        getMonitorData: null,
         templateRepositoryDelete: null,
         templateRepositoryGet: null,
         templateRepositoryList: null,

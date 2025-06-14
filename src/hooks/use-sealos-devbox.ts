@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useSealosStore } from "@/store/sealos-store";
 import { getCurrentUser } from "@/database/actions/user-actions";
 import { createDevboxContext } from "@/lib/devbox/devbox-provider";
+import { devboxEvents } from "@/hooks/use-devbox-sidebar";
 import {
   DevboxContext,
   buildDevboxUrls,
@@ -43,8 +44,10 @@ import {
   transformPlatformGetDebt,
   transformPlatformGetQuota,
   transformPlatformResourcePrice,
+  transformMonitorData,
 } from "@/lib/devbox/devbox-utils";
 import { runWake } from "@/lib/wake";
+import { MonitorRequestParams } from "@/lib/devbox/schemas/monitor-schema";
 
 type ShutdownModeType = "Stopped" | "Shutdown";
 
@@ -66,7 +69,9 @@ export function useSealosDevbox() {
       transformation: (data: any) => any,
       fetchOptions: any,
       invalidateList: boolean = false,
-      cacheKey?: string
+      cacheKey?: string,
+      emitEvent: boolean = false,
+      actionType?: string
     ) => {
       try {
         // For GET requests, check cache first
@@ -111,6 +116,15 @@ export function useSealosDevbox() {
 
         if (cacheKey) {
           setApiData("devbox", cacheKey, result, currentRegionUrl);
+        }
+
+        // Emit event for state-changing actions
+        if (emitEvent && actionType) {
+          devboxEvents.emit("devbox-action-completed", {
+            action: actionType,
+            url,
+            result,
+          });
         }
 
         return result;
@@ -168,7 +182,10 @@ export function useSealosDevbox() {
         urls.start,
         transformStartDevbox,
         createDevboxPostFetchOptions({ devboxName }),
-        true
+        true,
+        undefined,
+        true,
+        "start"
       );
     },
     [devboxAction]
@@ -181,7 +198,10 @@ export function useSealosDevbox() {
         urls.shutdown,
         transformShutdownDevbox,
         createDevboxPostFetchOptions({ devboxName, shutdownMode }),
-        true
+        true,
+        undefined,
+        true,
+        "shutdown"
       );
     },
     [devboxAction]
@@ -194,7 +214,10 @@ export function useSealosDevbox() {
         urls.restart,
         transformRestartDevbox,
         createDevboxPostFetchOptions({ devboxName }),
-        true
+        true,
+        undefined,
+        true,
+        "restart"
       );
     },
     [devboxAction]
@@ -207,7 +230,10 @@ export function useSealosDevbox() {
         urls.create,
         transformCreateDevbox,
         createDevboxPostFetchOptions(data),
-        true
+        true,
+        undefined,
+        true,
+        "create"
       );
     },
     [devboxAction]
@@ -220,7 +246,10 @@ export function useSealosDevbox() {
         urls.delete,
         transformDelDevbox,
         createDevboxPostFetchOptions({ devboxName }),
-        true
+        true,
+        undefined,
+        true,
+        "delete"
       );
     },
     [devboxAction]
@@ -233,7 +262,10 @@ export function useSealosDevbox() {
         urls.update,
         transformUpdateDevbox,
         createDevboxPostFetchOptions(data),
-        true
+        true,
+        undefined,
+        true,
+        "update"
       );
     },
     [devboxAction]
@@ -285,7 +317,8 @@ export function useSealosDevbox() {
       >,
       transformation: (data: any) => any,
       isPost: boolean = false,
-      invalidateList: boolean = false
+      invalidateList: boolean = false,
+      emitEvent: boolean = false
     ) => {
       return async (data: any) => {
         const urls = buildDevboxUrls();
@@ -293,7 +326,15 @@ export function useSealosDevbox() {
         const options = isPost
           ? createDevboxPostFetchOptions(data)
           : createDevboxFetchOptions("GET", data);
-        return devboxAction(url, transformation, options, invalidateList);
+        return devboxAction(
+          url,
+          transformation,
+          options,
+          invalidateList,
+          undefined,
+          emitEvent,
+          endpoint as string
+        );
       };
     },
     [devboxAction]
@@ -304,7 +345,8 @@ export function useSealosDevbox() {
       endpoint: keyof ReturnType<typeof buildDevboxUrls>["templateRepo"],
       transformation: (data: any) => any,
       isPost: boolean = false,
-      invalidateList: boolean = false
+      invalidateList: boolean = false,
+      emitEvent: boolean = false
     ) => {
       return async (data: any) => {
         const urls = buildDevboxUrls();
@@ -324,7 +366,15 @@ export function useSealosDevbox() {
         const options = isPost
           ? createDevboxPostFetchOptions(data)
           : createDevboxFetchOptions("GET", data);
-        return devboxAction(url, transformation, options, invalidateList);
+        return devboxAction(
+          url,
+          transformation,
+          options,
+          invalidateList,
+          undefined,
+          emitEvent,
+          `templateRepo-${endpoint as string}`
+        );
       };
     },
     [devboxAction]
@@ -335,6 +385,7 @@ export function useSealosDevbox() {
       "delDevboxVersionByName",
       transformDelDevboxVersionByName,
       true,
+      true,
       true
     ),
     [genericDevboxAction]
@@ -343,6 +394,7 @@ export function useSealosDevbox() {
     genericDevboxAction(
       "editDevboxVersion",
       transformEditDevboxVersion,
+      true,
       true,
       true
     ),
@@ -368,7 +420,7 @@ export function useSealosDevbox() {
     genericDevboxAction,
   ]);
   const releaseDevbox = useCallback(
-    genericDevboxAction("release", transformReleaseDevbox, true, true),
+    genericDevboxAction("release", transformReleaseDevbox, true, true, true),
     [genericDevboxAction]
   );
 
@@ -376,6 +428,7 @@ export function useSealosDevbox() {
     genericTemplateRepoAction(
       "delete",
       transformTemplateRepositoryDelete,
+      true,
       true,
       true
     ),
@@ -408,6 +461,7 @@ export function useSealosDevbox() {
       "update",
       transformTemplateRepositoryUpdate,
       true,
+      true,
       true
     ),
     [genericTemplateRepoAction]
@@ -433,7 +487,10 @@ export function useSealosDevbox() {
         urls.templateRepo.template.delete,
         transformTemplateRepositoryTemplateDelete,
         createDevboxPostFetchOptions(data),
-        true
+        true,
+        undefined,
+        true,
+        "templateDelete"
       );
     },
     [devboxAction]
@@ -470,7 +527,10 @@ export function useSealosDevbox() {
         urls.templateRepo.withTemplate.create,
         transformTemplateRepositoryWithTemplateCreate,
         createDevboxPostFetchOptions(data),
-        true
+        true,
+        undefined,
+        true,
+        "createWithTemplate"
       );
     },
     [devboxAction]
@@ -483,7 +543,10 @@ export function useSealosDevbox() {
         urls.templateRepo.withTemplate.update,
         transformTemplateRepositoryWithTemplateUpdate,
         createDevboxPostFetchOptions(data),
-        true
+        true,
+        undefined,
+        true,
+        "updateWithTemplate"
       );
     },
     [devboxAction]
@@ -563,6 +626,28 @@ export function useSealosDevbox() {
     return platformAction("resourcePrice", transformPlatformResourcePrice);
   }, [platformAction]);
 
+  const getMonitorData = useCallback(
+    async (params: MonitorRequestParams) => {
+      const urls = buildDevboxUrls();
+      const queryParams = {
+        queryName: params.queryName,
+        queryKey: params.queryKey,
+        start: params.start,
+        end: params.end,
+        step: params.step,
+      };
+
+      return devboxAction(
+        urls.monitor.getMonitorData,
+        transformMonitorData,
+        createDevboxFetchOptions("GET", queryParams),
+        false,
+        `getMonitorData-${params.queryName}-${params.queryKey}`
+      );
+    },
+    [devboxAction]
+  );
+
   return {
     currentUser,
     regionUrl,
@@ -596,6 +681,8 @@ export function useSealosDevbox() {
     listTemplates,
     createWithTemplate,
     updateWithTemplate,
+    // Monitor functions
+    getMonitorData,
     // Platform API functions
     authCname,
     getDebt,

@@ -10,6 +10,11 @@ import {
 } from "./schemas/devbox-check-ready-schema";
 import { ResponseSchema as TemplateRepositoryListSchema } from "./schemas/template-repo-schema";
 import { ResponseSchema as TemplateListSchema } from "./schemas/template-list-schema";
+import {
+  MonitorServiceResult,
+  MonitorDataResult,
+  MonitorRequestParams,
+} from "./schemas/monitor-schema";
 
 // Types for better type safety
 export interface DevboxContext {
@@ -22,10 +27,11 @@ export interface DevboxContext {
 export interface DevboxNodeDisplayData extends Record<string, unknown> {
   id: string;
   name: string;
-  state: "Running" | "Stopped" | "Unknown";
+  state: "Running" | "Stopped" | "Unknown" | "Creating";
   iconId?: string;
   url?: string;
   devboxName: string; // Add this for store lookup
+  isNew?: boolean; // Flag to indicate this is a newly created node
 }
 
 // Interface for full devbox data (used by detail components)
@@ -58,6 +64,9 @@ export function buildDevboxUrls() {
     getEnv: "/api/sealos/devbox/getEnv",
     release: "/api/sealos/devbox/releaseDevbox",
     update: "/api/sealos/devbox/updateDevbox",
+    monitor: {
+      getMonitorData: "/api/sealos/devbox/monitor/getMonitorData",
+    },
     templateRepo: {
       delete: "/api/sealos/devbox/templateRepository/delete",
       get: "/api/sealos/devbox/templateRepository/get",
@@ -404,3 +413,18 @@ export const transformPlatformAuthCname = (rawData: any) => rawData;
 export const transformPlatformGetDebt = (rawData: any) => rawData;
 export const transformPlatformGetQuota = (rawData: any) => rawData;
 export const transformPlatformResourcePrice = (rawData: any) => rawData;
+
+/**
+ * Transform monitor data response
+ */
+export const transformMonitorData = (rawData: any): MonitorDataResult[] => {
+  try {
+    if (rawData.code === 200 && rawData.data) {
+      return rawData.data;
+    }
+    throw new Error("Invalid monitor data format");
+  } catch (error) {
+    console.error("Error parsing monitor data:", error);
+    throw new Error("Invalid monitor data format");
+  }
+};

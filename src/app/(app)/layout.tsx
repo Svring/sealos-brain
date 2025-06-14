@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Nunito } from "next/font/google";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -25,6 +26,12 @@ export const metadata: Metadata = {
   description: "Sealos Brain",
 };
 
+const nunito = Nunito({
+  subsets: ["latin"],
+  variable: "--font-nunito",
+  weight: ["300", "400"],
+});
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -35,7 +42,9 @@ export default async function RootLayout({
   if (!user) {
     return (
       <html lang="en">
-        <body className={`h-screen w-screen antialiased dark`}>
+        <body
+          className={`${nunito.variable} h-screen w-screen font-nunito antialiased dark`}
+        >
           <LoginPanel />
         </body>
       </html>
@@ -44,7 +53,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`$antialiased`}>
+      <body className={`${nunito.variable} font-nunito antialiased`}>
         <ThemeProvider>
           <SidebarProvider>
             <AppSidebar />

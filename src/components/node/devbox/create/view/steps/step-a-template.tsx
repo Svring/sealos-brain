@@ -96,6 +96,18 @@ export default function StepATemplate() {
         const data = await listTemplates({ templateRepositoryUid: selectedRepoUid });
         console.log("📋 Template list response:", data);
         setTemplates(data || []);
+
+        // Auto-select first template if none selected yet
+        if (!selectedTemplateUid && Array.isArray(data) && data.length > 0) {
+          const first = data[0];
+          setValue("templateUid", first.uid, { shouldValidate: true });
+          setValue("image", first.image || "", { shouldValidate: true });
+          setValue("templateConfig", first.config || "", { shouldValidate: true });
+          if (first.config) {
+            const networks = createNetworksFromAppPorts(first.config);
+            setValue("networks", networks, { shouldValidate: true });
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch templates for repository", err);
         setError("Failed to load templates.");
@@ -135,9 +147,9 @@ export default function StepATemplate() {
       </div>
       
       {loadingRepos ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(110px,1fr))] justify-center">
           {Array.from({ length: 12 }).map((_, index) => (
-            <div key={index} className="aspect-square flex flex-col items-center justify-center p-4 border rounded-lg bg-muted">
+            <div key={index} className="aspect-square w-[110px] flex flex-col items-center justify-center p-4 border rounded-lg bg-muted">
               <Skeleton className="h-12 w-12 rounded mb-2" />
               <Skeleton className="h-4 w-16" />
             </div>
@@ -150,11 +162,11 @@ export default function StepATemplate() {
               <h3 className="text-lg font-semibold mb-4 text-foreground">
                 {kindLabels[kind as keyof typeof kindLabels] || kind}
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(88px,1fr))] justify-center">
                 {repoList.map((repo) => (
                   <Card
                     key={repo.uid}
-                    className={`cursor-pointer aspect-square flex flex-col items-center justify-center p-3 text-center hover:shadow-lg transition-all transform hover:-translate-y-1 ${
+                    className={`cursor-pointer w-[88px] aspect-square flex flex-col items-center justify-center p-2 text-center hover:shadow-lg transition-all hover:-translate-y-1 ${
                       selectedRepoUid === repo.uid 
                         ? "ring-2 ring-primary ring-offset-2 ring-offset-background" 
                         : "border hover:border-primary/50"
@@ -207,12 +219,12 @@ export default function StepATemplate() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(88px,1fr))] justify-center">
               {Array.isArray(templates) && templates.length > 0 ? (
                 templates.map((template) => (
                   <Card
                     key={template.uid}
-                    className={`cursor-pointer p-4 transition-all hover:shadow-md ${
+                    className={`cursor-pointer p-2 transition-all hover:shadow-md ${
                       selectedTemplateUid === template.uid
                         ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
                         : "border hover:border-primary/50"

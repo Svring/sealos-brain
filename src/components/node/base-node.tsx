@@ -1,4 +1,5 @@
 import { useNodeView } from "@/components/node/node-view-provider";
+import { Glass } from "@/components/ui/glass-effect";
 import { cn } from "@/lib/utils";
 import { type Node } from "@xyflow/react";
 
@@ -23,13 +24,13 @@ export default function BaseNode({
   };
 
   return (
-    <div
-      className={`border-border bg-card rounded-lg p-2 w-60 min-h-30 border ${className} cursor-pointer`}
-      onClick={handleShowDetails}
-    >
-      {/* <div className="relative flex flex-col bg-[#1F2023] border-[#444444] w-full h-full rounded-lg p-2"> */}
+    <Glass width="w-60" height="min-h-40" className="rounded-lg p-4">
+      <div
+        className={`border-border ${className} cursor-pointer w-full h-full`}
+        onClick={handleShowDetails}
+      >
         {children}
-      {/* </div> */}
-    </div>
+      </div>
+    </Glass>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { z } from "zod";
 import { useSealosDevbox } from "@/hooks/use-sealos-devbox";
 import {
@@ -21,6 +21,23 @@ interface UseDevboxSidebarReturn {
   error: string | null;
   refresh: (force?: boolean) => Promise<void>;
 }
+
+// Event system for devbox state changes
+export const devboxEvents = {
+  emit: (eventType: "devbox-action-completed", data?: any) => {
+    window.dispatchEvent(new CustomEvent(eventType, { detail: data }));
+  },
+
+  on: (
+    eventType: "devbox-action-completed",
+    callback: (data?: any) => void
+  ) => {
+    const handler = (event: CustomEvent) => callback(event.detail);
+    window.addEventListener(eventType, handler as EventListener);
+    return () =>
+      window.removeEventListener(eventType, handler as EventListener);
+  },
+};
 
 /**
  * A thin wrapper around `useSealosDevbox` that normalises the data shape that
@@ -97,6 +114,16 @@ export function useDevboxSidebar(): UseDevboxSidebarReturn {
     },
     [fetchDevboxList, getCachedDevboxList, isDevboxListValid, regionUrl]
   );
+
+  // Listen for devbox action events and refresh data
+  useEffect(() => {
+    const unsubscribe = devboxEvents.on("devbox-action-completed", () => {
+      console.log("🔄 Devbox action completed, refreshing sidebar data...");
+      refresh(true); // Force refresh to get latest state
+    });
+
+    return unsubscribe;
+  }, [refresh]);
 
   return {
     devboxes,
