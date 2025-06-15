@@ -24,7 +24,7 @@ from src.provider.backbone.backbone_provider import get_sealos_model
 from langchain_core.tools import tool
 
 # Get the model
-llm = get_sealos_model("gpt-4o-mini")
+llm = get_sealos_model("gpt-4o")
 
 
 @tool

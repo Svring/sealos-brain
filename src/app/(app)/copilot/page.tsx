@@ -123,16 +123,38 @@ You are the bridge between users and Sealos' cloud-native ecosystem, empowering 
 function CopilotPanelHandler() {
   const { panel } = useControlStore();
   const { showDetails, hideDetails, activeDetailsId } = useNodeView();
+  const lastPanelRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (panel.type === "devbox-create" && panel.nodeId) {
-      console.log("🎛️ Copilot: Opening devbox create panel", panel);
-      
-      // Create the DevboxCreateView component
-      const creationComponent = <DevboxCreateView onComplete={() => hideDetails()} />;
-      
-      // Show the details panel
-      showDetails(`devbox-create-${panel.nodeId}`, creationComponent);
+    // Create a unique key for the current panel state
+    const panelKey = panel.type === "devbox-create" && panel.nodeId 
+      ? `${panel.type}-${panel.nodeId}` 
+      : panel.type;
+
+    // Skip if we've already processed this exact panel state
+    if (lastPanelRef.current === panelKey) {
+      return;
+    }
+
+    lastPanelRef.current = panelKey;
+
+    // Prevent infinite loops by checking if we're already in the correct state
+    if (panel.type === "devbox-create") {
+      const nodeId = panel.nodeId;
+      if (nodeId) {
+        const expectedDetailsId = `devbox-create-${nodeId}`;
+        
+        // Only show details if not already showing the correct panel
+        if (activeDetailsId !== expectedDetailsId) {
+          console.log("🎛️ Copilot: Opening devbox create panel", panel);
+          
+          // Create the DevboxCreateView component
+          const creationComponent = <DevboxCreateView onComplete={() => hideDetails()} />;
+          
+          // Show the details panel
+          showDetails(expectedDetailsId, creationComponent);
+        }
+      }
     } else if (panel.type === "none" && activeDetailsId?.startsWith("devbox-create-")) {
       console.log("🎛️ Copilot: Closing devbox create panel");
       // Close the panel if control store says so
@@ -154,9 +176,9 @@ export default function CopilotPage() {
   useSealosTools();
 
   const { setState } = useCoAgent<AgentState>({
-    name: "sealos",
+    name: "copilot",
     initialState: {
-      sealos_data: copilotData,
+      // sealos_data: copilotData,
       ui_state: controlStore.getSerializableState(),
     },
     config: {
@@ -166,6 +188,19 @@ export default function CopilotPage() {
     },
   });
 
+  // Log initial state for debugging
+  useEffect(() => {
+    const initialUIState = controlStore.getSerializableState();
+    console.log("🚀 Copilot Agent - Initial UI state:", initialUIState);
+    
+    if (initialUIState.panelData?.type === "devbox-create" && initialUIState.panelData?.data?.stepA) {
+      console.log("📋 Initial Step A data:", {
+        repositories: initialUIState.panelData.data.stepA.repositories?.length || 0,
+        templates: initialUIState.panelData.data.stepA.templates?.length || 0,
+      });
+    }
+  }, [controlStore]);
+
   // Update agent state when aggregated copilot data changes
   useEffect(() => {
     if (!copilotData || lastTimestampRef.current === copilotData.timestamp)
@@ -174,7 +209,13 @@ export default function CopilotPage() {
     console.log("📦 Updating agent state with Copilot aggregated data");
 
     setState((prevState) => ({
-      sealos_data: copilotData,
+      // sealos_data: copilotData,
+      sealos_data: prevState?.sealos_data ?? {
+        devbox_data: [],
+        account_data: null,
+        auth_data: null,
+        timestamp: 0,
+      }, // placeholder to satisfy type
       ui_state: prevState?.ui_state || controlStore.getSerializableState(),
     }));
 
@@ -184,26 +225,50 @@ export default function CopilotPage() {
 
   // Update agent state when UI state changes
   useEffect(() => {
-    const unsubscribe = useControlStore.subscribe(() => {
+    // Immediate update on mount
+    const updateAgentState = () => {
       const uiState = controlStore.getSerializableState();
       const uiStateString = JSON.stringify(uiState);
+      
+      // Log specific panel data for debugging
+      if (uiState.panelData?.type === "devbox-create" && uiState.panelData?.data?.stepA) {
+        console.log("📋 AI State Update - Step A data:", {
+          repositories: uiState.panelData.data.stepA.repositories?.length || 0,
+          templates: uiState.panelData.data.stepA.templates?.length || 0,
+          selectedRepoUid: uiState.panelData.data.stepA.selectedRepoUid,
+          selectedTemplateUid: uiState.panelData.data.stepA.selectedTemplateUid,
+        });
+      }
       
       // Only update if UI state actually changed
       if (lastUIStateRef.current !== uiStateString) {
         console.log("🎛️ Updating agent state with UI state", uiState);
+        
         setState((prevState) => ({
-          sealos_data: prevState?.sealos_data || copilotData,
+          // sealos_data: prevState?.sealos_data || copilotData,
+          sealos_data: prevState?.sealos_data ?? {
+            devbox_data: [],
+            account_data: null,
+            auth_data: null,
+            timestamp: 0,
+          }, // placeholder to satisfy type
           ui_state: uiState,
         }));
         lastUIStateRef.current = uiStateString;
       }
-    });
+    };
+
+    // Update immediately on mount
+    updateAgentState();
+
+    // Subscribe to future changes
+    const unsubscribe = useControlStore.subscribe(updateAgentState);
 
     return unsubscribe;
   }, [controlStore, setState, copilotData]);
 
   return (
-    <div className="h-screen w-screen flex flex-col items-center justify-center relative">
+    <div className="h-screen w-screen flex flex-col relative">
       <CopilotPanelHandler />
       <CopilotChat
         className="h-full w-3/5"

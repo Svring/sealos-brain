@@ -1,6 +1,6 @@
 import { defineStepper } from "@stepperize/react";
 import { FormProvider, useForm } from "react-hook-form";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   devboxCreateSchema,
@@ -13,6 +13,7 @@ import StepDSummary from "./steps/step-d-summary";
 import { Button } from "@/components/ui/button";
 import { StepIndicator } from "@/components/ui/step-indicator";
 import { customAlphabet } from "nanoid";
+import { useControlStore } from "@/store/control-store";
 
 // Create a custom nanoid with lowercase alphabet and size 12
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz', 12);
@@ -33,6 +34,7 @@ interface DevboxCreateViewProps {
 export default function DevboxCreateView({ onComplete }: DevboxCreateViewProps) {
   const { switch: switchStep, next, prev, current, isFirst, isLast } = useStepper();
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  const { setDevboxCreateStep, updateDevboxCreateForm, devboxCreateForm } = useControlStore();
 
   const methods = useForm<DevboxFormValues>({
     resolver: zodResolver(devboxCreateSchema),
@@ -46,6 +48,51 @@ export default function DevboxCreateView({ onComplete }: DevboxCreateViewProps) 
   });
 
   const { handleSubmit, trigger, formState, watch } = methods;
+
+  // Sync current step with control store
+  useEffect(() => {
+    const stepMapping = {
+      "step-1": "template" as const,
+      "step-2": "resource" as const,
+      "step-3": "network" as const,
+      "step-4": "summary" as const,
+    };
+    
+    const controlStoreStep = stepMapping[current.id as keyof typeof stepMapping];
+    if (controlStoreStep) {
+      setDevboxCreateStep(controlStoreStep);
+    }
+  }, [current.id, setDevboxCreateStep]);
+
+  // Sync form values with control store for AI access
+  useEffect(() => {
+    const subscription = watch((formData) => {
+      // Convert form data to control store format
+      const controlStoreFormData = {
+        name: formData.name,
+        templateId: formData.templateUid,
+        cpu: formData.cpu ? Math.round(formData.cpu / 1000) : undefined, // Convert from millicores to cores
+        memory: formData.memory ? Math.round(formData.memory / 1024) : undefined, // Convert from MB to GB
+        gpu: formData.gpu ? {
+          type: formData.gpu.type || "",
+          count: formData.gpu.amount || 0,
+        } : undefined,
+      };
+
+      // Only update if there are actual changes to avoid infinite loops
+      const hasChanges = Object.entries(controlStoreFormData).some(([key, value]) => {
+        const currentValue = devboxCreateForm[key as keyof typeof devboxCreateForm];
+        return value !== currentValue;
+      });
+
+      if (hasChanges) {
+        console.log("🔄 Syncing form data to control store:", controlStoreFormData);
+        updateDevboxCreateForm(controlStoreFormData);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, updateDevboxCreateForm, devboxCreateForm]);
 
   const onSubmit = (data: DevboxFormValues) => {
     console.log("Form data:", data);

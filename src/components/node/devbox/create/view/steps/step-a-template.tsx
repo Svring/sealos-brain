@@ -15,6 +15,7 @@ import { z } from "zod";
 import { Template } from "@/lib/devbox/schemas/template-list-schema";
 import { customAlphabet } from "nanoid";
 import StepContainer from "../step-container";
+import { useControlStore, type TemplateRepository, type PanelAction } from "@/store/control-store";
 
 // Create a custom nanoid with lowercase alphabet and size 12
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz', 12);
@@ -27,11 +28,18 @@ const TemplateRepositorySchema = z.object({
   description: z.string(),
 });
 
-type TemplateRepository = z.infer<typeof TemplateRepositorySchema>;
-
 export default function StepATemplate() {
   const { templateRepositoryListOfficial, listTemplates } = useSealosDevbox();
   const { watch, setValue } = useFormContext<DevboxFormValues>();
+  const { 
+    panelData, 
+    updateDevboxCreateStepA, 
+    setDevboxCreateStep,
+    registerPanelActions,
+    clearPanelActions 
+  } = useControlStore();
+
+  // Local state for immediate UI updates
   const [repos, setRepos] = useState<TemplateRepository[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loadingRepos, setLoadingRepos] = useState(true);
@@ -65,13 +73,141 @@ export default function StepATemplate() {
     }
   };
 
+  // Register AI actions for this step
+  useEffect(() => {
+    const actions: Record<string, PanelAction> = {
+      selectTemplateRepository: {
+        name: "selectTemplateRepository",
+        description: "Select a template repository by UID or name",
+        parameters: [
+          {
+            name: "identifier",
+            type: "string",
+            description: "Repository UID or name to select",
+            required: true,
+          },
+        ],
+        handler: async (identifier: string) => {
+          const repo = repos.find(r => r.uid === identifier || r.name === identifier);
+          if (!repo) {
+            throw new Error(`Repository not found: ${identifier}`);
+          }
+          
+          console.log("🤖 AI Action - Repository selected:", repo);
+          setValue("templateRepositoryUid", repo.uid, { shouldValidate: true });
+          setValue("templateUid", "", { shouldValidate: true });
+          setValue("image", "", { shouldValidate: true });
+          setValue("templateConfig", "", { shouldValidate: true });
+          setValue("networks", [], { shouldValidate: true });
+          
+          return `Selected repository: ${repo.name} (${repo.kind})`;
+        },
+      },
+      selectTemplate: {
+        name: "selectTemplate",
+        description: "Select a template by UID or name from the currently selected repository",
+        parameters: [
+          {
+            name: "identifier",
+            type: "string",
+            description: "Template UID or name to select",
+            required: true,
+          },
+        ],
+        handler: async (identifier: string) => {
+          const template = templates.find(t => t.uid === identifier || t.name === identifier);
+          if (!template) {
+            throw new Error(`Template not found: ${identifier}`);
+          }
+          
+          console.log("🤖 AI Action - Template selected:", template);
+          setValue("templateUid", template.uid, { shouldValidate: true });
+          setValue("image", template.image || "", { shouldValidate: true });
+          setValue("templateConfig", template.config || "", { shouldValidate: true });
+          
+          if (template.config) {
+            const networks = createNetworksFromAppPorts(template.config);
+            setValue("networks", networks, { shouldValidate: true });
+          }
+          
+          return `Selected template: ${template.name} with image ${template.image}`;
+        },
+      },
+      listAvailableRepositories: {
+        name: "listAvailableRepositories",
+        description: "Get a list of all available template repositories",
+        parameters: [],
+        handler: async () => {
+          return repos.map(repo => ({
+            uid: repo.uid,
+            name: repo.name,
+            kind: repo.kind,
+            description: repo.description,
+            selected: repo.uid === selectedRepoUid
+          }));
+        },
+      },
+      listAvailableTemplates: {
+        name: "listAvailableTemplates",
+        description: "Get a list of templates for the currently selected repository",
+        parameters: [],
+        handler: async () => {
+          if (!selectedRepoUid) {
+            return { error: "No repository selected" };
+          }
+          return templates.map(template => ({
+            uid: template.uid,
+            name: template.name,
+            image: template.image,
+            selected: template.uid === selectedTemplateUid
+          }));
+        },
+      },
+    };
+
+    registerPanelActions(actions);
+
+    // Set current step in control store
+    setDevboxCreateStep("template");
+
+    return () => {
+      // Don't clear actions on unmount as other steps might be registering actions
+    };
+  }, [repos, templates, selectedRepoUid, selectedTemplateUid, setValue, registerPanelActions, setDevboxCreateStep]);
+
+  // Sync local state with control store
+  useEffect(() => {
+    console.log("🔄 Step A - Syncing data to control store:", {
+      repositories: repos.length,
+      templates: templates.length,
+      selectedRepoUid,
+      selectedTemplateUid,
+      loadingRepos,
+      loadingTemplates,
+      error,
+    });
+    
+    updateDevboxCreateStepA({
+      repositories: repos,
+      templates: templates,
+      selectedRepoUid,
+      selectedTemplateUid,
+      loadingRepos,
+      loadingTemplates,
+      error,
+    });
+  }, [repos, templates, selectedRepoUid, selectedTemplateUid, loadingRepos, loadingTemplates, error, updateDevboxCreateStepA]);
+
   useEffect(() => {
     const fetchRepos = async () => {
       try {
         setLoadingRepos(true);
         setError(null);
         const data = await templateRepositoryListOfficial({});
-        setRepos(data || []);
+        const repoData = data || [];
+        setRepos(repoData);
+        
+        console.log("📋 Step A - Repositories loaded:", repoData.length);
       } catch (err) {
         console.error("Failed to fetch official template repositories", err);
         setError("Failed to load template repositories.");
@@ -95,11 +231,12 @@ export default function StepATemplate() {
         console.log(`🔍 Fetching templates for repository UID: ${selectedRepoUid}`);
         const data = await listTemplates({ templateRepositoryUid: selectedRepoUid });
         console.log("📋 Template list response:", data);
-        setTemplates(data || []);
+        const templateData = data || [];
+        setTemplates(templateData);
 
         // Auto-select first template if none selected yet
-        if (!selectedTemplateUid && Array.isArray(data) && data.length > 0) {
-          const first = data[0];
+        if (!selectedTemplateUid && Array.isArray(templateData) && templateData.length > 0) {
+          const first = templateData[0];
           setValue("templateUid", first.uid, { shouldValidate: true });
           setValue("image", first.image || "", { shouldValidate: true });
           setValue("templateConfig", first.config || "", { shouldValidate: true });
@@ -117,7 +254,7 @@ export default function StepATemplate() {
     };
 
     fetchTemplates();
-  }, [selectedRepoUid, listTemplates]);
+  }, [selectedRepoUid, listTemplates, selectedTemplateUid, setValue]);
 
   if (error) {
     return <div className="text-destructive">{error}</div>;

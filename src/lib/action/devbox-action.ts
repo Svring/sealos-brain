@@ -247,6 +247,166 @@ export function useUpdateDevboxFormAction() {
   });
 }
 
+export function useGetPanelStateAction() {
+  const { getSerializableState, panelData, panelActions } = useControlStore();
+
+  useCopilotAction({
+    name: "getPanelState",
+    description:
+      "Get the current state of the active panel including data and available actions",
+    available: "remote",
+    parameters: [],
+    handler: async () => {
+      try {
+        const state = getSerializableState();
+        const availableActions = Object.keys(panelActions);
+
+        return {
+          currentPanel: state.panel,
+          panelData: state.panelData,
+          availableActions,
+          actionDescriptions: Object.values(panelActions).map((action) => ({
+            name: action.name,
+            description: action.description,
+            parameters: action.parameters,
+          })),
+        };
+      } catch (error: any) {
+        console.error("Failed to get panel state:", error);
+        return `Failed to get panel state: ${error.message}`;
+      }
+    },
+  });
+}
+
+export function useExecutePanelActionAction() {
+  const { panelActions } = useControlStore();
+
+  useCopilotAction({
+    name: "executePanelAction",
+    description: "Execute a specific panel action with given parameters",
+    available: "remote",
+    parameters: [
+      {
+        name: "actionName",
+        type: "string",
+        description: "Name of the action to execute",
+        required: true,
+      },
+      {
+        name: "parameters",
+        type: "object",
+        description: "Parameters to pass to the action",
+        required: false,
+      },
+    ],
+    handler: async ({
+      actionName,
+      parameters = {},
+    }: {
+      actionName: string;
+      parameters?: Record<string, any>;
+    }) => {
+      try {
+        const action = panelActions[actionName];
+        if (!action) {
+          const availableActions = Object.keys(panelActions);
+          return `Action "${actionName}" not found. Available actions: ${availableActions.join(", ")}`;
+        }
+
+        // Convert parameters object to array based on action parameter definitions
+        const paramArray = action.parameters.map(
+          (param) => parameters[param.name]
+        );
+
+        const result = await action.handler(...paramArray);
+        return result;
+      } catch (error: any) {
+        console.error(`Failed to execute panel action ${actionName}:`, error);
+        return `Failed to execute action "${actionName}": ${error.message}`;
+      }
+    },
+  });
+}
+
+export function useListTemplateRepositoriesAction() {
+  const { panelData } = useControlStore();
+
+  useCopilotAction({
+    name: "listTemplateRepositories",
+    description:
+      "Get a list of available template repositories in the current devbox creation panel",
+    available: "remote",
+    parameters: [],
+    handler: async () => {
+      try {
+        if (panelData.type !== "devbox-create") {
+          return "Devbox creation panel is not currently open";
+        }
+
+        const repositories = panelData.data.stepA.repositories;
+        const selectedRepoUid = panelData.data.stepA.selectedRepoUid;
+
+        return {
+          repositories: repositories.map((repo) => ({
+            uid: repo.uid,
+            name: repo.name,
+            kind: repo.kind,
+            description: repo.description,
+            selected: repo.uid === selectedRepoUid,
+          })),
+          loading: panelData.data.stepA.loadingRepos,
+          error: panelData.data.stepA.error,
+        };
+      } catch (error: any) {
+        console.error("Failed to list template repositories:", error);
+        return `Failed to list template repositories: ${error.message}`;
+      }
+    },
+  });
+}
+
+export function useListTemplatesAction() {
+  const { panelData } = useControlStore();
+
+  useCopilotAction({
+    name: "listTemplates",
+    description:
+      "Get a list of available templates for the selected repository in the current devbox creation panel",
+    available: "remote",
+    parameters: [],
+    handler: async () => {
+      try {
+        if (panelData.type !== "devbox-create") {
+          return "Devbox creation panel is not currently open";
+        }
+
+        const templates = panelData.data.stepA.templates;
+        const selectedTemplateUid = panelData.data.stepA.selectedTemplateUid;
+        const selectedRepoUid = panelData.data.stepA.selectedRepoUid;
+
+        if (!selectedRepoUid) {
+          return "No repository selected. Please select a repository first.";
+        }
+
+        return {
+          templates: templates.map((template) => ({
+            uid: template.uid,
+            name: template.name,
+            image: template.image,
+            selected: template.uid === selectedTemplateUid,
+          })),
+          loading: panelData.data.stepA.loadingTemplates,
+          error: panelData.data.stepA.error,
+        };
+      } catch (error: any) {
+        console.error("Failed to list templates:", error);
+        return `Failed to list templates: ${error.message}`;
+      }
+    },
+  });
+}
+
 /**
  * Convenience hook to use all Devbox actions at once
  */
@@ -255,4 +415,8 @@ export function useDevboxActions() {
   useShutdownDevboxAction();
   useOpenDevboxCreateAction();
   useUpdateDevboxFormAction();
+  useGetPanelStateAction();
+  useExecutePanelActionAction();
+  useListTemplateRepositoriesAction();
+  useListTemplatesAction();
 }

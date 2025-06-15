@@ -30,10 +30,82 @@ export interface ViewportState {
   zoom: number;
 }
 
+// Panel-specific data types
+export interface TemplateRepository {
+  kind: "LANGUAGE" | "FRAMEWORK" | "OS" | "SERVICE";
+  iconId: string;
+  name: string;
+  uid: string;
+  description: string;
+}
+
+export interface Template {
+  uid: string;
+  name: string;
+  config: string;
+  image: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DevboxCreatePanelData {
+  step: "template" | "resource" | "network" | "summary";
+  stepA: {
+    repositories: TemplateRepository[];
+    templates: Template[];
+    selectedRepoUid: string | null;
+    selectedTemplateUid: string | null;
+    loadingRepos: boolean;
+    loadingTemplates: boolean;
+    error: string | null;
+  };
+  stepB: {
+    quotaData: Array<{ type: string; limit: number; used: number }>;
+    loading: boolean;
+    error: string | null;
+  };
+  stepC: {
+    networks: Array<{
+      networkName: string;
+      portName: string;
+      port: number;
+      protocol: "HTTP" | "GRPC" | "WS";
+      openPublicDomain: boolean;
+      publicDomain: string;
+      customDomain: string;
+      id: string;
+    }>;
+  };
+}
+
+// Panel data union type
+export type PanelData =
+  | { type: "none" }
+  | { type: "devbox-create"; data: DevboxCreatePanelData }
+  | { type: "node-create"; data: any }
+  | { type: "devbox-detail"; data: any }
+  | { type: "database-create"; data: any }
+  | { type: "ai-proxy-create"; data: any };
+
+// Action definition for AI interaction
+export interface PanelAction {
+  name: string;
+  description: string;
+  parameters: Array<{
+    name: string;
+    type: string;
+    description: string;
+    required: boolean;
+  }>;
+  handler: (...args: any[]) => Promise<any> | any;
+}
+
 // Control store interface
 export interface ControlStore {
   // UI State
   panel: PanelState;
+  panelData: PanelData;
+  panelActions: Record<string, PanelAction>;
   viewport: ViewportState;
   sidebar: {
     open: boolean;
@@ -49,12 +121,33 @@ export interface ControlStore {
   setViewport: (viewport: Partial<ViewportState>) => void;
   setSidebarState: (state: Partial<{ open: boolean; pinned: boolean }>) => void;
 
+  // Panel data management
+  setPanelData: (data: PanelData) => void;
+  updatePanelData: (updates: Partial<any>) => void;
+
+  // Panel action management
+  registerPanelActions: (actions: Record<string, PanelAction>) => void;
+  clearPanelActions: () => void;
+
+  // Specific panel data updaters
+  updateDevboxCreateStepA: (
+    updates: Partial<DevboxCreatePanelData["stepA"]>
+  ) => void;
+  updateDevboxCreateStepB: (
+    updates: Partial<DevboxCreatePanelData["stepB"]>
+  ) => void;
+  updateDevboxCreateStepC: (
+    updates: Partial<DevboxCreatePanelData["stepC"]>
+  ) => void;
+  setDevboxCreateStep: (step: DevboxCreatePanelData["step"]) => void;
+
   // Form actions
   updateDevboxCreateForm: (data: Partial<DevboxCreateFormData>) => void;
   resetDevboxCreateForm: () => void;
 
   // AI-specific helpers
   getSerializableState: () => any;
+  getPanelActionsForAI: () => Array<PanelAction>;
 
   // Integration helpers
   syncWithNodeView: (
@@ -71,10 +164,33 @@ const defaultDevboxCreateForm: DevboxCreateFormData = {
   disk: 20,
 };
 
+const defaultDevboxCreatePanelData: DevboxCreatePanelData = {
+  step: "template",
+  stepA: {
+    repositories: [],
+    templates: [],
+    selectedRepoUid: null,
+    selectedTemplateUid: null,
+    loadingRepos: true,
+    loadingTemplates: false,
+    error: null,
+  },
+  stepB: {
+    quotaData: [],
+    loading: true,
+    error: null,
+  },
+  stepC: {
+    networks: [],
+  },
+};
+
 export const useControlStore = create<ControlStore>()(
   subscribeWithSelector((set, get) => ({
     // Initial state
     panel: { type: "none" },
+    panelData: { type: "none" },
+    panelActions: {},
     viewport: { x: 0, y: 0, zoom: 1 },
     sidebar: { open: true, pinned: true },
     devboxCreateForm: { ...defaultDevboxCreateForm },
@@ -83,16 +199,32 @@ export const useControlStore = create<ControlStore>()(
     openPanel: (panel) => {
       set({ panel });
 
-      // If opening devbox-create with form data, update the form
-      if (panel.type === "devbox-create" && panel.formData) {
+      // Initialize panel data based on panel type
+      if (panel.type === "devbox-create") {
         set({
-          devboxCreateForm: { ...defaultDevboxCreateForm, ...panel.formData },
+          panelData: {
+            type: "devbox-create",
+            data: { ...defaultDevboxCreatePanelData },
+          },
         });
+
+        // If opening devbox-create with form data, update the form
+        if (panel.formData) {
+          set({
+            devboxCreateForm: { ...defaultDevboxCreateForm, ...panel.formData },
+          });
+        }
+      } else {
+        set({ panelData: { type: panel.type as any } });
       }
     },
 
     closePanel: () => {
-      set({ panel: { type: "none" } });
+      set({
+        panel: { type: "none" },
+        panelData: { type: "none" },
+        panelActions: {},
+      });
       // Reset form when closing
       get().resetDevboxCreateForm();
     },
@@ -107,6 +239,113 @@ export const useControlStore = create<ControlStore>()(
       set((state) => ({
         sidebar: { ...state.sidebar, ...sidebarUpdate },
       }));
+    },
+
+    // Panel data management
+    setPanelData: (data) => {
+      set({ panelData: data });
+    },
+
+    updatePanelData: (updates) => {
+      set((state) => {
+        if (state.panelData.type === "none") return state;
+
+        return {
+          panelData: {
+            ...state.panelData,
+            data: { ...state.panelData.data, ...updates },
+          },
+        };
+      });
+    },
+
+    // Panel action management
+    registerPanelActions: (actions) => {
+      set({ panelActions: actions });
+    },
+
+    clearPanelActions: () => {
+      set({ panelActions: {} });
+    },
+
+    // Specific panel data updaters
+    updateDevboxCreateStepA: (updates) => {
+      set((state) => {
+        if (state.panelData.type !== "devbox-create") {
+          console.log(
+            "⚠️ Control Store - Cannot update stepA: panel type is not devbox-create",
+            state.panelData.type
+          );
+          return state;
+        }
+
+        console.log("📊 Control Store - Updating stepA data:", {
+          repositories: updates.repositories?.length || 0,
+          templates: updates.templates?.length || 0,
+          selectedRepoUid: updates.selectedRepoUid,
+          selectedTemplateUid: updates.selectedTemplateUid,
+          loadingRepos: updates.loadingRepos,
+          loadingTemplates: updates.loadingTemplates,
+        });
+
+        return {
+          panelData: {
+            ...state.panelData,
+            data: {
+              ...state.panelData.data,
+              stepA: { ...state.panelData.data.stepA, ...updates },
+            },
+          },
+        };
+      });
+    },
+
+    updateDevboxCreateStepB: (updates) => {
+      set((state) => {
+        if (state.panelData.type !== "devbox-create") return state;
+
+        return {
+          panelData: {
+            ...state.panelData,
+            data: {
+              ...state.panelData.data,
+              stepB: { ...state.panelData.data.stepB, ...updates },
+            },
+          },
+        };
+      });
+    },
+
+    updateDevboxCreateStepC: (updates) => {
+      set((state) => {
+        if (state.panelData.type !== "devbox-create") return state;
+
+        return {
+          panelData: {
+            ...state.panelData,
+            data: {
+              ...state.panelData.data,
+              stepC: { ...state.panelData.data.stepC, ...updates },
+            },
+          },
+        };
+      });
+    },
+
+    setDevboxCreateStep: (step) => {
+      set((state) => {
+        if (state.panelData.type !== "devbox-create") return state;
+
+        return {
+          panelData: {
+            ...state.panelData,
+            data: {
+              ...state.panelData.data,
+              step,
+            },
+          },
+        };
+      });
     },
 
     // Form actions
@@ -125,12 +364,18 @@ export const useControlStore = create<ControlStore>()(
       const state = get();
       return {
         panel: state.panel,
+        panelData: state.panelData,
         viewport: state.viewport,
         sidebar: state.sidebar,
         forms: {
           devboxCreate: state.devboxCreateForm,
         },
       };
+    },
+
+    getPanelActionsForAI: () => {
+      const state = get();
+      return Object.values(state.panelActions);
     },
 
     // Integration helpers
@@ -151,7 +396,8 @@ export const useControlStore = create<ControlStore>()(
         const nodeId = activeDetailsId.replace("devbox-create-", "");
         if (
           currentPanel.type !== "devbox-create" ||
-          currentPanel.nodeId !== nodeId
+          (currentPanel.type === "devbox-create" &&
+            currentPanel.nodeId !== nodeId)
         ) {
           set({ panel: { type: "devbox-create", nodeId } });
         }
@@ -159,7 +405,8 @@ export const useControlStore = create<ControlStore>()(
         const devboxName = activeDetailsId.replace("devbox-", "");
         if (
           currentPanel.type !== "devbox-detail" ||
-          currentPanel.devboxName !== devboxName
+          (currentPanel.type === "devbox-detail" &&
+            currentPanel.devboxName !== devboxName)
         ) {
           set({ panel: { type: "devbox-detail", devboxName } });
         }
@@ -174,6 +421,13 @@ if (typeof window !== "undefined") {
     (state) => state.panel,
     (panel) => {
       console.log("🎛️ Control Store: Panel changed to", panel);
+    }
+  );
+
+  useControlStore.subscribe(
+    (state) => state.panelData,
+    (panelData) => {
+      console.log("📊 Control Store: Panel data changed to", panelData);
     }
   );
 }

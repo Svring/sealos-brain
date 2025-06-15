@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useControlStore } from "@/store/control-store";
 
@@ -30,10 +30,18 @@ export const NodeViewProvider = ({ children }: { children: ReactNode }) => {
   );
   
   const { syncWithNodeView, closePanel } = useControlStore();
+  const syncingRef = useRef(false);
 
-  // Sync with control store whenever activeDetailsId changes
+  // Sync with control store whenever activeDetailsId changes, but avoid circular updates
   useEffect(() => {
-    syncWithNodeView(activeDetailsId, detailsContent);
+    if (!syncingRef.current) {
+      syncingRef.current = true;
+      syncWithNodeView(activeDetailsId, detailsContent);
+      // Reset the flag after a short delay to allow the sync to complete
+      setTimeout(() => {
+        syncingRef.current = false;
+      }, 10);
+    }
   }, [activeDetailsId, detailsContent, syncWithNodeView]);
 
   const showDetails = (
