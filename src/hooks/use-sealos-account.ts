@@ -108,10 +108,17 @@ export function useSealosAccount() {
     currentUser,
     regionUrl,
     fetchAccountAmount,
-    hasRequiredTokens: (type: "devbox" | "account") => hasRequiredTokens(type),
-    getCachedAccountAmount: (regionUrl: string) =>
-      getApiData("account", "getAmount", regionUrl),
-    isAccountDataValid: (regionUrl: string) =>
-      isApiDataValid("account", "getAmount", regionUrl),
+    hasRequiredTokens: useCallback(
+      (type: "devbox" | "account") => hasRequiredTokens(type),
+      [hasRequiredTokens]
+    ),
+    getCachedAccountAmount: useCallback(
+      (regionUrl: string) => getApiData("account", "getAmount", regionUrl),
+      [getApiData]
+    ),
+    isAccountDataValid: useCallback(
+      (regionUrl: string) => isApiDataValid("account", "getAmount", regionUrl),
+      [isApiDataValid]
+    ),
   };
 }

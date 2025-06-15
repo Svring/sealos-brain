@@ -1,10 +1,7 @@
 export type SidebarPath =
   | "/sidebar"
-  | "/sidebar/user-center"
-  | "/sidebar/settings"
-  | "/sidebar/documents"
-  | "/sidebar/account"
+  | "/sidebar/dashboard"
+  | "/sidebar/graph"
   | "/sidebar/devbox"
-  | "/sidebar/devbox/terminal"
-  | "/sidebar/devbox/database"
-  | "/sidebar/devbox/code-editor";
+  | "/sidebar/database"
+  | "/sidebar/ai-proxy";

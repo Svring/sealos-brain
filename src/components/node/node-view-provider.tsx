@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useControlStore } from "@/store/control-store";
 
 interface NodeViewContextType {
   showDetails: (id: string, content: ReactNode, onClose?: () => void) => void;
@@ -27,6 +28,13 @@ export const NodeViewProvider = ({ children }: { children: ReactNode }) => {
   const [onCloseHandler, setOnCloseHandler] = useState<(() => void) | null>(
     null
   );
+  
+  const { syncWithNodeView, closePanel } = useControlStore();
+
+  // Sync with control store whenever activeDetailsId changes
+  useEffect(() => {
+    syncWithNodeView(activeDetailsId, detailsContent);
+  }, [activeDetailsId, detailsContent, syncWithNodeView]);
 
   const showDetails = (
     id: string,
@@ -44,6 +52,7 @@ export const NodeViewProvider = ({ children }: { children: ReactNode }) => {
       setOnCloseHandler(null);
     }
     setActiveDetailsId(null);
+    closePanel(); // Also update control store
   };
 
   return (

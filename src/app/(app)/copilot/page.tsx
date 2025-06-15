@@ -2,21 +2,27 @@
 
 import { CopilotChat } from "@copilotkit/react-ui";
 import { useSealosStore } from "@/store/sealos-store";
+import { useControlStore } from "@/store/control-store";
 import { useSealosTools } from "@/lib/tool/sealos-tool";
 import {
   useCoAgent,
-  useCoAgentStateRender,
-  useCopilotAction,
-  useCopilotReadable,
 } from "@copilotkit/react-core";
 import { useEffect, useRef } from "react";
+import { useNodeView } from "@/components/node/node-view-provider";
+import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create-view";
 
 type AgentState = {
   sealos_data: {
-    devbox_data: any[];
-    account_data: any;
-    auth_data: any;
+    devbox_data: unknown[];
+    account_data: unknown;
+    auth_data: unknown;
     timestamp: number;
+  };
+  ui_state: {
+    panel: unknown;
+    viewport: unknown;
+    sidebar: unknown;
+    forms: unknown;
   };
 };
 
@@ -113,18 +119,45 @@ Final Notes
 You are the bridge between users and Sealos' cloud-native ecosystem, empowering them to focus on innovation. Stay curious, keep learning about Sealos' evolving features, and deliver a delightful, efficient user experience.
 `;
 
+// Component to handle panel opening on copilot page
+function CopilotPanelHandler() {
+  const { panel } = useControlStore();
+  const { showDetails, hideDetails, activeDetailsId } = useNodeView();
+
+  useEffect(() => {
+    if (panel.type === "devbox-create" && panel.nodeId) {
+      console.log("🎛️ Copilot: Opening devbox create panel", panel);
+      
+      // Create the DevboxCreateView component
+      const creationComponent = <DevboxCreateView onComplete={() => hideDetails()} />;
+      
+      // Show the details panel
+      showDetails(`devbox-create-${panel.nodeId}`, creationComponent);
+    } else if (panel.type === "none" && activeDetailsId?.startsWith("devbox-create-")) {
+      console.log("🎛️ Copilot: Closing devbox create panel");
+      // Close the panel if control store says so
+      hideDetails();
+    }
+  }, [panel, showDetails, hideDetails, activeDetailsId]);
+
+  return null; // This component doesn't render anything
+}
+
 export default function CopilotPage() {
   const sealosStore = useSealosStore();
+  const controlStore = useControlStore();
   const { currentUser, copilotData } = sealosStore;
   const lastTimestampRef = useRef<number | null>(null);
+  const lastUIStateRef = useRef<string | null>(null);
 
   // Use all Sealos tools
   useSealosTools();
 
-  const { state, setState } = useCoAgent<AgentState>({
+  const { setState } = useCoAgent<AgentState>({
     name: "sealos",
     initialState: {
       sealos_data: copilotData,
+      ui_state: controlStore.getSerializableState(),
     },
     config: {
       configurable: {
@@ -140,16 +173,38 @@ export default function CopilotPage() {
 
     console.log("📦 Updating agent state with Copilot aggregated data");
 
-    setState({
+    setState((prevState) => ({
       sealos_data: copilotData,
-    });
+      ui_state: prevState?.ui_state || controlStore.getSerializableState(),
+    }));
 
     // Update ref after successful state update
     lastTimestampRef.current = copilotData.timestamp;
-  }, [copilotData, setState]);
+  }, [copilotData, setState, controlStore]);
+
+  // Update agent state when UI state changes
+  useEffect(() => {
+    const unsubscribe = useControlStore.subscribe(() => {
+      const uiState = controlStore.getSerializableState();
+      const uiStateString = JSON.stringify(uiState);
+      
+      // Only update if UI state actually changed
+      if (lastUIStateRef.current !== uiStateString) {
+        console.log("🎛️ Updating agent state with UI state", uiState);
+        setState((prevState) => ({
+          sealos_data: prevState?.sealos_data || copilotData,
+          ui_state: uiState,
+        }));
+        lastUIStateRef.current = uiStateString;
+      }
+    });
+
+    return unsubscribe;
+  }, [controlStore, setState, copilotData]);
 
   return (
     <div className="h-screen w-screen flex flex-col items-center justify-center relative">
+      <CopilotPanelHandler />
       <CopilotChat
         className="h-full w-3/5"
         instructions={

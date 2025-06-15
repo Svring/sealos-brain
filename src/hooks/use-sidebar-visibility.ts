@@ -56,8 +56,8 @@ export function useSidebarVisibility({
   closeDelay = 100,
 }: UseSidebarVisibilityOptions = {}) {
   const [state, send] = useReducer(reducer, {
-    status: "closed",
-    pinned: false,
+    status: "pinned",
+    pinned: true,
   });
 
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);

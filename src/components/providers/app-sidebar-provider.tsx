@@ -1,12 +1,44 @@
-'use client'
-import React, { useState, useEffect } from "react";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarHeader, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar";
+"use client";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarHeader,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
+} from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Pin, PinOff, User2, ChevronUp, ArrowLeft, Home, Settings, FileText, Box, ChevronRight, Terminal, Database, Code, CreditCard } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import {
+  Pin,
+  PinOff,
+  User2,
+  ChevronUp,
+  ArrowLeft,
+  Home,
+  Settings,
+  FileText,
+  Box,
+  ChevronRight,
+  Terminal,
+  Database,
+  Code,
+  CreditCard,
+  BarChart3,
+  Sparkle,
+} from "lucide-react";
 import { UserCenter } from "@/components/ui/user-center";
 import { getCurrentUser } from "@/database/actions/user-actions";
 import { User } from "@/payload-types";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
 
 import { useSealosStore } from "@/store/sealos-store";
 import { useSealosAccount } from "@/hooks/use-sealos-account";
@@ -15,9 +47,21 @@ import { useDevboxSidebar } from "@/hooks/use-devbox-sidebar";
 import { useSidebarResize } from "@/hooks/use-sidebar-resize";
 import { useSidebarVisibility } from "@/hooks/use-sidebar-visibility";
 import { SidebarPath } from "@/components/providers/sidebar/types";
+import { type AccountAmountData } from "@/lib/account/schemas/account-amount-schema";
+import { debounce } from "lodash";
+
+// Import newly extracted section components
+import {
+  MainSection,
+  DashboardSection,
+  GraphSection,
+  DevboxSection,
+  DatabaseSection,
+  AIProxySection,
+  NavigationItem,
+} from "@/components/sidebar/sections";
 
 export function AppSidebar() {
-  // Sealos store
   const {
     currentUser,
     regionUrl,
@@ -30,20 +74,9 @@ export function AppSidebar() {
     debugPrintState,
   } = useSealosStore();
 
-  // Sealos hooks
-  const {
-    fetchAccountAmount,
-    getCachedAccountAmount,
-    isAccountDataValid,
-  } = useSealosAccount();
-
-  const {
-    fetchAuthInfo,
-    getCachedAuthInfo,
-    isAuthDataValid,
-  } = useSealosAuth();
-
-  // DevBox sidebar data managed via dedicated hook
+  const { fetchAccountAmount, getCachedAccountAmount, isAccountDataValid } =
+    useSealosAccount();
+  const { fetchAuthInfo, getCachedAuthInfo, isAuthDataValid } = useSealosAuth();
   const {
     devboxes: parsedDevboxes,
     rawData: devboxData,
@@ -51,13 +84,8 @@ export function AppSidebar() {
     error: devboxError,
     refresh: refreshDevboxList,
   } = useDevboxSidebar();
-
-  // --- Behaviour hooks ---
-  const {
-    width: sidebarWidth,
-    handleMouseDown: handleResizeMouseDown,
-  } = useSidebarResize();
-
+  const { width: sidebarWidth, handleMouseDown: handleResizeMouseDown } =
+    useSidebarResize();
   const {
     open,
     setOpen,
@@ -68,35 +96,38 @@ export function AppSidebar() {
     enterSidebar: handleSidebarEnter,
   } = useSidebarVisibility();
 
-  const [currentPath, setCurrentPath] = useState<SidebarPath>('/sidebar');
-  const [devboxExpanded, setDevboxExpanded] = useState(false);
+  const [currentPath, setCurrentPath] = useState<SidebarPath>("/sidebar");
   const dataFetchedRef = React.useRef(false);
 
-  // Fetch user data on component mount
+  // Debounced fetchAccountAmount
+  const debouncedFetchAccountAmount = useCallback(
+    debounce(async () => {
+      try {
+        await fetchAccountAmount();
+      } catch (error) {
+        console.error("Failed to fetch account amount:", error);
+      }
+    }, 500),
+    [fetchAccountAmount]
+  );
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const currentUser = await getCurrentUser();
         setCurrentUser(currentUser);
-        
-        // If user exists, update tokens in store and fetch account data
         if (currentUser) {
           console.log("Setting user tokens in Sealos store");
-          // The store will automatically extract and set tokens when setCurrentUser is called
-          
-          // Debug: Print store state after setting user
           setTimeout(() => {
             console.log("📊 Store state after setting user:");
             debugPrintState();
           }, 100);
-
-          // Fetch account data after user is set
           setTimeout(async () => {
             await fetchAccountData();
           }, 200);
         }
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error("Error fetching user:", error);
         setCurrentUser(null);
       }
     };
@@ -104,327 +135,174 @@ export function AppSidebar() {
     fetchUser();
   }, [setCurrentUser, debugPrintState]);
 
-  // Fetch account data function
   const fetchAccountData = async () => {
     if (!currentUser) return;
-
     try {
       console.log("🏦 Fetching account data in sidebar");
-      
-      // Fetch both account amount and auth info
       const [accountAmount, authInfo] = await Promise.allSettled([
         fetchAccountAmount(),
         fetchAuthInfo(),
       ]);
-
-      if (accountAmount.status === 'fulfilled') {
-        console.log("✅ Account amount fetched successfully:", accountAmount.value);
+      if (accountAmount.status === "fulfilled") {
+        console.log(
+          "✅ Account amount fetched successfully:",
+          accountAmount.value
+        );
       } else {
-        console.error("❌ Failed to fetch account amount:", accountAmount.reason);
+        console.error(
+          "❌ Failed to fetch account amount:",
+          accountAmount.reason
+        );
       }
-
-      if (authInfo.status === 'fulfilled') {
+      if (authInfo.status === "fulfilled") {
         console.log("✅ Auth info fetched successfully:", authInfo.value);
       } else {
         console.error("❌ Failed to fetch auth info:", authInfo.reason);
       }
-
     } catch (error) {
-      console.error('Error fetching account data:', error);
+      console.error("Error fetching account data:", error);
     }
   };
 
-  // Navigation handlers
   const handleBackClick = () => {
-    setCurrentPath('/sidebar');
+    setCurrentPath("/sidebar");
   };
 
   const handleNavigate = (path: SidebarPath) => {
     setCurrentPath(path);
-    
-    // If navigating to devbox, fetch devbox list
-    if (path === '/sidebar/devbox' && currentUser) {
+    if (path === "/sidebar/devbox" && currentUser) {
       refreshDevboxList();
     }
-    
-    // If navigating to account, fetch account data
-    if (path === '/sidebar/account' && currentUser) {
-      fetchAccountData();
-    }
   };
 
-  // Get current page title
   const getCurrentTitle = () => {
     switch (currentPath) {
-      case '/sidebar':
-        return 'Sidebar';
-      case '/sidebar/user-center':
-        return 'User Center';
-      case '/sidebar/account':
-        return 'Account';
-      case '/sidebar/settings':
-        return 'Settings';
-      case '/sidebar/documents':
-        return 'Documents';
-      case '/sidebar/devbox':
-        return 'DevBox';
-      case '/sidebar/devbox/terminal':
-        return 'Terminal';
-      case '/sidebar/devbox/database':
-        return 'Database';
-      case '/sidebar/devbox/code-editor':
-        return 'Code Editor';
+      case "/sidebar":
+        return "Sidebar";
+      case "/sidebar/dashboard":
+        return "Dashboard";
+      case "/sidebar/graph":
+        return "Graph";
+      case "/sidebar/devbox":
+        return "DevBox";
+      case "/sidebar/database":
+        return "Database";
+      case "/sidebar/ai-proxy":
+        return "AI Proxy";
       default:
-        return 'Sidebar';
+        return "DevBox";
     }
   };
 
-  // Define navigation items
-  const navigationItems = [
+  const navigationItems: NavigationItem[] = [
     {
-      title: 'User Center',
-      icon: User2,
-      path: '/sidebar/user-center' as SidebarPath,
+      title: "Dashboard",
+      icon: Home,
+      path: "/sidebar/dashboard" as SidebarPath,
+      group: "overview",
     },
     {
-      title: 'Account',
-      icon: CreditCard,
-      path: '/sidebar/account' as SidebarPath,
+      title: "Graph",
+      icon: BarChart3,
+      path: "/sidebar/graph" as SidebarPath,
+      group: "overview",
     },
     {
-      title: 'Settings',
-      icon: Settings,
-      path: '/sidebar/settings' as SidebarPath,
+      title: "DevBox",
+      icon: Box,
+      path: "/sidebar/devbox" as SidebarPath,
+      group: "application",
     },
     {
-      title: 'Documents',
-      icon: FileText,
-      path: '/sidebar/documents' as SidebarPath,
+      title: "Database",
+      icon: Database,
+      path: "/sidebar/database" as SidebarPath,
+      group: "application",
+    },
+    {
+      title: "AI Proxy",
+      icon: Sparkle,
+      path: "/sidebar/ai-proxy" as SidebarPath,
+      group: "application",
     },
   ];
 
-
-  // Render main sidebar content
-  const renderMainSidebarContent = () => (
-    <SidebarGroup>
-      <SidebarGroupLabel>Application</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {navigationItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton onClick={() => handleNavigate(item.path)}>
-                <item.icon className="w-4 h-4" />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-          
-          {/* DevBox Collapsible Menu */}
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              onClick={() => {
-                setDevboxExpanded(!devboxExpanded);
-                if (!devboxExpanded && currentUser && parsedDevboxes.length === 0) {
-                  refreshDevboxList();
-                }
-              }}
-              className="w-full"
-            >
-              <Box className="w-4 h-4" />
-              <span>DevBox</span>
-              <ChevronRight 
-                className={`ml-auto w-4 h-4 transition-transform ${
-                  devboxExpanded ? 'rotate-90' : ''
-                }`} 
-              />
-            </SidebarMenuButton>
-            {devboxExpanded && (
-              <SidebarMenuSub>
-                {devboxLoading && (
-                  <SidebarMenuSubItem>
-                    <div className="px-3 py-2">
-                      <span className="text-xs text-muted-foreground">Loading...</span>
-                    </div>
-                  </SidebarMenuSubItem>
-                )}
-                
-                {devboxError && (
-                  <SidebarMenuSubItem>
-                    <div className="px-3 py-2">
-                      <span className="text-xs text-red-500">Error loading devboxes</span>
-                    </div>
-                  </SidebarMenuSubItem>
-                )}
-                
-                {!devboxLoading && !devboxError && parsedDevboxes.length === 0 && (
-                  <SidebarMenuSubItem>
-                    <div className="px-3 py-2">
-                      <span className="text-xs text-muted-foreground">No devboxes found</span>
-                    </div>
-                  </SidebarMenuSubItem>
-                )}
-                
-                {parsedDevboxes.map((devbox) => (
-                  <SidebarMenuSubItem key={`${devbox.namespace}-${devbox.name}`}>
-                    <SidebarMenuSubButton onClick={() => handleNavigate('/sidebar/devbox')}>
-                      <Box className="w-4 h-4" />
-                      <span className="truncate" title={devbox.name}>{devbox.name}</span>
-                      <span className={`ml-auto w-2 h-2 rounded-full ${
-                        devbox.phase === 'Running' ? 'bg-green-500' : 
-                        devbox.phase === 'Pending' ? 'bg-yellow-500' : 'bg-gray-500'
-                      }`} />
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                ))}
-              </SidebarMenuSub>
-            )}
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
-
-  // Render content based on current path
-  const renderContent = () => {
-    switch (currentPath) {
-      case '/sidebar':
-        return renderMainSidebarContent();
-      case '/sidebar/user-center':
-        return <UserCenter user={currentUser} />;
-      case '/sidebar/account':
-        return (
-          <div className="p-4">
-            <h3 className="text-lg font-semibold mb-4">Account Information</h3>
-            
-            <div className="space-y-4">
-              <div className="bg-black p-3 rounded-md">
-                <h4 className="text-sm font-medium mb-2">Account Amount:</h4>
-                <pre className="text-xs overflow-auto max-h-32">
-                  {JSON.stringify(getCachedAccountAmount(regionUrl), null, 2)}
-                </pre>
-              </div>
-              
-              <div className="bg-black p-3 rounded-md">
-                <h4 className="text-sm font-medium mb-2">Auth Info:</h4>
-                <pre className="text-xs overflow-auto max-h-32">
-                  {JSON.stringify(getCachedAuthInfo(regionUrl), null, 2)}
-                </pre>
-              </div>
-              
-              <button 
-                onClick={fetchAccountData}
-                className="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
-              >
-                Refresh Account Data
-              </button>
-            </div>
-          </div>
-        );
-      case '/sidebar/settings':
-        return (
-          <div className="p-4">
-            <h3 className="text-lg font-semibold mb-4">Settings</h3>
-            <p className="text-sm text-muted-foreground">Settings content coming soon...</p>
-          </div>
-        );
-      case '/sidebar/documents':
-        return (
-          <div className="p-4">
-            <h3 className="text-lg font-semibold mb-4">Documents</h3>
-            <p className="text-sm text-muted-foreground">Documents content coming soon...</p>
-          </div>
-        );
-      case '/sidebar/devbox':
-        return (
-          <div className="p-4">
-            <h3 className="text-lg font-semibold mb-4">DevBox</h3>
-            
-            {devboxLoading && (
-              <div className="text-sm text-muted-foreground">Loading devbox list...</div>
-            )}
-            
-            {devboxError && (
-              <div className="text-sm text-red-500 mb-4">
-                Error: {devboxError}
-              </div>
-            )}
-            
-            {devboxData && (
-              <div className="space-y-4">
-                <div className="text-sm text-green-600">
-                  ✅ Devbox list loaded successfully!
-                </div>
-                <div className="bg-gray-100 p-3 rounded-md">
-                  <h4 className="text-sm font-medium mb-2">API Response:</h4>
-                  <pre className="text-xs overflow-auto max-h-64">
-                    {JSON.stringify(devboxData, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            )}
-            
-            {!devboxLoading && !devboxError && !devboxData && (
-              <p className="text-sm text-muted-foreground">
-                Click to load devbox list or select a DevBox tool from the navigation menu.
-              </p>
-            )}
-          </div>
-        );
-      case '/sidebar/devbox/terminal':
-        return (
-          <div className="p-4">
-            <h3 className="text-lg font-semibold mb-4">Terminal</h3>
-            <p className="text-sm text-muted-foreground">Terminal interface coming soon...</p>
-          </div>
-        );
-      case '/sidebar/devbox/database':
-        return (
-          <div className="p-4">
-            <h3 className="text-lg font-semibold mb-4">Database</h3>
-            <p className="text-sm text-muted-foreground">Database management coming soon...</p>
-          </div>
-        );
-      case '/sidebar/devbox/code-editor':
-        return (
-          <div className="p-4">
-            <h3 className="text-lg font-semibold mb-4">Code Editor</h3>
-            <p className="text-sm text-muted-foreground">Code editor coming soon...</p>
-          </div>
-        );
-      default:
-        return renderMainSidebarContent();
-    }
+  const getAccountBalance = (): string => {
+    const currentRegionUrl = regionUrl || "bja.sealos.run";
+    const accountData = getCachedAccountAmount(
+      currentRegionUrl
+    ) as AccountAmountData | null;
+    return accountData ? accountData.validBalance.toString() : "0";
   };
 
-  // Centralized data fetching effect - fetch all API data when user is available
   useEffect(() => {
     if (currentUser && !dataFetchedRef.current) {
       dataFetchedRef.current = true;
       console.log("🚀 Sidebar: Starting centralized data fetch");
-      
-      // Fetch all three API data types
       Promise.allSettled([
         refreshDevboxList(),
         fetchAccountAmount(),
         fetchAuthInfo(),
       ]).then((results) => {
         results.forEach((result, index) => {
-          const apiNames = ['devbox', 'account', 'auth'];
-          if (result.status === 'fulfilled') {
-            console.log(`✅ Sidebar: ${apiNames[index]} data fetched successfully`);
+          const apiNames = ["devbox", "account", "auth"];
+          if (result.status === "fulfilled") {
+            console.log(
+              `✅ Sidebar: ${apiNames[index]} data fetched successfully`
+            );
           } else {
-            console.error(`❌ Sidebar: ${apiNames[index]} data fetch failed:`, result.reason);
+            console.error(
+              `❌ Sidebar: ${apiNames[index]} data fetch failed:`,
+              result.reason
+            );
           }
         });
         console.log("🏁 Sidebar: Centralized data fetch completed");
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]);
+  }, [currentUser, refreshDevboxList, fetchAccountAmount, fetchAuthInfo]);
+
+  useEffect(() => {
+    if (currentUser && (open || pinned)) {
+      const currentRegionUrl = regionUrl || "bja.sealos.run";
+      const cachedData = getCachedAccountAmount(currentRegionUrl);
+      if (!cachedData || !isAccountDataValid(currentRegionUrl)) {
+        console.log("🔄 Sidebar visible: Refreshing account data");
+        debouncedFetchAccountAmount();
+      }
+    }
+  }, [
+    open,
+    pinned,
+    currentUser,
+    regionUrl,
+    getCachedAccountAmount,
+    isAccountDataValid,
+    debouncedFetchAccountAmount,
+  ]);
+
+  // Simplified content rendering using extracted section components
+  const renderContent = () => {
+    switch (currentPath) {
+      case "/sidebar":
+        return <MainSection navigationItems={navigationItems} handleNavigate={handleNavigate} />;
+      case "/sidebar/dashboard":
+        return <DashboardSection getAccountBalance={getAccountBalance} />;
+      case "/sidebar/graph":
+        return <GraphSection />;
+      case "/sidebar/devbox":
+        return <DevboxSection loading={devboxLoading} error={devboxError} data={devboxData} />;
+      case "/sidebar/database":
+        return <DatabaseSection />;
+      case "/sidebar/ai-proxy":
+        return <AIProxySection />;
+      default:
+        return <MainSection navigationItems={navigationItems} handleNavigate={handleNavigate} />;
+    }
+  };
 
   return (
     <>
-      {/* Hot zone: only active when sidebar is closed and not pinned */}
       {!open && !pinned && (
         <div
           className="fixed left-0 top-0 w-12 h-screen z-[100]"
@@ -439,18 +317,15 @@ export function AppSidebar() {
           onMouseEnter={handleSidebarEnter}
           onMouseLeave={handleSidebarLeave}
         >
-          {/* Resize handle */}
           <div
             className="absolute top-0 right-0 h-full w-2 cursor-ew-resize z-50 bg-transparent transition-colors"
             onMouseDown={handleResizeMouseDown}
-            style={{ userSelect: 'none' }}
+            style={{ userSelect: "none" }}
           />
-          
-          {/* Header */}
-          <SidebarHeader className="border-b p-3">
+          <SidebarHeader className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                {currentPath !== '/sidebar' && (
+                {currentPath !== "/sidebar" && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -462,15 +337,16 @@ export function AppSidebar() {
                   </Button>
                 )}
                 <div className="flex items-center space-x-2">
-                  <Home className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{getCurrentTitle()}</span>
+                  <span className="pl-2 text-sm font-medium">
+                    {getCurrentTitle()}
+                  </span>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handlePinClick}
-                aria-label={pinned ? 'Unpin sidebar' : 'Pin sidebar'}
+                aria-label={pinned ? "Unpin sidebar" : "Pin sidebar"}
                 className="h-8 w-8"
               >
                 {pinned ? (
@@ -481,20 +357,26 @@ export function AppSidebar() {
               </Button>
             </div>
           </SidebarHeader>
-
-          {/* Content */}
-          <SidebarContent>
-            {renderContent()}
-          </SidebarContent>
-          
+          <SidebarContent>{renderContent()}</SidebarContent>
           <SidebarFooter>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => handleNavigate('/sidebar/user-center')}>
-                  <User2 className="w-4 h-4" />
-                  <span>{currentUser?.username || currentUser?.email || 'User'}</span>
-                  <ChevronUp className="ml-auto w-4 h-4" />
-                </SidebarMenuButton>
+                <SpotlightCard className="p-2 mb-2 rounded-lg h-10">
+                  <div className="text-sm text-[var(--paragraph-text)] flex items-center justify-center h-full">
+                    <span className="font-semibold text-[var(--heading-text)]">
+                      Balance:
+                    </span>{" "}
+                    <span className="text-foreground ml-1">
+                      {getAccountBalance()}
+                    </span>
+                  </div>
+                </SpotlightCard>
+                <div className="relative px-3 py-2 flex items-center gap-2">
+                  <User2 className="w-4 h-4 relative z-10" />
+                  <span className="text-sm relative z-10">
+                    {currentUser?.username || currentUser?.email || "User"}
+                  </span>
+                </div>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>

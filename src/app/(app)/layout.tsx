@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/providers/app-sidebar-provider";
+import { NodeViewProvider } from "@/components/node/node-view-provider";
 
 import "./globals.css";
 import "@xyflow/react/dist/style.css";
@@ -62,7 +63,9 @@ export default async function RootLayout({
               publicApiKey={publicApiKey}
               agent={agentName}
             >
-              <main>{children}</main>
+              <NodeViewProvider>
+                <main>{children}</main>
+              </NodeViewProvider>
             </CopilotKit>
           </SidebarProvider>
         </ThemeProvider>

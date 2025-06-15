@@ -38,6 +38,9 @@ import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create
 import NodeCreateView from "@/components/node/create/node-create-view";
 import { useSealosDevbox } from "@/hooks/use-sealos-devbox";
 import { devboxEvents } from "@/hooks/use-devbox-sidebar";
+import { useDevboxActions } from "@/lib/action/devbox-action";
+import { useDevboxUIActions } from "@/lib/action/devbox-ui-action";
+import { useControlStore } from "@/store/control-store";
 
 interface Message {
   id: string;
@@ -65,11 +68,46 @@ function FlowContent() {
   const dataLoadedRef = useRef(false);
   const { fetchDevboxList, fetchDevboxReadyStatus } = useSealosDevbox();
 
+  // Enable AI actions for devbox operations
+  useDevboxActions();
+  useDevboxUIActions();
+
+  // Control store integration
+  const { panel } = useControlStore();
+
   // Sealos Store - only consume data, don't fetch
   const { devbox, regionUrl } = useSealosStore();
 
   // Get debug function from store
   const { debugPrintState } = useSealosStore();
+
+  // Handle control store panel changes
+  useEffect(() => {
+    if (panel.type === "devbox-create" && panel.nodeId) {
+      // Create the DevboxCreateView component
+      const creationComponent = <DevboxCreateView onComplete={() => hideDetails()} />;
+      
+      // Show the details panel
+      showDetails(`devbox-create-${panel.nodeId}`, creationComponent);
+      
+      // Position the viewport nicely
+      const screenWidth = window.innerWidth;
+      const leftAreaCenter = screenWidth * 0.3;
+      const finalZoom = Math.max(Math.min(getZoom(), 1.0), 0.6);
+      
+      setTimeout(() => {
+        const viewport = {
+          x: leftAreaCenter - (screenWidth / 2) * finalZoom,
+          y: window.innerHeight / 2 - (window.innerHeight / 2) * finalZoom,
+          zoom: finalZoom,
+        };
+        setViewport(viewport, { duration: 400 });
+      }, 100);
+    } else if (panel.type === "none" && activeDetailsId?.startsWith("devbox-create-")) {
+      // Close the panel if control store says so
+      hideDetails();
+    }
+  }, [panel, showDetails, hideDetails, activeDetailsId, getZoom, setViewport]);
 
   // Function to delete a node by ID
   const deleteNode = useCallback((nodeId: string) => {
@@ -558,9 +596,7 @@ function FlowContent() {
 export default function App() {
   return (
     <ReactFlowProvider>
-      <NodeViewProvider>
-        <FlowContent />
-      </NodeViewProvider>
+      <FlowContent />
     </ReactFlowProvider>
   );
 }

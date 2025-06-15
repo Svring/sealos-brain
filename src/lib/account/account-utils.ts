@@ -20,7 +20,15 @@ export function buildAccountUrls() {
  */
 export const transformAccountAmount = (rawData: any) => {
   try {
-    return rawData.data; // Add specific transformation if needed
+    const { balance, deductionBalance } = rawData.data;
+    const validBalanceRaw = balance - deductionBalance;
+    // Keep only the first three digits
+    const validBalance = Number(validBalanceRaw.toString().slice(0, 3));
+    return {
+      balance,
+      deductionBalance,
+      validBalance,
+    };
   } catch (error) {
     console.error("Error parsing account amount data:", error);
     throw new Error("Invalid account amount data format");

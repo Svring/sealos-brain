@@ -1,5 +1,6 @@
 import { useCopilotAction } from "@copilotkit/react-core";
 import { useSealosDevbox } from "@/hooks/use-sealos-devbox";
+import { useDevboxUIActions } from "@/lib/action/devbox-ui-action";
 
 type ShutdownModeType = "Stopped" | "Shutdown";
 
@@ -80,4 +81,7 @@ export function useShutdownDevboxTool() {
 export function useSealosTools() {
   useStartDevboxTool();
   useShutdownDevboxTool();
+
+  // Include UI actions for controlling the interface
+  useDevboxUIActions();
 }

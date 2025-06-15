@@ -45,6 +45,7 @@ class SealosAgentState(CopilotKitState):
     """
 
     sealos_data: Any = None
+    ui_state: Any = None
 
 
 async def sealos_agent_node(
