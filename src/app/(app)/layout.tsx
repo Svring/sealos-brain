@@ -1,49 +1,52 @@
+// Types and metadata
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 
+// Component imports
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/providers/app-sidebar-provider";
-import { NodeViewProvider } from "@/components/node/node-view-provider";
+import { PanelProvider } from "@/components/node/panel-provider";
 import { SealosStoreHydrator } from "@/components/providers/sealos-store-hydrator";
+import LoginPanel from "@/components/ui/login-panel";
+import { CopilotKit } from "@copilotkit/react-core";
+import QueryProvider from "@/components/providers/query-provider";
 
+// Database actions
+import { getCurrentUser } from "@/database/actions/user-actions";
+
+// Styles
 import "./globals.css";
 import "@xyflow/react/dist/style.css";
 import "@copilotkit/react-ui/styles.css";
 
-import LoginPanel from "@/components/ui/login-panel";
-import { getCurrentUser } from "@/database/actions/user-actions";
-
-import { CopilotKit } from "@copilotkit/react-core";
-
-import QueryProvider from "@/components/providers/query-provider";
-
-// Where CopilotKit will proxy requests to. If you're using Copilot Cloud, this environment variable will be empty.
+// Environment variables
 const runtimeUrl = process.env.NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL;
-// When using Copilot Cloud, all we need is the publicApiKey.
 const publicApiKey = process.env.NEXT_PUBLIC_COPILOT_API_KEY;
-// The name of the agent that we'll be using.
 const agentName = process.env.NEXT_PUBLIC_COPILOTKIT_AGENT_NAME;
 
+// Metadata configuration
 export const metadata: Metadata = {
   title: "Sealos Brain",
   description: "Sealos Brain",
 };
 
+// Font configuration
 const nunito = Nunito({
   subsets: ["latin"],
   variable: "--font-nunito",
   weight: ["300", "400"],
 });
 
+// Layout component
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  
   const user = await getCurrentUser();
 
+  // Unauthenticated state
   if (!user) {
     return (
       <html lang="en">
@@ -56,13 +59,13 @@ export default async function RootLayout({
     );
   }
 
+  // Authenticated state
   return (
     <html lang="en">
       <body className={`${nunito.variable} font-nunito antialiased`}>
         <ThemeProvider>
           <SidebarProvider>
             <QueryProvider>
-              {/* Hydrate the store with current user before any components that depend on it */}
               <SealosStoreHydrator user={user} />
               <AppSidebar />
               <CopilotKit
@@ -70,9 +73,9 @@ export default async function RootLayout({
                 publicApiKey={publicApiKey}
                 agent={agentName}
               >
-                <NodeViewProvider>
+                <PanelProvider>
                   <main>{children}</main>
-                </NodeViewProvider>
+                </PanelProvider>
               </CopilotKit>
             </QueryProvider>
           </SidebarProvider>

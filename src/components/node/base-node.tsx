@@ -1,26 +1,24 @@
-import { useNodeView } from "@/components/node/node-view-provider";
+import { usePanel } from "@/components/node/panel-provider";
 import { Glass } from "@/components/ui/glass-effect";
-import { cn } from "@/lib/utils";
-import { type Node } from "@xyflow/react";
 
 interface BaseNodeProps {
   id: string | null;
   children: React.ReactNode;
-  details?: React.ReactNode;
+  content?: React.ReactNode;
   className?: string;
 }
 
 export default function BaseNode({
   id,
   children,
-  details,
+  content,
   className = "",
 }: BaseNodeProps) {
   if (!id) return null;
-  const { showDetails } = useNodeView();
+  const { openPanel } = usePanel();
 
   const handleShowDetails = () => {
-    showDetails(id, details);
+    openPanel(id, content);
   };
 
   return (

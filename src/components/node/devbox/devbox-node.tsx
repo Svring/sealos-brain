@@ -26,7 +26,7 @@ export default function DevboxNode({ data }: { data: DevboxNodeData }) {
 
   return (
     <>
-      <BaseNode id={nodeId} details={<DevboxDetails devboxName={devboxName} />}>
+      <BaseNode id={nodeId} content={<DevboxDetails devboxName={devboxName} />}>
         <div className="space-y-4">
           {/* Name */}
           <div className="font-medium truncate flex items-center gap-2">

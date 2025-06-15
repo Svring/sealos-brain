@@ -1,4 +1,4 @@
-import { useSealosDevbox } from "@/hooks/use-sealos-devbox";
+import { useSealosDevbox } from "@/lib/devbox/devbox-query";
 import React, { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { DevboxFormValues } from "@/components/node/devbox/create/schema/devbox-create-schema";

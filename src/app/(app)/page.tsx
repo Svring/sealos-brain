@@ -12,10 +12,11 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 import { useQuery } from "@tanstack/react-query";
-import { devboxListOptions } from "@/hooks/use-sealos-devbox";
+import { devboxListOptions } from "@/lib/devbox/devbox-query";
 import { useSealosStore } from "@/store/sealos-store";
-import { transformDevboxListIntoNode } from "@/lib/devbox/devbox-utils";
+import { transformDevboxListIntoNode } from "@/lib/devbox/devbox-transform";
 import nodeTypes from "@/components/node/node-types";
+import { usePanel } from "@/components/node/panel-provider";
 // import DevboxDetails from "@/components/node/devbox/detail/view/devbox-detail-view";
 // import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create-view";
 // import NodeCreateView from "@/components/node/create/node-create-view";
@@ -40,6 +41,7 @@ export default function App() {
   const [isInputExpanded, setIsInputExpanded] = useState(true);
   const promptTextareaRef = useRef<any>(null);
   const { regionUrl, currentUser } = useSealosStore();
+  const { closePanel } = usePanel();
 
   // Fetch devbox list using the new query
   const {
@@ -98,7 +100,7 @@ export default function App() {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         // edgeTypes={edgeTypes} // Uncomment if edgeTypes is available
-        // onPaneClick={hideDetails} // Uncomment if hideDetails is available
+        onPaneClick={closePanel} // Uncomment if hideDetails is available
         // onNodeClick={handleNodeClick} // Uncomment if handleNodeClick is available
       >
         <Background variant={BackgroundVariant.Dots} gap={60} size={1} />

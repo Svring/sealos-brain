@@ -1,5 +1,5 @@
 import { useCopilotAction } from "@copilotkit/react-core";
-import { useSealosDevbox } from "@/hooks/use-sealos-devbox";
+import { useSealosDevbox } from "@/lib/devbox/devbox-query";
 import { useDevboxUIActions } from "@/lib/action/devbox-ui-action";
 
 type ShutdownModeType = "Stopped" | "Shutdown";

@@ -9,7 +9,7 @@ import {
   useCoAgent,
 } from "@copilotkit/react-core";
 import { useEffect, useRef } from "react";
-import { useNodeView } from "@/components/node/node-view-provider";
+import { usePanel } from "@/components/node/panel-provider";
 import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create-view";
 
 type AgentState = {
@@ -123,7 +123,7 @@ You are the bridge between users and Sealos' cloud-native ecosystem, empowering 
 // Component to handle panel opening on copilot page
 function CopilotPanelHandler() {
   const { panel } = useControlStore();
-  const { showDetails, hideDetails, activeDetailsId } = useNodeView();
+  const { showDetails, hideDetails, activeDetailsId } = usePanel();
   const lastPanelRef = useRef<string | null>(null);
 
   useEffect(() => {

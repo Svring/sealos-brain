@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Play, Power, RotateCcw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { devboxByNameOptions } from "@/hooks/use-sealos-devbox";
+import { devboxByNameOptions } from "@/lib/devbox/devbox-query";
 
 export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   const { currentUser, regionUrl } = useSealosStore();

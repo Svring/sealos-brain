@@ -31,10 +31,10 @@ import { MainSection, NavigationItem } from "@/components/sidebar/sections";
 // Hooks and store
 import { useSealosStore } from "@/store/sealos-store";
 import { useSidebarControl } from "@/hooks/use-sidebar-control";
-import { accountAmountOptions } from "@/hooks/use-sealos-account";
+import { accountAmountOptions } from "@/lib/account/account-query";
 
 // Utils
-import { transformAccountAmountIntoBalance } from "@/lib/account/account-utils";
+import { transformAccountAmountIntoBalance } from "@/lib/account/account-transform";
 
 // Constants
 const NAVIGATION_ITEMS: NavigationItem[] = [
