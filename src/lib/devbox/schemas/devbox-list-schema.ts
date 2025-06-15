@@ -127,4 +127,6 @@ const TemplateSchema = z.object({
 // Top-level schema for the entire data structure
 const DataSchema = z.array(z.array(z.union([DevboxSchema, TemplateSchema])));
 
-export { DataSchema, DevboxSchema, TemplateSchema };
+export type DataSchema = z.infer<typeof DataSchema>;
+export type DevboxSchema = z.infer<typeof DevboxSchema>;
+export type TemplateSchema = z.infer<typeof TemplateSchema>;

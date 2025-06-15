@@ -1,697 +1,467 @@
-import { useCallback } from "react";
-import { useSealosStore } from "@/store/sealos-store";
-import { getCurrentUser } from "@/database/actions/user-actions";
-import { createDevboxContext } from "@/lib/devbox/devbox-provider";
-import { devboxEvents } from "@/hooks/use-devbox-sidebar";
-import {
-  DevboxContext,
-  buildDevboxUrls,
-  buildPlatformUrls,
-  createDevboxFetchOptions,
-  createDevboxPostFetchOptions,
-  createDevboxApiContext,
-  transformDevboxList,
-  transformCheckReady,
-  transformStartDevbox,
-  transformShutdownDevbox,
-  transformRestartDevbox,
-  transformCreateDevbox,
-  transformDelDevbox,
-  transformUpdateDevbox,
-  transformDevboxByName,
-  transformSSHConnectionInfo,
-  transformDelDevboxVersionByName,
-  transformEditDevboxVersion,
-  transformExecCommandInDevboxPod,
-  transformGetAppsByDevboxId,
-  transformGetDevboxPodsByDevboxName,
-  transformGetDevboxVersionList,
-  transformGetEnv,
-  transformReleaseDevbox,
-  transformTemplateRepositoryDelete,
-  transformTemplateRepositoryGet,
-  transformTemplateRepositoryList,
-  transformTemplateRepositoryListOfficial,
-  transformTemplateRepositoryListPrivate,
-  transformTemplateRepositoryTagList,
-  transformTemplateRepositoryTemplateDelete,
-  transformTemplateRepositoryTemplateGetConfig,
-  transformTemplateRepositoryTemplateList,
-  transformTemplateRepositoryUpdate,
-  transformTemplateRepositoryWithTemplateCreate,
-  transformTemplateRepositoryWithTemplateUpdate,
-  transformPlatformAuthCname,
-  transformPlatformGetDebt,
-  transformPlatformGetQuota,
-  transformPlatformResourcePrice,
-  transformMonitorData,
-} from "@/lib/devbox/devbox-utils";
-import { runWake } from "@/lib/wake";
-import { MonitorRequestParams } from "@/lib/devbox/schemas/monitor-schema";
+import { queryOptions } from "@tanstack/react-query";
+import axios from "axios";
+import { queryDebugLog } from "@/lib/tracing/query-debug-log";
 
-type ShutdownModeType = "Stopped" | "Shutdown";
-
-export function useSealosDevbox() {
-  const {
-    currentUser,
-    regionUrl,
-    setCurrentUser,
-    setRegionUrl,
-    getApiData,
-    setApiData,
-    isApiDataValid,
-    hasRequiredTokens,
-  } = useSealosStore();
-
-  const devboxAction = useCallback(
-    async (
-      url: string,
-      transformation: (data: any) => any,
-      fetchOptions: any,
-      invalidateList: boolean = false,
-      cacheKey?: string,
-      emitEvent: boolean = false,
-      actionType?: string
-    ) => {
-      try {
-        // For GET requests, check cache first
-        if (fetchOptions.method === "GET" && cacheKey) {
-          const cachedData = getApiData("devbox", cacheKey, regionUrl);
-          if (cachedData && isApiDataValid("devbox", cacheKey, regionUrl)) {
-            console.log(`Using cached data for ${cacheKey}`);
-            return cachedData;
-          }
-        }
-
-        const user = currentUser || (await getCurrentUser());
-        if (!user) {
-          throw new Error("No user found");
-        }
-        const currentRegionUrl = regionUrl;
-
-        if (!hasRequiredTokens("devbox")) {
-          throw new Error("User missing required tokens for devbox operations");
-        }
-
-        const devboxContext = await createDevboxContext(user, currentRegionUrl);
-        if (!devboxContext) {
-          throw new Error("Failed to create devbox context - missing tokens");
-        }
-
-        const apiContext = createDevboxApiContext(devboxContext);
-
-        const [result] = await runWake({
-          urls: [url],
-          transformations: [transformation],
-          fetchOptions: {
-            ...fetchOptions,
-            params: { ...fetchOptions.params, regionUrl: currentRegionUrl },
-          },
-          context: apiContext,
-        });
-
-        if (invalidateList) {
-          setApiData("devbox", "getDevboxList", null, currentRegionUrl);
-        }
-
-        if (cacheKey) {
-          setApiData("devbox", cacheKey, result, currentRegionUrl);
-        }
-
-        // Emit event for state-changing actions
-        if (emitEvent && actionType) {
-          devboxEvents.emit("devbox-action-completed", {
-            action: actionType,
-            url,
-            result,
-          });
-        }
-
-        return result;
-      } catch (error) {
-        console.error(`Error performing devbox action for ${url}:`, error);
-        throw error;
-      }
-    },
-    [
-      currentUser,
-      regionUrl,
-      hasRequiredTokens,
-      setApiData,
-      getApiData,
-      isApiDataValid,
-      setCurrentUser,
-    ]
-  );
-
-  const fetchDevboxList = useCallback(
-    async (forceRefresh = false) => {
-      const urls = buildDevboxUrls();
-      if (forceRefresh) {
-        setApiData("devbox", "getDevboxList", null, regionUrl);
-      }
-      return devboxAction(
-        urls.list,
-        transformDevboxList,
-        createDevboxFetchOptions("GET"),
-        false,
-        "getDevboxList"
-      );
-    },
-    [devboxAction, setApiData, regionUrl]
-  );
-
-  const fetchDevboxReadyStatus = useCallback(
-    async (devboxName: string) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.checkReady,
-        transformCheckReady,
-        createDevboxFetchOptions("GET", { devboxName }),
-        false,
-        `checkReady-${devboxName}`
-      );
-    },
-    [devboxAction]
-  );
-
-  const startDevbox = useCallback(
-    async (devboxName: string) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.start,
-        transformStartDevbox,
-        createDevboxPostFetchOptions({ devboxName }),
-        true,
-        undefined,
-        true,
-        "start"
-      );
-    },
-    [devboxAction]
-  );
-
-  const shutdownDevbox = useCallback(
-    async (devboxName: string, shutdownMode: ShutdownModeType = "Stopped") => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.shutdown,
-        transformShutdownDevbox,
-        createDevboxPostFetchOptions({ devboxName, shutdownMode }),
-        true,
-        undefined,
-        true,
-        "shutdown"
-      );
-    },
-    [devboxAction]
-  );
-
-  const restartDevbox = useCallback(
-    async (devboxName: string) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.restart,
-        transformRestartDevbox,
-        createDevboxPostFetchOptions({ devboxName }),
-        true,
-        undefined,
-        true,
-        "restart"
-      );
-    },
-    [devboxAction]
-  );
-
-  const createDevbox = useCallback(
-    async (data: any) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.create,
-        transformCreateDevbox,
-        createDevboxPostFetchOptions(data),
-        true,
-        undefined,
-        true,
-        "create"
-      );
-    },
-    [devboxAction]
-  );
-
-  const deleteDevbox = useCallback(
-    async (devboxName: string) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.delete,
-        transformDelDevbox,
-        createDevboxPostFetchOptions({ devboxName }),
-        true,
-        undefined,
-        true,
-        "delete"
-      );
-    },
-    [devboxAction]
-  );
-
-  const updateDevbox = useCallback(
-    async (data: any) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.update,
-        transformUpdateDevbox,
-        createDevboxPostFetchOptions(data),
-        true,
-        undefined,
-        true,
-        "update"
-      );
-    },
-    [devboxAction]
-  );
-
-  const getDevboxByName = useCallback(
-    async (devboxName: string) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.byName,
-        transformDevboxByName,
-        createDevboxFetchOptions("GET", { devboxName }),
-        false,
-        `getDevboxByName-${devboxName}`
-      );
-    },
-    [devboxAction]
-  );
-
-  const getSSHConnectionInfo = useCallback(
-    async (devboxName: string) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.sshInfo,
-        transformSSHConnectionInfo,
-        createDevboxFetchOptions("GET", { devboxName }),
-        false,
-        `getSSHConnectionInfo-${devboxName}`
-      );
-    },
-    [devboxAction]
-  );
-
-  const genericDevboxAction = useCallback(
-    (
-      endpoint: keyof Omit<
-        ReturnType<typeof buildDevboxUrls>,
-        | "templateRepo"
-        | "list"
-        | "byName"
-        | "sshInfo"
-        | "checkReady"
-        | "start"
-        | "shutdown"
-        | "restart"
-        | "create"
-        | "delete"
-        | "update"
-      >,
-      transformation: (data: any) => any,
-      isPost: boolean = false,
-      invalidateList: boolean = false,
-      emitEvent: boolean = false
-    ) => {
-      return async (data: any) => {
-        const urls = buildDevboxUrls();
-        const url = urls[endpoint] as string;
-        const options = isPost
-          ? createDevboxPostFetchOptions(data)
-          : createDevboxFetchOptions("GET", data);
-        return devboxAction(
-          url,
-          transformation,
-          options,
-          invalidateList,
-          undefined,
-          emitEvent,
-          endpoint as string
-        );
-      };
-    },
-    [devboxAction]
-  );
-
-  const genericTemplateRepoAction = useCallback(
-    (
-      endpoint: keyof ReturnType<typeof buildDevboxUrls>["templateRepo"],
-      transformation: (data: any) => any,
-      isPost: boolean = false,
-      invalidateList: boolean = false,
-      emitEvent: boolean = false
-    ) => {
-      return async (data: any) => {
-        const urls = buildDevboxUrls();
-        // This is tricky because the endpoint can be nested.
-        let url: string;
-        if (typeof urls.templateRepo[endpoint] === "string") {
-          url = urls.templateRepo[endpoint] as string;
-        } else {
-          // This part is not robust and assumes a certain structure
-          // It needs to be fixed if the structure is deeper or different.
-          console.error(
-            "Nested template repo URLs are not handled generically yet."
-          );
-          return;
-        }
-
-        const options = isPost
-          ? createDevboxPostFetchOptions(data)
-          : createDevboxFetchOptions("GET", data);
-        return devboxAction(
-          url,
-          transformation,
-          options,
-          invalidateList,
-          undefined,
-          emitEvent,
-          `templateRepo-${endpoint as string}`
-        );
-      };
-    },
-    [devboxAction]
-  );
-
-  const delDevboxVersionByName = useCallback(
-    genericDevboxAction(
-      "delDevboxVersionByName",
-      transformDelDevboxVersionByName,
-      true,
-      true,
-      true
-    ),
-    [genericDevboxAction]
-  );
-  const editDevboxVersion = useCallback(
-    genericDevboxAction(
-      "editDevboxVersion",
-      transformEditDevboxVersion,
-      true,
-      true,
-      true
-    ),
-    [genericDevboxAction]
-  );
-  const execCommandInDevboxPod = useCallback(
-    genericDevboxAction("exec", transformExecCommandInDevboxPod, true),
-    [genericDevboxAction]
-  );
-  const getAppsByDevboxId = useCallback(
-    genericDevboxAction("getApps", transformGetAppsByDevboxId),
-    [genericDevboxAction]
-  );
-  const getDevboxPodsByDevboxName = useCallback(
-    genericDevboxAction("getPods", transformGetDevboxPodsByDevboxName),
-    [genericDevboxAction]
-  );
-  const getDevboxVersionList = useCallback(
-    genericDevboxAction("getVersionList", transformGetDevboxVersionList),
-    [genericDevboxAction]
-  );
-  const getEnv = useCallback(genericDevboxAction("getEnv", transformGetEnv), [
-    genericDevboxAction,
-  ]);
-  const releaseDevbox = useCallback(
-    genericDevboxAction("release", transformReleaseDevbox, true, true, true),
-    [genericDevboxAction]
-  );
-
-  const templateRepositoryDelete = useCallback(
-    genericTemplateRepoAction(
-      "delete",
-      transformTemplateRepositoryDelete,
-      true,
-      true,
-      true
-    ),
-    [genericTemplateRepoAction]
-  );
-  const templateRepositoryGet = useCallback(
-    genericTemplateRepoAction("get", transformTemplateRepositoryGet),
-    [genericTemplateRepoAction]
-  );
-  const templateRepositoryList = useCallback(
-    genericTemplateRepoAction("list", transformTemplateRepositoryList),
-    [genericTemplateRepoAction]
-  );
-  const templateRepositoryListOfficial = useCallback(
-    genericTemplateRepoAction(
-      "listOfficial",
-      transformTemplateRepositoryListOfficial
-    ),
-    [genericTemplateRepoAction]
-  );
-  const templateRepositoryListPrivate = useCallback(
-    genericTemplateRepoAction(
-      "listPrivate",
-      transformTemplateRepositoryListPrivate
-    ),
-    [genericTemplateRepoAction]
-  );
-  const templateRepositoryUpdate = useCallback(
-    genericTemplateRepoAction(
-      "update",
-      transformTemplateRepositoryUpdate,
-      true,
-      true,
-      true
-    ),
-    [genericTemplateRepoAction]
-  );
-  // How to handle nested ones?
-  // I will just implement them manually for now.
-  const listTags = useCallback(
-    async (data: any) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.templateRepo.tag.list,
-        transformTemplateRepositoryTagList,
-        createDevboxFetchOptions("GET", data)
-      );
-    },
-    [devboxAction]
-  );
-
-  const deleteTemplate = useCallback(
-    async (data: any) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.templateRepo.template.delete,
-        transformTemplateRepositoryTemplateDelete,
-        createDevboxPostFetchOptions(data),
-        true,
-        undefined,
-        true,
-        "templateDelete"
-      );
-    },
-    [devboxAction]
-  );
-
-  const getTemplateConfig = useCallback(
-    async (data: any) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.templateRepo.template.getConfig,
-        transformTemplateRepositoryTemplateGetConfig,
-        createDevboxFetchOptions("GET", data)
-      );
-    },
-    [devboxAction]
-  );
-
-  const listTemplates = useCallback(
-    async (data: any) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.templateRepo.template.list,
-        transformTemplateRepositoryTemplateList,
-        createDevboxFetchOptions("GET", data)
-      );
-    },
-    [devboxAction]
-  );
-
-  const createWithTemplate = useCallback(
-    async (data: any) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.templateRepo.withTemplate.create,
-        transformTemplateRepositoryWithTemplateCreate,
-        createDevboxPostFetchOptions(data),
-        true,
-        undefined,
-        true,
-        "createWithTemplate"
-      );
-    },
-    [devboxAction]
-  );
-
-  const updateWithTemplate = useCallback(
-    async (data: any) => {
-      const urls = buildDevboxUrls();
-      return devboxAction(
-        urls.templateRepo.withTemplate.update,
-        transformTemplateRepositoryWithTemplateUpdate,
-        createDevboxPostFetchOptions(data),
-        true,
-        undefined,
-        true,
-        "updateWithTemplate"
-      );
-    },
-    [devboxAction]
-  );
-
-  // Platform API functions
-  const platformAction = useCallback(
-    async (
-      endpoint: keyof ReturnType<typeof buildPlatformUrls>,
-      transformation: (data: any) => any,
-      isPost: boolean = false,
-      data?: any
-    ) => {
-      try {
-        const user = currentUser || (await getCurrentUser());
-        if (!user) {
-          throw new Error("No user found");
-        }
-        const currentRegionUrl = regionUrl;
-
-        if (!hasRequiredTokens("devbox")) {
-          throw new Error(
-            "User missing required tokens for platform operations"
-          );
-        }
-
-        const urls = buildPlatformUrls();
-        const url = urls[endpoint];
-
-        const [result] = await runWake({
-          urls: [url],
-          transformations: [transformation],
-          fetchOptions: {
-            method: isPost ? "POST" : "GET",
-            params: { regionUrl: currentRegionUrl },
-            ...(isPost && data ? { data } : {}),
-          },
-          context: {
-            authorization:
-              user.tokens?.find((t) => t.type === "kubeconfig")?.value || "",
-          },
-        });
-
-        return result;
-      } catch (error) {
-        console.error(
-          `Error performing platform action for ${endpoint}:`,
-          error
-        );
-        throw error;
-      }
-    },
-    [currentUser, regionUrl, hasRequiredTokens]
-  );
-
-  const authCname = useCallback(
-    async (data: { publicDomain: string; customDomain: string }) => {
-      return platformAction(
-        "authCname",
-        transformPlatformAuthCname,
-        true,
-        data
-      );
-    },
-    [platformAction]
-  );
-
-  const getDebt = useCallback(async () => {
-    return platformAction("getDebt", transformPlatformGetDebt);
-  }, [platformAction]);
-
-  const getQuota = useCallback(async () => {
-    return platformAction("getQuota", transformPlatformGetQuota);
-  }, [platformAction]);
-
-  const getResourcePrice = useCallback(async () => {
-    return platformAction("resourcePrice", transformPlatformResourcePrice);
-  }, [platformAction]);
-
-  const getMonitorData = useCallback(
-    async (params: MonitorRequestParams) => {
-      const urls = buildDevboxUrls();
-      const queryParams = {
-        queryName: params.queryName,
-        queryKey: params.queryKey,
-        start: params.start,
-        end: params.end,
-        step: params.step,
-      };
-
-      return devboxAction(
-        urls.monitor.getMonitorData,
-        transformMonitorData,
-        createDevboxFetchOptions("GET", queryParams),
-        false,
-        `getMonitorData-${params.queryName}-${params.queryKey}`
-      );
-    },
-    [devboxAction]
-  );
-
+function getDevboxHeaders(currentUser: any) {
   return {
-    currentUser,
-    regionUrl,
-    fetchDevboxList,
-    fetchDevboxReadyStatus,
-    startDevbox,
-    shutdownDevbox,
-    restartDevbox,
-    createDevbox,
-    deleteDevbox,
-    updateDevbox,
-    getDevboxByName,
-    getSSHConnectionInfo,
-    delDevboxVersionByName,
-    editDevboxVersion,
-    execCommandInDevboxPod,
-    getAppsByDevboxId,
-    getDevboxPodsByDevboxName,
-    getDevboxVersionList,
-    getEnv,
-    releaseDevbox,
-    templateRepositoryDelete,
-    templateRepositoryGet,
-    templateRepositoryList,
-    templateRepositoryListOfficial,
-    templateRepositoryListPrivate,
-    templateRepositoryUpdate,
-    listTags,
-    deleteTemplate,
-    getTemplateConfig,
-    listTemplates,
-    createWithTemplate,
-    updateWithTemplate,
-    // Monitor functions
-    getMonitorData,
-    // Platform API functions
-    authCname,
-    getDebt,
-    getQuota,
-    getResourcePrice,
-    hasRequiredTokens: (type: "devbox" | "account") => hasRequiredTokens(type),
-    getCachedDevboxList: (regionUrl: string) =>
-      getApiData("devbox", "getDevboxList", regionUrl),
-    isDevboxListValid: (regionUrl: string) =>
-      isApiDataValid("devbox", "getDevboxList", regionUrl),
+    Authorization:
+      currentUser?.tokens?.find((t: any) => t.type === "kubeconfig")?.value ||
+      "",
+    "Authorization-Bearer":
+      currentUser?.tokens?.find((t: any) => t.type === "custom")?.value || "",
   };
 }
+
+export function devboxListOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "list", regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl,
+    queryFn: async () => {
+      queryDebugLog("devboxListOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/getDevboxList?regionUrl=${regionUrl}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function devboxByNameOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  devboxName: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "byName", devboxName, regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl && !!devboxName,
+    queryFn: async () => {
+      queryDebugLog("devboxByNameOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        devboxName,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/getDevboxByName?regionUrl=${regionUrl}&devboxName=${devboxName}&mock=false`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function sshConnectionInfoOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  devboxName: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "sshInfo", devboxName, regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl && !!devboxName,
+    queryFn: async () => {
+      queryDebugLog("sshConnectionInfoOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        devboxName,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/getSSHConnectionInfo?regionUrl=${regionUrl}&devboxName=${devboxName}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function devboxReadyStatusOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  devboxName: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "checkReady", devboxName, regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl && !!devboxName,
+    queryFn: async () => {
+      queryDebugLog("devboxReadyStatusOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        devboxName,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/checkReady?regionUrl=${regionUrl}&devboxName=${devboxName}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function appsByDevboxIdOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  devboxId: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "getApps", devboxId, regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl && !!devboxId,
+    queryFn: async () => {
+      queryDebugLog("appsByDevboxIdOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        devboxId,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/getAppsByDevboxId?regionUrl=${regionUrl}&devboxId=${devboxId}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function devboxPodsByDevboxNameOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  devboxName: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "getPods", devboxName, regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl && !!devboxName,
+    queryFn: async () => {
+      queryDebugLog("devboxPodsByDevboxNameOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        devboxName,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/getDevboxPodsByDevboxName?regionUrl=${regionUrl}&devboxName=${devboxName}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function devboxVersionListOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  devboxName: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "devbox",
+      "getVersionList",
+      devboxName,
+      regionUrl,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser && !!regionUrl && !!devboxName,
+    queryFn: async () => {
+      queryDebugLog("devboxVersionListOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        devboxName,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/getDevboxVersionList?regionUrl=${regionUrl}&devboxName=${devboxName}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function devboxEnvOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  devboxName: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "getEnv", devboxName, regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl && !!devboxName,
+    queryFn: async () => {
+      queryDebugLog("devboxEnvOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        devboxName,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/getEnv?regionUrl=${regionUrl}&devboxName=${devboxName}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function monitorDataOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  params: any,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "monitor", params, regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl && !!params,
+    queryFn: async () => {
+      queryDebugLog("monitorDataOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        params,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/monitor/getMonitorData?regionUrl=${regionUrl}&${new URLSearchParams(params).toString()}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function templateRepositoryListOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "templateRepo", "list", regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl,
+    queryFn: async () => {
+      queryDebugLog("templateRepositoryListOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/templateRepository/list?regionUrl=${regionUrl}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function templateRepositoryListOfficialOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "devbox",
+      "templateRepo",
+      "listOfficial",
+      regionUrl,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser && !!regionUrl,
+    queryFn: async () => {
+      queryDebugLog("templateRepositoryListOfficialOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/templateRepository/listOfficial?regionUrl=${regionUrl}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function templateRepositoryListPrivateOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "devbox",
+      "templateRepo",
+      "listPrivate",
+      regionUrl,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser && !!regionUrl,
+    queryFn: async () => {
+      queryDebugLog("templateRepositoryListPrivateOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/templateRepository/listPrivate?regionUrl=${regionUrl}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function templateRepositoryTagListOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  params: any,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "devbox",
+      "templateRepo",
+      "tag",
+      "list",
+      params,
+      regionUrl,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser && !!regionUrl && !!params,
+    queryFn: async () => {
+      queryDebugLog("templateRepositoryTagListOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        params,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/templateRepository/tag/list?regionUrl=${regionUrl}&${new URLSearchParams(params).toString()}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function templateRepositoryGetOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  id: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "templateRepo", "get", id, regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl && !!id,
+    queryFn: async () => {
+      queryDebugLog("templateRepositoryGetOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        id,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/templateRepository/get?regionUrl=${regionUrl}&id=${id}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function templateRepositoryTemplateGetConfigOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  id: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "devbox",
+      "templateRepo",
+      "template",
+      "getConfig",
+      id,
+      regionUrl,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser && !!regionUrl && !!id,
+    queryFn: async () => {
+      queryDebugLog("templateRepositoryTemplateGetConfigOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        id,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/templateRepository/template/getConfig?regionUrl=${regionUrl}&id=${id}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+export function templateRepositoryTemplateListOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  params: any,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "devbox",
+      "templateRepo",
+      "template",
+      "list",
+      params,
+      regionUrl,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser && !!regionUrl && !!params,
+    queryFn: async () => {
+      queryDebugLog("templateRepositoryTemplateListOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+        params,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/templateRepository/template/list?regionUrl=${regionUrl}&${new URLSearchParams(params).toString()}`,
+        { headers }
+      );
+      return response.data.data;
+    },
+    select: postprocess,
+  });
+}
+
+// Usage example:
+// const { currentUser, regionUrl } = useSealosStore();
+// const query = useQuery(devboxListOptions(currentUser, regionUrl));

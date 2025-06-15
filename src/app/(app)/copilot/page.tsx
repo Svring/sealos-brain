@@ -4,6 +4,7 @@ import { CopilotChat } from "@copilotkit/react-ui";
 import { useSealosStore } from "@/store/sealos-store";
 import { useControlStore } from "@/store/control-store";
 import { useSealosTools } from "@/lib/tool/sealos-tool";
+import { useActionHub } from "@/lib/action/action-hub";
 import {
   useCoAgent,
 } from "@copilotkit/react-core";
@@ -172,8 +173,9 @@ export default function CopilotPage() {
   const lastTimestampRef = useRef<number | null>(null);
   const lastUIStateRef = useRef<string | null>(null);
 
-  // Use all Sealos tools
+  // Use all Sealos tools and AI actions
   useSealosTools();
+  useActionHub();
 
   const { setState } = useCoAgent<AgentState>({
     name: "copilot",

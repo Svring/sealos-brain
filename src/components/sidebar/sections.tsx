@@ -7,16 +7,14 @@ import { SidebarPath } from "@/components/providers/sidebar/types";
 export interface NavigationItem {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
-  path: SidebarPath;
   group: "overview" | "application";
 }
 
 export interface MainSectionProps {
   navigationItems: NavigationItem[];
-  handleNavigate: (path: SidebarPath) => void;
 }
 
-export const MainSection: React.FC<MainSectionProps> = ({ navigationItems, handleNavigate }) => (
+export const MainSection: React.FC<MainSectionProps> = ({ navigationItems }) => (
   <>
     <SidebarGroup>
       <SidebarGroupLabel>Overview</SidebarGroupLabel>
@@ -26,7 +24,7 @@ export const MainSection: React.FC<MainSectionProps> = ({ navigationItems, handl
             .filter((item) => item.group === "overview")
             .map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton onClick={() => handleNavigate(item.path)}>
+                <SidebarMenuButton>
                   <item.icon className="w-4 h-4" />
                   <span>{item.title}</span>
                 </SidebarMenuButton>
@@ -43,7 +41,7 @@ export const MainSection: React.FC<MainSectionProps> = ({ navigationItems, handl
             .filter((item) => item.group === "application")
             .map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton onClick={() => handleNavigate(item.path)}>
+                <SidebarMenuButton>
                   <item.icon className="w-4 h-4" />
                   <span>{item.title}</span>
                 </SidebarMenuButton>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { useSealosStore } from "@/store/sealos-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -6,89 +6,33 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { useSealosDevbox } from "@/hooks/use-sealos-devbox";
-import { devboxEvents } from "@/hooks/use-devbox-sidebar";
-import { Play, Power, RotateCcw, Activity } from "lucide-react";
-import { MonitorDataResult } from "@/lib/devbox/schemas/monitor-schema";
+import { Play, Power, RotateCcw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { devboxByNameOptions } from "@/hooks/use-sealos-devbox";
 
 export default function DevboxDetail({ devboxName }: { devboxName: string }) {
-  const { getDevboxByName } = useSealosStore();
-  const { startDevbox, shutdownDevbox, restartDevbox, getMonitorData } = useSealosDevbox();
-  
-  const [monitorData, setMonitorData] = useState<{
-    cpu?: MonitorDataResult[];
-    memory?: MonitorDataResult[];
-    disk?: MonitorDataResult[];
-  }>({});
-  const [loadingMonitor, setLoadingMonitor] = useState(false);
+  const { currentUser, regionUrl } = useSealosStore();
 
-  const devboxData = getDevboxByName(devboxName);
-  const devbox = devboxData?.devbox;
-  const readyData = devboxData?.readyData;
+  const { data: devbox, isLoading } = useQuery(
+    devboxByNameOptions(currentUser, regionUrl, devboxName)
+  );
 
   const handleStart = async () => {
-    try {
-      await startDevbox(devboxName);
-      devboxEvents.emit('devbox-action-completed', { action: 'start', devboxName });
-    } catch (error) {
-      console.error("Failed to start devbox:", error);
-    }
+    // TODO: Implement devbox start functionality
+    console.log("Start devbox:", devboxName);
   };
 
   const handleShutdown = async () => {
-    try {
-      await shutdownDevbox(devboxName);
-      devboxEvents.emit('devbox-action-completed', { action: 'shutdown', devboxName });
-    } catch (error) {
-      console.error("Failed to shutdown devbox:", error);
-    }
+    // TODO: Implement devbox shutdown functionality
+    console.log("Shutdown devbox:", devboxName);
   };
 
   const handleRestart = async () => {
-    try {
-      await restartDevbox(devboxName);
-      devboxEvents.emit('devbox-action-completed', { action: 'restart', devboxName });
-    } catch (error) {
-      console.error("Failed to restart devbox:", error);
-    }
+    // TODO: Implement devbox restart functionality
+    console.log("Restart devbox:", devboxName);
   };
 
-  const fetchMonitorData = async () => {
-    if (!devboxName) return;
-    
-    setLoadingMonitor(true);
-    try {
-      const [cpuData, memoryData, diskData] = await Promise.allSettled([
-        getMonitorData({
-          queryName: devboxName,
-          queryKey: 'cpu',
-          step: '1m'
-        }),
-        getMonitorData({
-          queryName: devboxName,
-          queryKey: 'memory',
-          step: '1m'
-        }),
-        getMonitorData({
-          queryName: devboxName,
-          queryKey: 'disk',
-          step: '1m'
-        })
-      ]);
-
-      setMonitorData({
-        cpu: cpuData.status === 'fulfilled' ? cpuData.value : undefined,
-        memory: memoryData.status === 'fulfilled' ? memoryData.value : undefined,
-        disk: diskData.status === 'fulfilled' ? diskData.value : undefined,
-      });
-    } catch (error) {
-      console.error("Failed to fetch monitor data:", error);
-    } finally {
-      setLoadingMonitor(false);
-    }
-  };
-
-  if (!devbox) {
+  if (isLoading || !devbox) {
     return (
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -99,7 +43,8 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
     );
   }
 
-  const isRunning = devbox.status?.phase === "Running";
+  const isRunning = devbox.status.value === "Running";
+  const templateConfig = typeof devbox.templateConfig === 'string' ? JSON.parse(devbox.templateConfig) : devbox.templateConfig;
 
   const tabs = [
     {
@@ -114,31 +59,50 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
             <div className="grid gap-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Name</span>
-                <span className="font-medium">{devbox.metadata?.name}</span>
+                <span className="font-medium">{devbox.name}</span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Phase</span>
-                <Badge
-                  variant={
-                    devbox.status?.phase === "Running"
-                      ? "default"
-                      : devbox.status?.phase === "Shutdown"
-                        ? "destructive"
-                        : "secondary"
-                  }
-                >
-                  {devbox.status?.phase}
-                </Badge>
+                <span className="text-muted-foreground">Status</span>
+                <span className="flex items-center gap-2">
+                  <span
+                    className="rounded px-2 py-0.5 text-xs"
+                    style={{
+                      color: devbox.status.color,
+                      background: devbox.status.backgroundColor,
+                    }}
+                  >
+                    {devbox.status.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({devbox.status.value})
+                  </span>
+                </span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Created</span>
-                <span>
-                  {new Date(
-                    devbox.metadata?.creationTimestamp
-                  ).toLocaleString()}
-                </span>
+                <span>{new Date(devbox.createTime).toLocaleString()}</span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Image</span>
+                <span className="font-mono text-xs">{devbox.image}</span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Icon</span>
+                <span className="font-mono text-xs">{devbox.iconId}</span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Template</span>
+                <span>{devbox.templateName}</span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Repository</span>
+                <span>{devbox.templateRepositoryName}</span>
               </div>
             </div>
           </CardContent>
@@ -157,78 +121,26 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Image</span>
-                  <span className="font-mono text-xs">{devbox.spec?.image}</span>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">User</span>
-                  <span>{devbox.spec?.config?.user}</span>
+                  <span>{templateConfig.user}</span>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Working Dir</span>
+                  <span className="font-mono text-xs">{templateConfig.workingDir}</span>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Release Command</span>
                   <span className="font-mono text-xs">
-                    {devbox.spec?.config?.workingDir}
+                    {templateConfig.releaseCommand?.join(" ")}
                   </span>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Squash</span>
-                  <span>{devbox.spec?.squash ? "Yes" : "No"}</span>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Template ID</span>
+                  <span className="text-muted-foreground">Release Args</span>
                   <span className="font-mono text-xs">
-                    {devbox.spec?.templateID}
-                  </span>
-                </div>
-                {devbox.spec?.config?.releaseCommand && (
-                  <>
-                    <Separator />
-                    <div>
-                      <span className="text-muted-foreground block mb-1">
-                        Release Command
-                      </span>
-                      <code className="bg-card/50 rounded p-2 block font-mono text-xs">
-                        {devbox.spec.config.releaseCommand.join(" ")}
-                      </code>
-                    </div>
-                  </>
-                )}
-                {devbox.spec?.config?.releaseArgs &&
-                  devbox.spec.config.releaseArgs.length > 0 && (
-                    <>
-                      <Separator />
-                      <div>
-                        <span className="text-muted-foreground block mb-1">
-                          Release Args
-                        </span>
-                        <code className="bg-card/50 rounded p-2 block font-mono text-xs">
-                          {devbox.spec.config.releaseArgs.join(" ")}
-                        </code>
-                      </div>
-                    </>
-                  )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-muted/50">
-              <CardHeader>
-                <CardTitle>Resource Allocation</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4 text-sm">
-                <div className="bg-card rounded p-3 flex flex-col items-center">
-                  <span className="text-muted-foreground">CPU</span>
-                  <span className="font-bold text-lg">
-                    {devbox.spec?.resource?.cpu}
-                  </span>
-                </div>
-                <div className="bg-card rounded p-3 flex flex-col items-center">
-                  <span className="text-muted-foreground">Memory</span>
-                  <span className="font-bold text-lg">
-                    {devbox.spec?.resource?.memory}
+                    {templateConfig.releaseArgs?.join(" ")}
                   </span>
                 </div>
               </CardContent>
@@ -245,14 +157,48 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
           <div className="space-y-4">
             <Card className="bg-muted/50">
               <CardHeader>
-                <CardTitle>Network Configuration</CardTitle>
+                <CardTitle>Networks</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {devbox.spec?.config?.ports?.map((port: any, index: number) => (
-                  <div key={index} className="space-y-3">
-                    {index > 0 && <Separator />}
+                {devbox.networks.map((net: any, idx: number) => (
+                  <div key={idx} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Port Name</span>
+                      <span className="font-mono text-xs">{net.portName}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Port</span>
+                      <span className="font-mono text-xs">{net.port}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Protocol</span>
+                      <span className="font-mono text-xs">{net.protocol}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Network Name</span>
+                      <span className="font-mono text-xs">{net.networkName}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Public Domain</span>
+                      <span className="font-mono text-xs">{net.publicDomain}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Custom Domain</span>
+                      <span className="font-mono text-xs">{net.customDomain}</span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/50">
+              <CardHeader>
+                <CardTitle>Ports</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {templateConfig.ports.map((port: any, idx: number) => (
+                  <div key={idx} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Name</span>
                       <span className="font-mono text-xs">{port.name}</span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -267,16 +213,14 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                 ))}
               </CardContent>
             </Card>
-
-            {devbox.spec?.config?.appPorts && devbox.spec.config.appPorts.length > 0 && (
+            {templateConfig.appPorts.length > 0 && (
               <Card className="bg-muted/50">
                 <CardHeader>
                   <CardTitle>Application Ports</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {devbox.spec.config.appPorts.map((port: any, index: number) => (
-                    <div key={index} className="space-y-3">
-                      {index > 0 && <Separator />}
+                  {templateConfig.appPorts.map((port: any, idx: number) => (
+                    <div key={idx} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Name</span>
                         <span className="font-mono text-xs">{port.name}</span>
@@ -303,112 +247,74 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
       ),
     },
     {
-      id: "monitor",
-      label: "Monitor",
+      id: "resource",
+      label: "Resource",
       content: (
         <ScrollArea className="h-full">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium">Performance Metrics</h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchMonitorData}
-                disabled={loadingMonitor}
-                className="flex items-center gap-1"
-              >
-                <Activity className="w-4 h-4" />
-                {loadingMonitor ? "Loading..." : "Refresh"}
-              </Button>
-            </div>
-            
-            {loadingMonitor ? (
-              <div className="text-center text-sm text-muted-foreground py-8">
-                Loading monitor data...
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {/* CPU Metrics */}
-                <Card className="bg-muted/50">
-                  <CardHeader>
-                    <CardTitle className="text-sm">CPU Usage</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {monitorData.cpu && monitorData.cpu.length > 0 ? (
-                      <div className="space-y-2">
-                        {monitorData.cpu.map((item, idx) => (
-                          <div key={idx} className="text-xs">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">{item.name}</span>
-                              <span>{item.yData[item.yData.length - 1]}%</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground">No CPU data available</div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Memory Metrics */}
-                <Card className="bg-muted/50">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Memory Usage</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {monitorData.memory && monitorData.memory.length > 0 ? (
-                      <div className="space-y-2">
-                        {monitorData.memory.map((item, idx) => (
-                          <div key={idx} className="text-xs">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">{item.name}</span>
-                              <span>{item.yData[item.yData.length - 1]}%</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground">No memory data available</div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Disk Metrics */}
-                <Card className="bg-muted/50">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Disk Usage</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {monitorData.disk && monitorData.disk.length > 0 ? (
-                      <div className="space-y-2">
-                        {monitorData.disk.map((item, idx) => (
-                          <div key={idx} className="text-xs">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">{item.name}</span>
-                              <span>{item.yData[item.yData.length - 1]}%</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground">No disk data available</div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+            <Card className="bg-muted/50">
+              <CardHeader>
+                <CardTitle>Resource Usage</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">CPU</span>
+                  <span className="font-bold text-lg">{devbox.cpu}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Memory</span>
+                  <span className="font-bold text-lg">{devbox.memory}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">GPU</span>
+                  <span className="font-mono text-xs">
+                    {devbox.gpu.type} ({devbox.gpu.amount})
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Used CPU</span>
+                  <span className="font-mono text-xs">
+                    {devbox.usedCpu.xData.join(", ")} {devbox.usedCpu.name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Used Memory</span>
+                  <span className="font-mono text-xs">
+                    {devbox.usedMemory.xData.join(", ")} {devbox.usedMemory.name}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </ScrollArea>
       ),
     },
     {
-      id: "release",
-      label: "Release",
+      id: "advanced",
+      label: "Advanced",
       content: (
         <ScrollArea className="h-full">
-          <div className="text-center text-sm text-muted-foreground py-8">
-            No release data available
+          <div className="space-y-4">
+            <Card className="bg-muted/50">
+              <CardHeader>
+                <CardTitle>Advanced Info</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">SSH Port</span>
+                  <span className="font-mono text-xs">{devbox.sshPort}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Paused</span>
+                  <span>{devbox.isPause ? "Yes" : "No"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Last Terminated Reason</span>
+                  <span>{devbox.lastTerminatedReason}</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </ScrollArea>
       ),
