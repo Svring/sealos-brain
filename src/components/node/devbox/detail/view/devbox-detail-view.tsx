@@ -5,9 +5,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Play, Power, RotateCcw, Trash2 } from "lucide-react";
+import { Play, Power, RotateCcw, Trash2, Link } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { devboxByNameOptions } from "@/lib/devbox/devbox-query";
+import { devboxByNameOptions, sshConnectionInfoOptions } from "@/lib/devbox/devbox-query";
+import { namespaceListOptions } from "@/lib/auth/auth-query";
+import { getFirstNamespaceId } from "@/lib/auth/auth-transform";
 import {
   startDevboxMutation,
   shutdownDevboxMutation,
@@ -27,6 +29,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   const { currentUser, regionUrl } = useSealosStore();
@@ -34,6 +41,16 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
 
   const { data: devbox, isLoading } = useQuery(
     devboxByNameOptions(currentUser, regionUrl, devboxName)
+  );
+
+  // SSH connection info query
+  const { data: sshConnectionInfo } = useQuery(
+    sshConnectionInfoOptions(currentUser, regionUrl, devboxName)
+  );
+
+  // Namespace query
+  const { data: namespaceId } = useQuery(
+    namespaceListOptions(currentUser, regionUrl, getFirstNamespaceId)
   );
 
   // Mutation hooks
@@ -45,6 +62,33 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
     restartDevboxMutation(currentUser, regionUrl);
   const { mutateAsync: deleteDevbox, isPending: isDeleting } =
     deleteDevboxMutation(currentUser, regionUrl);
+
+  const handleOpenIDE = async () => {
+    try {
+      if (!sshConnectionInfo || !devbox || !namespaceId) {
+        toast.error("Required connection information not available");
+        return;
+      }
+
+      const { base64PrivateKey, userName, workingDir, token } = sshConnectionInfo;
+      const sshPort = devbox.sshPort;
+      const idePrefix = 'cursor://';
+      const sealosDomain = regionUrl;
+
+      const fullUri = `${idePrefix}labring.devbox-aio?sshDomain=${encodeURIComponent(
+        `${userName}@${sealosDomain}`
+      )}&sshPort=${encodeURIComponent(sshPort)}&base64PrivateKey=${encodeURIComponent(
+        base64PrivateKey
+      )}&sshHostLabel=${encodeURIComponent(
+        `${sealosDomain}_${namespaceId}_${devboxName}`
+      )}&workingDir=${encodeURIComponent(workingDir)}&token=${encodeURIComponent(token)}`;
+      
+      window.location.href = fullUri;
+    } catch (error: any) {
+      console.error("Failed to open IDE:", error);
+      toast.error(error?.message || "Failed to open IDE");
+    }
+  };
 
   const handleDelete = async () => {
     try {
@@ -384,50 +428,90 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Devbox Details</h2>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => startDevbox(devboxName)}
-            disabled={isRunning || isStarting}
-            className="flex items-center gap-1"
-          >
-            <Play className="w-4 h-4" />
-            {isStarting ? "Starting..." : "Start"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              shutdownDevbox({ devboxName, shutdownMode: "Stopped" })
-            }
-            disabled={!isRunning || isShuttingDown}
-            className="flex items-center gap-1"
-          >
-            <Power className="w-4 h-4" />
-            {isShuttingDown ? "Shutting down..." : "Shutdown"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => restartDevbox(devboxName)}
-            disabled={!isRunning || isRestarting}
-            className="flex items-center gap-1"
-          >
-            <RotateCcw className="w-4 h-4" />
-            {isRestarting ? "Restarting..." : "Restart"}
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
-                variant="destructive"
-                size="sm"
-                disabled={isDeleting}
-                className="flex items-center gap-1"
+                variant="outline"
+                size="icon"
+                onClick={handleOpenIDE}
+                disabled={!isRunning}
               >
-                <Trash2 className="w-4 h-4" />
-                {isDeleting ? "Deleting..." : "Delete"}
+                <Link className="w-4 h-4" />
+                <span className="sr-only">Open IDE</span>
               </Button>
-            </AlertDialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Open IDE</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => startDevbox(devboxName)}
+                disabled={isRunning || isStarting}
+              >
+                <Play className="w-4 h-4" />
+                <span className="sr-only">{isStarting ? "Starting..." : "Start"}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isStarting ? "Starting..." : "Start"}</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() =>
+                  shutdownDevbox({ devboxName, shutdownMode: "Stopped" })
+                }
+                disabled={!isRunning || isShuttingDown}
+              >
+                <Power className="w-4 h-4" />
+                <span className="sr-only">{isShuttingDown ? "Shutting down..." : "Shutdown"}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isShuttingDown ? "Shutting down..." : "Shutdown"}</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => restartDevbox(devboxName)}
+                disabled={!isRunning || isRestarting}
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span className="sr-only">{isRestarting ? "Restarting..." : "Restart"}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isRestarting ? "Restarting..." : "Restart"}</p>
+            </TooltipContent>
+          </Tooltip>
+          <AlertDialog>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="sr-only">{isDeleting ? "Deleting..." : "Delete"}</span>
+                  </Button>
+                </AlertDialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isDeleting ? "Deleting..." : "Delete"}</p>
+              </TooltipContent>
+            </Tooltip>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Devbox</AlertDialogTitle>

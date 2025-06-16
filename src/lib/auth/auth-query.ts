@@ -33,3 +33,31 @@ export function authInfoOptions(
     select: postprocess,
   });
 }
+
+export function namespaceListOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["auth", "namespace", "list", regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl,
+    queryFn: async () => {
+      queryDebugLog("namespaceListOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+      });
+      const regionToken = getRegionToken(currentUser);
+      const response = await axios.get(
+        `/api/sealos/auth/namespace/list?regionUrl=${regionUrl}`,
+        {
+          headers: {
+            Authorization: `${regionToken}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    select: postprocess,
+  });
+}

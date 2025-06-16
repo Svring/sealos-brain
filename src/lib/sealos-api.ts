@@ -80,11 +80,17 @@ export async function makeAccountApiRequest(
 export async function makeAuthApiRequest(
   regionUrl: string,
   endpoint: string,
-  headers: Pick<RequestHeaders, "authorization">
+  headers: Pick<RequestHeaders, "authorization">,
+  queryParams?: Record<string, string>,
+  options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
 ): Promise<ApiResponse> {
   try {
     const url = `https://${regionUrl}/api/auth/${endpoint}`;
-    const config = createAxiosConfig(headers);
+    const config = createAxiosConfig(headers, options?.method, options?.data);
+
+    if (queryParams) {
+      config.params = queryParams;
+    }
 
     const response = await axios(url, config);
     return handleAxiosResponse(response);
