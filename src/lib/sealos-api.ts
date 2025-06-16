@@ -145,6 +145,29 @@ export async function makePlatformApiRequest(
   }
 }
 
+// Pure function for making DBProvider API requests
+export async function makeDBProviderApiRequest(
+  regionUrl: string,
+  endpoint: string,
+  headers: Pick<RequestHeaders, "authorization">,
+  queryParams?: Record<string, string>,
+  options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
+): Promise<ApiResponse> {
+  try {
+    const baseUrl = `https://dbprovider.${regionUrl}/api/${endpoint}`;
+    const config = createAxiosConfig(headers, options?.method, options?.data);
+
+    if (queryParams) {
+      config.params = queryParams;
+    }
+
+    const response = await axios(baseUrl, config);
+    return handleAxiosResponse(response);
+  } catch (error) {
+    return handleAxiosError(error);
+  }
+}
+
 // Pure function for validating required headers
 export function validateHeaders(
   authorization: string | null,

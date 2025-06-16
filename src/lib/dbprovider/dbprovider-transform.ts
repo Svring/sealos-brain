@@ -1,0 +1,175 @@
+import { z } from "zod";
+
+export interface DBProviderNodeDisplayData extends Record<string, unknown> {
+  id: string;
+  state: "Running" | "Stopped" | "Unknown" | "Creating" | "Failed";
+  dbType: string;
+  dbName: string;
+  dbVersion?: string;
+  replicas?: number;
+}
+
+// Define the actual API response structure based on the provided data
+export interface DBProviderAPIItem {
+  id: string;
+  name: string;
+  dbType: string;
+  status: {
+    label: string;
+    value: string;
+    color: string;
+    backgroundColor: string;
+    dotColor: string;
+  };
+  createTime: string;
+  cpu: number;
+  memory: number;
+  totalCpu: number;
+  totalMemory: number;
+  storage: number;
+  totalStorage: number;
+  replicas: number;
+  conditions: Array<{
+    lastTransitionTime: string;
+    message: string;
+    observedGeneration?: number;
+    reason: string;
+    status: string;
+    type: string;
+  }>;
+  isDiskSpaceOverflow: boolean;
+  labels: {
+    "clusterdefinition.kubeblocks.io/name": string;
+    "clusterversion.kubeblocks.io/name": string;
+    "sealos-db-provider-cr": string;
+  };
+  source: {
+    hasSource: boolean;
+    sourceName: string;
+    sourceType: string;
+  };
+}
+
+/**
+ * Transform DBProvider list into lightweight node display data
+ * Only includes data needed for node rendering
+ */
+export const transformDBProviderListIntoNode = (
+  data: DBProviderAPIItem[]
+): DBProviderNodeDisplayData[] => {
+  if (!Array.isArray(data)) {
+    console.error("Expected array but got:", typeof data, data);
+    return [];
+  }
+
+  return data
+    .map((dbProvider): DBProviderNodeDisplayData | null => {
+      if (!dbProvider || typeof dbProvider !== "object") return null;
+
+      const dbName = dbProvider.name;
+      const dbType = capitalizeDBType(dbProvider.dbType);
+      const dbVersion =
+        dbProvider.labels?.["clusterversion.kubeblocks.io/name"];
+
+      // Map the status value to our node states
+      let state: DBProviderNodeDisplayData["state"] = "Unknown";
+      if (dbProvider.status?.value) {
+        switch (dbProvider.status.value.toLowerCase()) {
+          case "running":
+            state = "Running";
+            break;
+          case "stopped":
+          case "paused":
+            state = "Stopped";
+            break;
+          case "creating":
+          case "starting":
+            state = "Creating";
+            break;
+          case "failed":
+          case "error":
+            state = "Failed";
+            break;
+          default:
+            state = "Unknown";
+        }
+      }
+
+      const replicas = dbProvider.replicas;
+
+      return {
+        id: `dbprovider-${dbName}`,
+        state,
+        dbType,
+        dbName,
+        dbVersion,
+        replicas,
+      };
+    })
+    .filter((item): item is DBProviderNodeDisplayData => item !== null);
+};
+
+/**
+ * Capitalize database type for display
+ * Maps database types to proper capitalized names
+ */
+function capitalizeDBType(dbType: string): string {
+  const lowerType = dbType.toLowerCase();
+
+  switch (lowerType) {
+    case "postgresql":
+    case "postgres":
+      return "PostgreSQL";
+    case "mongodb":
+    case "mongo":
+      return "MongoDB";
+    case "mysql":
+      return "MySQL";
+    case "redis":
+      return "Redis";
+    case "kafka":
+      return "Kafka";
+    case "qdrant":
+      return "Qdrant";
+    case "nebula":
+      return "Nebula";
+    case "weaviate":
+      return "Weaviate";
+    case "milvus":
+      return "Milvus";
+    case "pulsar":
+      return "Pulsar";
+    case "clickhouse":
+      return "ClickHouse";
+    default:
+      // Capitalize first letter of unknown types
+      return dbType.charAt(0).toUpperCase() + dbType.slice(1);
+  }
+}
+
+/**
+ * Get the appropriate icon/logo for a database type
+ */
+export function getDBTypeIcon(dbType: string): string {
+  const lowerType = dbType.toLowerCase();
+
+  // You can customize these paths based on your icon assets
+  if (lowerType.includes("postgresql") || lowerType.includes("postgres")) {
+    return "/icons/postgresql.svg";
+  }
+  if (lowerType.includes("mongodb") || lowerType.includes("mongo")) {
+    return "/icons/mongodb.svg";
+  }
+  if (lowerType.includes("mysql")) {
+    return "/icons/mysql.svg";
+  }
+  if (lowerType.includes("redis")) {
+    return "/icons/redis.svg";
+  }
+  if (lowerType.includes("kafka")) {
+    return "/icons/kafka.svg";
+  }
+
+  // Fallback to a generic database icon
+  return "/icons/database.svg";
+}

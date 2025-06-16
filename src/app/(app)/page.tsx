@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { devboxListOptions } from "@/lib/devbox/devbox-query";
 import { useSealosStore } from "@/store/sealos-store";
 import { transformDevboxListIntoNode } from "@/lib/devbox/devbox-transform";
+import { transformDBProviderListIntoNode } from "@/lib/dbprovider/dbprovider-transform";
 import nodeTypes from "@/components/node/node-types";
 import { usePanel } from "@/components/providers/panel-provider";
 import NodeCreateView from "@/components/node/create/node-create-view";
@@ -27,7 +28,8 @@ import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useSidebarControl } from "@/hooks/use-sidebar-control";
-
+import { dbProviderListOptions } from "@/lib/dbprovider/dbprovider-query";
+  
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 
@@ -50,6 +52,12 @@ export default function App() {
     isLoading: devboxListLoading,
     error: devboxListError,
   } = useQuery(devboxListOptions(currentUser, regionUrl));
+
+  const {
+    data: dbproviderList,
+    isLoading: dbproviderListLoading,
+    error: dbproviderListError,
+  } = useQuery(dbProviderListOptions(currentUser, regionUrl, transformDBProviderListIntoNode));
 
   /* ---------------- Layout Calculation Helpers ---------------- */
   const [windowWidth, setWindowWidth] = useState(0);
@@ -99,42 +107,74 @@ export default function App() {
     return { left: "50%", x: "-50%", width: 640 };
   }, [panelId, sidebarOpen, sidebarWidth, windowWidth]);
 
-  // Transform devbox list data into nodes and set them locally
+  // Transform both devbox and dbprovider list data into nodes and set them locally
   useEffect(() => {
-    console.log("🔍 Devbox list query state:", {
-      loading: devboxListLoading,
-      error: devboxListError,
-      data: devboxList,
+    console.log("🔍 Query states:", {
+      devbox: {
+        loading: devboxListLoading,
+        error: devboxListError,
+        data: devboxList,
+      },
+      dbprovider: {
+        loading: dbproviderListLoading,
+        error: dbproviderListError,
+        data: dbproviderList,
+      },
       currentUser: currentUser?.id,
       regionUrl,
     });
 
+    const allNodes: Node[] = [];
+
+    // Process devbox nodes
     if (devboxList && devboxList.length > 0) {
       try {
         console.log("🔄 Transforming devbox list to nodes:", devboxList);
         const lightweightData = transformDevboxListIntoNode(devboxList);
-        const nodeData = lightweightData.map((item, index) => ({
+        const devboxNodes = lightweightData.map((item, index) => ({
           id: item.id,
           type: "devbox",
           position: { x: 300 + index * 280, y: 200 },
           data: item,
         }));
-        console.log("✅ Generated nodes:", nodeData);
-        setNodes(nodeData);
+        allNodes.push(...devboxNodes);
+        console.log("✅ Generated devbox nodes:", devboxNodes);
       } catch (error) {
         console.error("❌ Error transforming devbox list to nodes:", error);
-        setNodes([]);
       }
-    } else if (devboxList && devboxList.length === 0) {
-      // Clear nodes if no devboxes
-      console.log("📭 No devboxes found, clearing nodes");
-      setNodes([]);
+    }
+
+    // Process dbprovider nodes (data is already transformed)
+    if (dbproviderList && dbproviderList.length > 0) {
+      try {
+        console.log("🔄 Creating dbprovider nodes from transformed data:", dbproviderList);
+        const dbproviderNodes = dbproviderList.map((item: any, index: number) => ({
+          id: item.id,
+          type: "dbprovider",
+          position: { x: 300 + index * 280, y: 400 }, // Position below devbox nodes
+          data: item,
+        }));
+        allNodes.push(...dbproviderNodes);
+        console.log("✅ Generated dbprovider nodes:", dbproviderNodes);
+      } catch (error) {
+        console.error("❌ Error creating dbprovider nodes:", error);
+      }
+    }
+
+    // Set all nodes at once
+    setNodes(allNodes);
+
+    if (allNodes.length === 0) {
+      console.log("📭 No nodes found, clearing flow");
     }
   }, [
     devboxList,
+    dbproviderList,
     setNodes,
     devboxListLoading,
+    dbproviderListLoading,
     devboxListError,
+    dbproviderListError,
     currentUser,
     regionUrl,
   ]);
@@ -165,16 +205,16 @@ export default function App() {
         <Background variant={BackgroundVariant.Dots} gap={60} size={1} />
 
         {/* Loading indicator */}
-        {devboxListLoading && (
+        {(devboxListLoading || dbproviderListLoading) && (
           <div className="absolute top-4 left-4 bg-blue-100 text-blue-800 px-3 py-2 rounded-md shadow-md z-10">
-            Loading devboxes...
+            Loading {devboxListLoading && dbproviderListLoading ? "devboxes and databases" : devboxListLoading ? "devboxes" : "databases"}...
           </div>
         )}
 
         {/* Error indicator */}
-        {devboxListError && (
+        {(devboxListError || dbproviderListError) && (
           <div className="absolute top-4 left-4 bg-red-100 text-red-800 px-3 py-2 rounded-md shadow-md z-10">
-            Error loading devboxes: {devboxListError.message}
+            Error loading: {devboxListError?.message || dbproviderListError?.message}
           </div>
         )}
       </ReactFlow>
