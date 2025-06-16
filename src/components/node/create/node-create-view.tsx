@@ -1,13 +1,9 @@
 import React from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Box, Database, Code, Globe, Settings } from "lucide-react";
+import { usePanel } from "@/components/node/panel-provider";
+import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create-view";
 
 interface NodeCreateViewProps {
   onCreateNode: (nodeType: string) => void;
@@ -27,10 +23,11 @@ const nodeTypes = [
     description: "Set up a database instance",
     icon: Database,
     color: "bg-green-500",
-  }
+  },
 ];
 
 export default function NodeCreateView({ onCreateNode }: NodeCreateViewProps) {
+  const { openPanel } = usePanel();
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -45,7 +42,16 @@ export default function NodeCreateView({ onCreateNode }: NodeCreateViewProps) {
           <Card
             key={nodeType.id}
             className="cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] border-2 hover:border-primary/50"
-            onClick={() => onCreateNode(nodeType.id)}
+            onClick={() => {
+              if (nodeType.id === "devbox") {
+                openPanel(
+                  "devbox-create",
+                  <DevboxCreateView onComplete={() => {}} />
+                );
+              } else {
+                onCreateNode(nodeType.id);
+              }
+            }}
           >
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
@@ -73,4 +79,4 @@ export default function NodeCreateView({ onCreateNode }: NodeCreateViewProps) {
       </div>
     </div>
   );
-} 
+}

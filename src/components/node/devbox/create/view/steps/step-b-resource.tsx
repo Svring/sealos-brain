@@ -1,4 +1,6 @@
-import { useSealosDevbox } from "@/lib/devbox/devbox-query";
+import { useQuery } from "@tanstack/react-query";
+import { useSealosStore } from "@/store/sealos-store";
+import { devboxQuotaOptions } from "@/lib/devbox/devbox-query";
 import React, { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { DevboxFormValues } from "@/components/node/devbox/create/schema/devbox-create-schema";
@@ -22,16 +24,15 @@ interface QuotaItem {
   used: number;
 }
 
-interface QuotaResponse {
-  quota: QuotaItem[];
-}
-
 export default function StepBResource() {
-  const { getQuota } = useSealosDevbox();
+  const { currentUser, regionUrl } = useSealosStore();
   const { watch, setValue } = useFormContext<DevboxFormValues>();
-  const [quotaData, setQuotaData] = useState<QuotaItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: quotaResponse,
+    isLoading: loading,
+    error,
+  } = useQuery(devboxQuotaOptions(currentUser, regionUrl));
+  const quotaData: QuotaItem[] = quotaResponse && Array.isArray(quotaResponse.quota) ? quotaResponse.quota : [];
 
   const cpuValue = watch("cpu") || 1000; // Default 1 CPU (1000m)
   const memoryValue = watch("memory") || 2048; // Default 2GB
@@ -40,25 +41,6 @@ export default function StepBResource() {
   const cpuOptions = [1000, 2000, 4000, 8000, 16000]; // 1, 2, 4, 8, 16 cores
   // Memory options in powers of 2: 2, 4, 8, 16, 32, 64 GB (in MB)
   const memoryOptions = [2048, 4096, 8192, 16384, 32768, 65536]; // 2, 4, 8, 16, 32, 64 GB
-
-  useEffect(() => {
-    const fetchQuota = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        console.log("🔍 Fetching quota information...");
-        const data: QuotaResponse = await getQuota();
-        console.log("📋 Quota response:", data);
-        setQuotaData(data?.quota || []);
-      } catch (err) {
-        console.error("Failed to fetch quota information", err);
-        setError("Failed to load quota information.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchQuota();
-  }, [getQuota]);
 
   // Find CPU and memory quota
   const cpuQuota = quotaData.find(q => q.type === "cpu");
@@ -97,7 +79,7 @@ export default function StepBResource() {
   };
 
   if (error) {
-    return <div className="text-destructive">{error}</div>;
+    return <div className="text-destructive">{String(error)}</div>;
   }
 
   return (

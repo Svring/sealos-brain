@@ -14,15 +14,35 @@ import { Button } from "@/components/ui/button";
 import { StepIndicator } from "@/components/ui/step-indicator";
 import { customAlphabet } from "nanoid";
 import { useControlStore } from "@/store/control-store";
+import { useSealosStore } from "@/store/sealos-store";
+import { useCreateDevboxMutation } from "@/lib/devbox/devbox-mutation";
+import { toast } from "sonner";
+import { usePanel } from "@/components/node/panel-provider";
 
 // Create a custom nanoid with lowercase alphabet and size 12
-const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz', 12);
+const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 12);
 
 const stepDefinitions = [
-  { id: "step-1", title: "Template", description: "Choose a template repository and template" },
-  { id: "step-2", title: "Resource", description: "Configure CPU, memory, and storage" },
-  { id: "step-3", title: "Network", description: "Set up networking and ports" },
-  { id: "step-4", title: "Summary", description: "Review and create your devbox" }
+  {
+    id: "step-1",
+    title: "Template",
+    description: "Choose a template repository and template",
+  },
+  {
+    id: "step-2",
+    title: "Resource",
+    description: "Configure CPU, memory, and storage",
+  },
+  {
+    id: "step-3",
+    title: "Network",
+    description: "Set up networking and ports",
+  },
+  {
+    id: "step-4",
+    title: "Summary",
+    description: "Review and create your devbox",
+  },
 ];
 
 const { Scoped, useStepper, steps, utils } = defineStepper(...stepDefinitions);
@@ -31,10 +51,25 @@ interface DevboxCreateViewProps {
   onComplete?: (success: boolean) => void;
 }
 
-export default function DevboxCreateView({ onComplete }: DevboxCreateViewProps) {
-  const { switch: switchStep, next, prev, current, isFirst, isLast } = useStepper();
+export default function DevboxCreateView({
+  onComplete,
+}: DevboxCreateViewProps) {
+  const {
+    switch: switchStep,
+    next,
+    prev,
+    current,
+    isFirst,
+    isLast,
+  } = useStepper();
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
-  const { setDevboxCreateStep, updateDevboxCreateForm, devboxCreateForm } = useControlStore();
+  const { setDevboxCreateStep, updateDevboxCreateForm, devboxCreateForm } =
+    useControlStore();
+  const { currentUser, regionUrl } = useSealosStore();
+  const { closePanel } = usePanel();
+
+  // Create devbox mutation
+  const createDevboxMutation = useCreateDevboxMutation(currentUser, regionUrl);
 
   const methods = useForm<DevboxFormValues>({
     resolver: zodResolver(devboxCreateSchema),
@@ -57,8 +92,9 @@ export default function DevboxCreateView({ onComplete }: DevboxCreateViewProps) 
       "step-3": "network" as const,
       "step-4": "summary" as const,
     };
-    
-    const controlStoreStep = stepMapping[current.id as keyof typeof stepMapping];
+
+    const controlStoreStep =
+      stepMapping[current.id as keyof typeof stepMapping];
     if (controlStoreStep) {
       setDevboxCreateStep(controlStoreStep);
     }
@@ -72,21 +108,31 @@ export default function DevboxCreateView({ onComplete }: DevboxCreateViewProps) 
         name: formData.name,
         templateId: formData.templateUid,
         cpu: formData.cpu ? Math.round(formData.cpu / 1000) : undefined, // Convert from millicores to cores
-        memory: formData.memory ? Math.round(formData.memory / 1024) : undefined, // Convert from MB to GB
-        gpu: formData.gpu ? {
-          type: formData.gpu.type || "",
-          count: formData.gpu.amount || 0,
-        } : undefined,
+        memory: formData.memory
+          ? Math.round(formData.memory / 1024)
+          : undefined, // Convert from MB to GB
+        gpu: formData.gpu
+          ? {
+              type: formData.gpu.type || "",
+              count: formData.gpu.amount || 0,
+            }
+          : undefined,
       };
 
       // Only update if there are actual changes to avoid infinite loops
-      const hasChanges = Object.entries(controlStoreFormData).some(([key, value]) => {
-        const currentValue = devboxCreateForm[key as keyof typeof devboxCreateForm];
-        return value !== currentValue;
-      });
+      const hasChanges = Object.entries(controlStoreFormData).some(
+        ([key, value]) => {
+          const currentValue =
+            devboxCreateForm[key as keyof typeof devboxCreateForm];
+          return value !== currentValue;
+        }
+      );
 
       if (hasChanges) {
-        console.log("🔄 Syncing form data to control store:", controlStoreFormData);
+        console.log(
+          "🔄 Syncing form data to control store:",
+          controlStoreFormData
+        );
         updateDevboxCreateForm(controlStoreFormData);
       }
     });
@@ -94,11 +140,27 @@ export default function DevboxCreateView({ onComplete }: DevboxCreateViewProps) 
     return () => subscription.unsubscribe();
   }, [watch, updateDevboxCreateForm, devboxCreateForm]);
 
-  const onSubmit = (data: DevboxFormValues) => {
-    console.log("Form data:", data);
-    // TODO: Implement actual devbox creation logic here
-    // For now, we'll just call onComplete with success
-    onComplete?.(true);
+  const onSubmit = async (data: DevboxFormValues) => {
+    try {
+      toast.loading("Creating devbox...", { id: "create-devbox" });
+
+      const result = await createDevboxMutation.mutateAsync({
+        devboxForm: {
+          ...data,
+          cpu: data.cpu, // Keep in millicores
+          memory: data.memory, // Keep in MB
+        },
+      });
+
+      toast.success("Devbox created successfully!", { id: "create-devbox" });
+      closePanel();
+      onComplete?.(true);
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to create devbox", {
+        id: "create-devbox",
+      });
+      onComplete?.(false);
+    }
   };
 
   const handleCancel = () => {
@@ -122,35 +184,43 @@ export default function DevboxCreateView({ onComplete }: DevboxCreateViewProps) 
 
   const handleNext = async () => {
     const fieldsToValidate = getFieldsToValidate(current.id);
-    console.log(`🔍 Validating step ${current.id} with fields:`, fieldsToValidate);
-    
+    console.log(
+      `🔍 Validating step ${current.id} with fields:`,
+      fieldsToValidate
+    );
+
     // Log current form values for the fields we're validating
     const currentValues = watch();
     console.log("📋 Current form values:", currentValues);
-    console.log("📋 Values for validation:", fieldsToValidate.map(field => ({ [field]: currentValues[field] })));
-    
+    console.log(
+      "📋 Values for validation:",
+      fieldsToValidate.map((field) => ({ [field]: currentValues[field] }))
+    );
+
     const isValid = await trigger(fieldsToValidate);
     console.log(`✅ Validation result for step ${current.id}:`, isValid);
-    
+
     if (!isValid) {
       console.log("❌ Form errors:", formState.errors);
     }
-    
+
     if (isValid) {
       // Mark current step as completed
       if (!completedSteps.includes(current.id)) {
-        setCompletedSteps(prev => [...prev, current.id]);
+        setCompletedSteps((prev) => [...prev, current.id]);
       }
       console.log(`🚀 Moving to next step from ${current.id}`);
       next();
     } else {
-      console.log(`🛑 Cannot proceed from step ${current.id} due to validation errors`);
+      console.log(
+        `🛑 Cannot proceed from step ${current.id} due to validation errors`
+      );
     }
   };
 
   const handlePrev = () => {
     // Remove current step from completed steps when going back
-    setCompletedSteps(prev => prev.filter(stepId => stepId !== current.id));
+    setCompletedSteps((prev) => prev.filter((stepId) => stepId !== current.id));
     prev();
   };
 
@@ -190,14 +260,21 @@ export default function DevboxCreateView({ onComplete }: DevboxCreateViewProps) 
                   </Button>
                 )}
               </div>
-              
+
               <div className="flex gap-4">
                 {!isLast ? (
                   <Button type="button" onClick={handleNext}>
                     Next
                   </Button>
                 ) : (
-                  <Button type="submit">Create Devbox</Button>
+                  <Button
+                    type="submit"
+                    disabled={createDevboxMutation.isPending}
+                  >
+                    {createDevboxMutation.isPending
+                      ? "Creating..."
+                      : "Create Devbox"}
+                  </Button>
                 )}
               </div>
             </div>

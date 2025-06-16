@@ -462,6 +462,30 @@ export function templateRepositoryTemplateListOptions(
   });
 }
 
+export function devboxQuotaOptions(
+  currentUser: any,
+  regionUrl: string | undefined,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: ["devbox", "quota", regionUrl, currentUser?.id],
+    enabled: !!currentUser && !!regionUrl,
+    queryFn: async () => {
+      queryDebugLog("devboxQuotaOptions", {
+        regionUrl,
+        userId: currentUser?.id,
+      });
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.get(
+        `/api/sealos/devbox/platform/getQuota?regionUrl=${regionUrl}`,
+        { headers }
+      );
+      return response.data;
+    },
+    select: postprocess,
+  });
+}
+
 // Usage example:
 // const { currentUser, regionUrl } = useSealosStore();
 // const query = useQuery(devboxListOptions(currentUser, regionUrl));

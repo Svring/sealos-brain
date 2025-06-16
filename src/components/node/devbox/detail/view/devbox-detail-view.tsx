@@ -6,30 +6,53 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Play, Power, RotateCcw } from "lucide-react";
+import { Play, Power, RotateCcw, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { devboxByNameOptions } from "@/lib/devbox/devbox-query";
+import {
+  useStartDevboxMutation,
+  useShutdownDevboxMutation,
+  useRestartDevboxMutation,
+  useDeleteDevboxMutation,
+} from "@/lib/devbox/devbox-mutation";
+import { toast } from "sonner";
+import { usePanel } from "@/components/node/panel-provider";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   const { currentUser, regionUrl } = useSealosStore();
+  const { closePanel } = usePanel();
 
   const { data: devbox, isLoading } = useQuery(
     devboxByNameOptions(currentUser, regionUrl, devboxName)
   );
 
-  const handleStart = async () => {
-    // TODO: Implement devbox start functionality
-    console.log("Start devbox:", devboxName);
-  };
+  // Mutation hooks
+  const startMutation = useStartDevboxMutation(currentUser, regionUrl);
+  const shutdownMutation = useShutdownDevboxMutation(currentUser, regionUrl);
+  const restartMutation = useRestartDevboxMutation(currentUser, regionUrl);
+  const deleteMutation = useDeleteDevboxMutation(currentUser, regionUrl);
 
-  const handleShutdown = async () => {
-    // TODO: Implement devbox shutdown functionality
-    console.log("Shutdown devbox:", devboxName);
-  };
-
-  const handleRestart = async () => {
-    // TODO: Implement devbox restart functionality
-    console.log("Restart devbox:", devboxName);
+  const handleDelete = async () => {
+    try {
+      toast.loading("Deleting devbox...", { id: "delete-devbox" });
+      await deleteMutation.mutateAsync(devboxName);
+      toast.success("Devbox deleted successfully!", { id: "delete-devbox" });
+      closePanel();
+    } catch (error: any) {
+      console.error("Failed to delete devbox:", error);
+      toast.error(error?.message || "Failed to delete devbox", { id: "delete-devbox" });
+    }
   };
 
   if (isLoading || !devbox) {
@@ -44,7 +67,10 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   }
 
   const isRunning = devbox.status.value === "Running";
-  const templateConfig = typeof devbox.templateConfig === 'string' ? JSON.parse(devbox.templateConfig) : devbox.templateConfig;
+  const templateConfig =
+    typeof devbox.templateConfig === "string"
+      ? JSON.parse(devbox.templateConfig)
+      : devbox.templateConfig;
 
   const tabs = [
     {
@@ -127,7 +153,9 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Working Dir</span>
-                  <span className="font-mono text-xs">{templateConfig.workingDir}</span>
+                  <span className="font-mono text-xs">
+                    {templateConfig.workingDir}
+                  </span>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -175,16 +203,28 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                       <span className="font-mono text-xs">{net.protocol}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Network Name</span>
-                      <span className="font-mono text-xs">{net.networkName}</span>
+                      <span className="text-muted-foreground">
+                        Network Name
+                      </span>
+                      <span className="font-mono text-xs">
+                        {net.networkName}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Public Domain</span>
-                      <span className="font-mono text-xs">{net.publicDomain}</span>
+                      <span className="text-muted-foreground">
+                        Public Domain
+                      </span>
+                      <span className="font-mono text-xs">
+                        {net.publicDomain}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Custom Domain</span>
-                      <span className="font-mono text-xs">{net.customDomain}</span>
+                      <span className="text-muted-foreground">
+                        Custom Domain
+                      </span>
+                      <span className="font-mono text-xs">
+                        {net.customDomain}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -202,8 +242,12 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                       <span className="font-mono text-xs">{port.name}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Container Port</span>
-                      <span className="font-mono text-xs">{port.containerPort}</span>
+                      <span className="text-muted-foreground">
+                        Container Port
+                      </span>
+                      <span className="font-mono text-xs">
+                        {port.containerPort}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Protocol</span>
@@ -230,12 +274,18 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                         <span className="font-mono text-xs">{port.port}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Target Port</span>
-                        <span className="font-mono text-xs">{port.targetPort}</span>
+                        <span className="text-muted-foreground">
+                          Target Port
+                        </span>
+                        <span className="font-mono text-xs">
+                          {port.targetPort}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Protocol</span>
-                        <span className="font-mono text-xs">{port.protocol}</span>
+                        <span className="font-mono text-xs">
+                          {port.protocol}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -281,7 +331,8 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Used Memory</span>
                   <span className="font-mono text-xs">
-                    {devbox.usedMemory.xData.join(", ")} {devbox.usedMemory.name}
+                    {devbox.usedMemory.xData.join(", ")}{" "}
+                    {devbox.usedMemory.name}
                   </span>
                 </div>
               </CardContent>
@@ -310,7 +361,9 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                   <span>{devbox.isPause ? "Yes" : "No"}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Last Terminated Reason</span>
+                  <span className="text-muted-foreground">
+                    Last Terminated Reason
+                  </span>
                   <span>{devbox.lastTerminatedReason}</span>
                 </div>
               </CardContent>
@@ -329,33 +382,63 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleStart}
-            disabled={isRunning}
+            onClick={() => startMutation.mutate(devboxName)}
+            disabled={isRunning || startMutation.isPending}
             className="flex items-center gap-1"
           >
             <Play className="w-4 h-4" />
-            Start
+            {startMutation.isPending ? "Starting..." : "Start"}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={handleShutdown}
-            disabled={!isRunning}
+            onClick={() => shutdownMutation.mutate({ devboxName, shutdownMode: "Stopped" })}
+            disabled={!isRunning || shutdownMutation.isPending}
             className="flex items-center gap-1"
           >
             <Power className="w-4 h-4" />
-            Shutdown
+            {shutdownMutation.isPending ? "Shutting down..." : "Shutdown"}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={handleRestart}
-            disabled={!isRunning}
+            onClick={() => restartMutation.mutate(devboxName)}
+            disabled={!isRunning || restartMutation.isPending}
             className="flex items-center gap-1"
           >
             <RotateCcw className="w-4 h-4" />
-            Restart
+            {restartMutation.isPending ? "Restarting..." : "Restart"}
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={deleteMutation.isPending}
+                className="flex items-center gap-1"
+              >
+                <Trash2 className="w-4 h-4" />
+                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Devbox</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete the devbox "{devbox.name}"? This action cannot be undone and will permanently remove all data associated with this devbox.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete Devbox
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
       <div className="flex-1 overflow-hidden">

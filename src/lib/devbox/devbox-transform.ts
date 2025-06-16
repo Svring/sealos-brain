@@ -4,6 +4,8 @@ import {
   DevboxSchema,
   TemplateSchema as DevboxTemplateSchema,
 } from "./schemas/devbox-list-schema";
+import { TemplateRepositoryListSchema } from "./schemas/template-repo-schema";
+import { DataSchema as TemplateListDataSchema } from "./schemas/template-list-schema";
 
 export interface DevboxNodeDisplayData extends Record<string, unknown> {
   id: string;
@@ -60,4 +62,35 @@ export const transformDevboxListIntoNode = (
       };
     })
     .filter((item): item is DevboxNodeDisplayData => item !== null);
+};
+
+/**
+ * Transform template repository API response into flat array of repositories
+ * Extracts templateRepositoryList from the nested API response structure
+ */
+export const transformTemplateRepositoryList = (data: any) => {
+  const validatedResponse = TemplateRepositoryListSchema.parse(data);
+  return validatedResponse.templateRepositoryList;
+};
+
+/**
+ * Transform template list API response into flat array of templates
+ * Extracts templateList from the nested API response structure
+ */
+export const transformTemplateList = (data: any) => {
+  try {
+    const validatedResponse = TemplateListDataSchema.parse(data);
+    return validatedResponse.templateList;
+  } catch (error) {
+    console.error("Failed to transform template list data:", error);
+    console.error("Raw data:", data);
+
+    // Fallback: try to extract array directly if validation fails
+    if (data?.templateList && Array.isArray(data.templateList)) {
+      return data.templateList;
+    }
+
+    // Return empty array as fallback
+    return [];
+  }
 };

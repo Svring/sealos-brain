@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import {
   ReactFlow,
-  Controls,
   Background,
   useNodesState,
   useEdgesState,
-  addEdge,
   BackgroundVariant,
-  ReactFlowProvider,
+  Node,
+  Edge,
 } from "@xyflow/react";
 import { useQuery } from "@tanstack/react-query";
 import { devboxListOptions } from "@/lib/devbox/devbox-query";
@@ -17,31 +16,19 @@ import { useSealosStore } from "@/store/sealos-store";
 import { transformDevboxListIntoNode } from "@/lib/devbox/devbox-transform";
 import nodeTypes from "@/components/node/node-types";
 import { usePanel } from "@/components/node/panel-provider";
-// import DevboxDetails from "@/components/node/devbox/detail/view/devbox-detail-view";
-// import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create-view";
-// import NodeCreateView from "@/components/node/create/node-create-view";
-// import edgeTypes from "@/components/edge/edge-types";
-// import { PromptInputBox } from "@/components/ai/ai-prompt-box";
-// import { MenuBar } from "@/components/ui/bottom-menu";
-// import { MessageSwiper } from "@/components/ui/message-swiper";
-// import { motion, AnimatePresence } from "framer-motion";
+import NodeCreateView from "@/components/node/create/node-create-view";
+import edgeTypes from "@/components/edge/edge-types";
+import { Button } from "@/components/ui/button";
 
-const initialNodes: any[] = [];
-const initialEdges: any[] = [];
+const initialNodes: Node[] = [];
+const initialEdges: Edge[] = [];
 
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-  const messageContentRef = useRef<any>(null);
-  const prevMessagesLength = useRef(messages.length);
-  const [isInputExpanded, setIsInputExpanded] = useState(true);
-  const promptTextareaRef = useRef<any>(null);
+  
   const { regionUrl, currentUser } = useSealosStore();
-  const { closePanel } = usePanel();
+  const { closePanel, openPanel } = usePanel();
 
   // Fetch devbox list using the new query
   const {
@@ -92,6 +79,17 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen">
+      {/* Top-right button to open node-create view */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button
+          variant="default"
+          onClick={() =>
+            openPanel("node-create", <NodeCreateView onCreateNode={() => {}} />)
+          }
+        >
+          +
+        </Button>
+      </div>
       <ReactFlow
         panOnScroll
         nodes={nodes}
@@ -99,12 +97,10 @@ export default function App() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
-        // edgeTypes={edgeTypes} // Uncomment if edgeTypes is available
-        onPaneClick={closePanel} // Uncomment if hideDetails is available
-        // onNodeClick={handleNodeClick} // Uncomment if handleNodeClick is available
+        edgeTypes={edgeTypes}
+        onPaneClick={closePanel}
       >
         <Background variant={BackgroundVariant.Dots} gap={60} size={1} />
-        <Controls />
 
         {/* Loading indicator */}
         {devboxListLoading && (
@@ -119,19 +115,9 @@ export default function App() {
             Error loading devboxes: {devboxListError.message}
           </div>
         )}
-
-        {/* No data indicator */}
-        {!devboxListLoading &&
-          !devboxListError &&
-          devboxList &&
-          devboxList.length === 0 && (
-            <div className="absolute top-4 left-4 bg-yellow-100 text-yellow-800 px-3 py-2 rounded-md shadow-md z-10">
-              No devboxes found
-            </div>
-          )}
       </ReactFlow>
-      {/*
-      <AnimatePresence>
+
+      {/* <AnimatePresence>
         {isInputExpanded && (
           <motion.div>
             {messages.length > 0 && (
@@ -147,17 +133,13 @@ export default function App() {
             <motion.div>
               <PromptInputBox
                 textareaRef={promptTextareaRef}
-                onSend={onMessageSend}
+                onSend={() => {}}
                 isLoading={isLoading}
               />
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
-      <motion.div>
-        <MenuBar items={menuItems} />
-      </motion.div>
-      */}
+      </AnimatePresence> */}
     </div>
   );
 }

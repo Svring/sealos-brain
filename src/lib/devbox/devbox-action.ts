@@ -1,5 +1,9 @@
 import { useCopilotAction } from "@copilotkit/react-core";
-import { useSealosDevbox } from "@/lib/devbox/devbox-query";
+import { useSealosStore } from "@/store/sealos-store";
+import {
+  shutdownDevboxMutation,
+  startDevboxMutation,
+} from "@/lib/devbox/devbox-mutation";
 import { useDevboxUIActions } from "@/lib/action/devbox-ui-action";
 
 type ShutdownModeType = "Stopped" | "Shutdown";
@@ -9,8 +13,13 @@ type ShutdownModeType = "Stopped" | "Shutdown";
  * Extracted tools for better organization and reusability
  */
 
-export function useStartDevboxTool() {
-  const { startDevbox } = useSealosDevbox();
+export function startDevboxAction() {
+  const { currentUser, regionUrl } = useSealosStore();
+
+  const { mutateAsync: startDevbox } = startDevboxMutation(
+    currentUser,
+    regionUrl
+  );
 
   useCopilotAction({
     name: "startDevbox",
@@ -29,17 +38,22 @@ export function useStartDevboxTool() {
         console.log(`Starting devbox: ${devboxName}`);
         const result = await startDevbox(devboxName);
         console.log(`Successfully started devbox: ${devboxName}`, result);
-        return `Successfully started devbox "${devboxName}". The devbox is now starting up and will be available shortly.`;
+        return `Successfully started devbox \"${devboxName}\". The devbox is now starting up and will be available shortly.`;
       } catch (error: any) {
         console.error(`Failed to start devbox: ${devboxName}`, error);
-        return `Failed to start devbox "${devboxName}": ${error.message}`;
+        return `Failed to start devbox \"${devboxName}\": ${error.message}`;
       }
     },
   });
 }
 
-export function useShutdownDevboxTool() {
-  const { shutdownDevbox } = useSealosDevbox();
+export function shutdownDevboxAction() {
+  const { currentUser, regionUrl } = useSealosStore();
+
+  const { mutateAsync: shutdownDevbox } = shutdownDevboxMutation(
+    currentUser,
+    regionUrl
+  );
 
   useCopilotAction({
     name: "shutdownDevbox",
@@ -64,12 +78,12 @@ export function useShutdownDevboxTool() {
       try {
         const mode = (shutdownMode as ShutdownModeType) || "Stopped";
         console.log(`Shutting down devbox: ${devboxName} with mode: ${mode}`);
-        const result = await shutdownDevbox(devboxName, mode);
+        const result = await shutdownDevbox({ devboxName, shutdownMode: mode });
         console.log(`Successfully shutdown devbox: ${devboxName}`, result);
-        return `Successfully shutdown devbox "${devboxName}" with mode "${mode}". The devbox has been ${mode.toLowerCase()}.`;
+        return `Successfully shutdown devbox \"${devboxName}\" with mode \"${mode}\". The devbox has been ${mode.toLowerCase()}.`;
       } catch (error: any) {
         console.error(`Failed to shutdown devbox: ${devboxName}`, error);
-        return `Failed to shutdown devbox "${devboxName}": ${error.message}`;
+        return `Failed to shutdown devbox \"${devboxName}\": ${error.message}`;
       }
     },
   });
@@ -78,10 +92,10 @@ export function useShutdownDevboxTool() {
 /**
  * Convenience hook to use all Sealos tools at once
  */
-export function useSealosTools() {
-  useStartDevboxTool();
-  useShutdownDevboxTool();
+export function activateDevboxActions() {
+  startDevboxAction();
+  shutdownDevboxAction();
 
   // Include UI actions for controlling the interface
-  useDevboxUIActions();
+  // useDevboxUIActions();
 }

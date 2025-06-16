@@ -25,7 +25,7 @@ const TemplateRepositorySchema = z.object({
 });
 
 // Define the Data schema
-const DataSchema = z.object({
+const TemplateRepositoryListSchema = z.object({
   templateRepositoryList: z.array(TemplateRepositorySchema),
 });
 
@@ -34,7 +34,7 @@ const ResponseSchema = z.object({
   code: z.number(),
   statusText: z.string(),
   message: z.string(),
-  data: DataSchema,
+  data: TemplateRepositoryListSchema,
 });
 
-export { ResponseSchema };
+export { ResponseSchema, TemplateRepositoryListSchema };
