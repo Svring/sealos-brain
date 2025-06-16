@@ -2,7 +2,6 @@ import React from "react";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { useSealosStore } from "@/store/sealos-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -10,10 +9,10 @@ import { Play, Power, RotateCcw, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { devboxByNameOptions } from "@/lib/devbox/devbox-query";
 import {
-  useStartDevboxMutation,
-  useShutdownDevboxMutation,
-  useRestartDevboxMutation,
-  useDeleteDevboxMutation,
+  startDevboxMutation,
+  shutdownDevboxMutation,
+  restartDevboxMutation,
+  deleteDevboxMutation,
 } from "@/lib/devbox/devbox-mutation";
 import { toast } from "sonner";
 import { usePanel } from "@/components/node/panel-provider";
@@ -38,20 +37,26 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   );
 
   // Mutation hooks
-  const startMutation = useStartDevboxMutation(currentUser, regionUrl);
-  const shutdownMutation = useShutdownDevboxMutation(currentUser, regionUrl);
-  const restartMutation = useRestartDevboxMutation(currentUser, regionUrl);
-  const deleteMutation = useDeleteDevboxMutation(currentUser, regionUrl);
+  const { mutateAsync: startDevbox, isPending: isStarting } =
+    startDevboxMutation(currentUser, regionUrl);
+  const { mutateAsync: shutdownDevbox, isPending: isShuttingDown } =
+    shutdownDevboxMutation(currentUser, regionUrl);
+  const { mutateAsync: restartDevbox, isPending: isRestarting } =
+    restartDevboxMutation(currentUser, regionUrl);
+  const { mutateAsync: deleteDevbox, isPending: isDeleting } =
+    deleteDevboxMutation(currentUser, regionUrl);
 
   const handleDelete = async () => {
     try {
       toast.loading("Deleting devbox...", { id: "delete-devbox" });
-      await deleteMutation.mutateAsync(devboxName);
+      await deleteDevbox(devboxName);
       toast.success("Devbox deleted successfully!", { id: "delete-devbox" });
       closePanel();
     } catch (error: any) {
       console.error("Failed to delete devbox:", error);
-      toast.error(error?.message || "Failed to delete devbox", { id: "delete-devbox" });
+      toast.error(error?.message || "Failed to delete devbox", {
+        id: "delete-devbox",
+      });
     }
   };
 
@@ -382,50 +387,54 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => startMutation.mutate(devboxName)}
-            disabled={isRunning || startMutation.isPending}
+            onClick={() => startDevbox(devboxName)}
+            disabled={isRunning || isStarting}
             className="flex items-center gap-1"
           >
             <Play className="w-4 h-4" />
-            {startMutation.isPending ? "Starting..." : "Start"}
+            {isStarting ? "Starting..." : "Start"}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => shutdownMutation.mutate({ devboxName, shutdownMode: "Stopped" })}
-            disabled={!isRunning || shutdownMutation.isPending}
+            onClick={() =>
+              shutdownDevbox({ devboxName, shutdownMode: "Stopped" })
+            }
+            disabled={!isRunning || isShuttingDown}
             className="flex items-center gap-1"
           >
             <Power className="w-4 h-4" />
-            {shutdownMutation.isPending ? "Shutting down..." : "Shutdown"}
+            {isShuttingDown ? "Shutting down..." : "Shutdown"}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => restartMutation.mutate(devboxName)}
-            disabled={!isRunning || restartMutation.isPending}
+            onClick={() => restartDevbox(devboxName)}
+            disabled={!isRunning || isRestarting}
             className="flex items-center gap-1"
           >
             <RotateCcw className="w-4 h-4" />
-            {restartMutation.isPending ? "Restarting..." : "Restart"}
+            {isRestarting ? "Restarting..." : "Restart"}
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
                 variant="destructive"
                 size="sm"
-                disabled={deleteMutation.isPending}
+                disabled={isDeleting}
                 className="flex items-center gap-1"
               >
                 <Trash2 className="w-4 h-4" />
-                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                {isDeleting ? "Deleting..." : "Delete"}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Devbox</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete the devbox "{devbox.name}"? This action cannot be undone and will permanently remove all data associated with this devbox.
+                  Are you sure you want to delete the devbox "{devbox.name}"?
+                  This action cannot be undone and will permanently remove all
+                  data associated with this devbox.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

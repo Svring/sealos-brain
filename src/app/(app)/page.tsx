@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -19,6 +19,13 @@ import { usePanel } from "@/components/node/panel-provider";
 import NodeCreateView from "@/components/node/create/node-create-view";
 import edgeTypes from "@/components/edge/edge-types";
 import { Button } from "@/components/ui/button";
+import { AnimatePresence, motion } from "framer-motion";
+import { MessageSwiper } from "@/components/ui/message-swiper";
+import { PromptInputBox } from "@/components/ai/ai-prompt-box";
+
+import { useCopilotChat } from "@copilotkit/react-core";
+import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
+import { ChevronDown, ChevronUp, MessageSquareMore } from "lucide-react";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
@@ -26,9 +33,14 @@ const initialEdges: Edge[] = [];
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  
+
   const { regionUrl, currentUser } = useSealosStore();
   const { closePanel, openPanel } = usePanel();
+
+  const { visibleMessages, appendMessage, isLoading } = useCopilotChat();
+
+  // Add expand state for MessageSwiper
+  const [isMessageSwiperExpanded, setIsMessageSwiperExpanded] = useState(false);
 
   // Fetch devbox list using the new query
   const {
@@ -117,29 +129,38 @@ export default function App() {
         )}
       </ReactFlow>
 
-      {/* <AnimatePresence>
-        {isInputExpanded && (
-          <motion.div>
-            {messages.length > 0 && (
-              <motion.div>
-                <MessageSwiper
-                  messages={messages}
-                  currentIndex={currentMessageIndex}
-                  onIndexChange={setCurrentMessageIndex}
-                  isExpanded={isExpanded}
-                />
-              </motion.div>
-            )}
-            <motion.div>
-              <PromptInputBox
-                textareaRef={promptTextareaRef}
-                onSend={() => {}}
-                isLoading={isLoading}
-              />
-            </motion.div>
+      <AnimatePresence>
+        <motion.div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-xl">
+          <motion.div className="translate-y-3 relative z-0">
+            <MessageSwiper
+              messages={visibleMessages}
+              isExpanded={isMessageSwiperExpanded}
+            />
           </motion.div>
-        )}
-      </AnimatePresence> */}
+
+          <motion.div className="w-full relative z-10">
+            <motion.button
+              onClick={() => setIsMessageSwiperExpanded((prev) => !prev)}
+              className="absolute left-1/2 -translate-x-1/2 -top-4 z-20 rounded-full p-2 cursor-pointer"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              animate={{ rotate: isMessageSwiperExpanded ? 0 : 180 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronDown className="w-5 h-5" />
+            </motion.button>
+            <PromptInputBox
+              onSend={(content: string) => {
+                appendMessage(
+                  new TextMessage({ content, role: MessageRole.User })
+                );
+                console.log("🔍 Appended message:", content);
+              }}
+              isLoading={isLoading}
+            />
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

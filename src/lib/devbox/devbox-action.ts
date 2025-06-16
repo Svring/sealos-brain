@@ -4,7 +4,6 @@ import {
   shutdownDevboxMutation,
   startDevboxMutation,
 } from "@/lib/devbox/devbox-mutation";
-import { useDevboxUIActions } from "@/lib/action/devbox-ui-action";
 
 type ShutdownModeType = "Stopped" | "Shutdown";
 

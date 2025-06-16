@@ -15,7 +15,7 @@ import { StepIndicator } from "@/components/ui/step-indicator";
 import { customAlphabet } from "nanoid";
 import { useControlStore } from "@/store/control-store";
 import { useSealosStore } from "@/store/sealos-store";
-import { useCreateDevboxMutation } from "@/lib/devbox/devbox-mutation";
+import { createDevboxMutation } from "@/lib/devbox/devbox-mutation";
 import { toast } from "sonner";
 import { usePanel } from "@/components/node/panel-provider";
 
@@ -69,7 +69,10 @@ export default function DevboxCreateView({
   const { closePanel } = usePanel();
 
   // Create devbox mutation
-  const createDevboxMutation = useCreateDevboxMutation(currentUser, regionUrl);
+  const { mutateAsync: createDevbox, isPending } = createDevboxMutation(
+    currentUser,
+    regionUrl
+  );
 
   const methods = useForm<DevboxFormValues>({
     resolver: zodResolver(devboxCreateSchema),
@@ -144,7 +147,7 @@ export default function DevboxCreateView({
     try {
       toast.loading("Creating devbox...", { id: "create-devbox" });
 
-      const result = await createDevboxMutation.mutateAsync({
+      const result = await createDevbox({
         devboxForm: {
           ...data,
           cpu: data.cpu, // Keep in millicores
@@ -267,13 +270,8 @@ export default function DevboxCreateView({
                     Next
                   </Button>
                 ) : (
-                  <Button
-                    type="submit"
-                    disabled={createDevboxMutation.isPending}
-                  >
-                    {createDevboxMutation.isPending
-                      ? "Creating..."
-                      : "Create Devbox"}
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Creating..." : "Create Devbox"}
                   </Button>
                 )}
               </div>

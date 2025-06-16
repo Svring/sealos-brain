@@ -26,7 +26,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { MainSection, NavigationItem } from "@/components/sidebar/sections";
+import { MainSection, NavigationItem } from "@/components/ui/sidebar-section";
 
 // Hooks and store
 import { useSealosStore } from "@/store/sealos-store";

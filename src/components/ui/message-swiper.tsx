@@ -1,18 +1,14 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-interface Message {
-  id: string;
-  content: string;
-  role: 'user' | 'assistant';
-  timestamp?: Date;
-}
+import React, { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Message,
+  MessageRole,
+  TextMessage,
+} from "@copilotkit/runtime-client-gql";
 
 interface MessageSwiperProps {
   messages: Message[];
-  cardWidth?: number;
-  cardHeight?: number;
   className?: string;
   currentIndex?: number;
   onIndexChange?: (index: number) => void;
@@ -21,13 +17,25 @@ interface MessageSwiperProps {
 
 export const MessageSwiper: React.FC<MessageSwiperProps> = ({
   messages,
-  cardWidth = 400,
-  cardHeight = 240,
-  className = '',
+  className = "",
   currentIndex = 0,
   onIndexChange,
-  isExpanded = false
+  isExpanded = false,
 }) => {
+  console.log("🔍 Messages:", messages);
+  // Filter out only TextMessage types with non-empty content
+  const filteredMessages = messages.filter((msg) => {
+    if (
+      msg.type === "TextMessage" &&
+      msg.isTextMessage &&
+      msg.isTextMessage()
+    ) {
+      const content = (msg as TextMessage).content;
+      return typeof content === "string" && content.trim().length > 0;
+    }
+    return false; // Only allow TextMessage
+  });
+
   const [localCurrentIndex, setLocalCurrentIndex] = useState(currentIndex);
   const [direction, setDirection] = useState(0); // -1 for backward, 1 for forward
   const messageContentRef = useRef<HTMLDivElement>(null);
@@ -46,7 +54,7 @@ export const MessageSwiper: React.FC<MessageSwiperProps> = ({
 
   const handleNextMessage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (activeIndex < messages.length - 1) {
+    if (activeIndex < filteredMessages.length - 1) {
       setDirection(1);
       setActiveIndex(activeIndex + 1);
     }
@@ -59,98 +67,125 @@ export const MessageSwiper: React.FC<MessageSwiperProps> = ({
     }
   }, [currentIndex, activeIndex, onIndexChange]);
 
-  if (messages.length === 0) {
+  if (filteredMessages.length === 0) {
     return null;
   }
 
-  const currentMessage = messages[activeIndex];
+  const currentMessage = filteredMessages[activeIndex];
+  if (!currentMessage) {
+    return null;
+  }
 
-  const slideVariants = {
-    enter: (direction: number) => ({
-      y: direction > 0 ? 30 : -30,
-      opacity: 0
-    }),
-    center: {
-      y: 0,
-      opacity: 1
+  // Fade in/out variants for message transitions
+  const fadeVariants = {
+    enter: {
+      opacity: 0,
     },
-    exit: (direction: number) => ({
-      y: direction < 0 ? 30 : -30,
-      opacity: 0
-    })
+    center: {
+      opacity: 1,
+    },
+    exit: {
+      opacity: 0,
+    },
   };
 
   return (
-    <motion.div 
+    <motion.div
       ref={messageContentRef}
-      className={`bg-card text-card-foreground border border-border rounded-xl shadow-lg overflow-hidden w-[98%] mx-auto ${className} pb-3`}
-      initial={{ y: 30, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      className={`bg-card text-card-foreground border border-border rounded-xl shadow-lg overflow-hidden w-[98%] mx-auto ${className}`}
+      initial={{ opacity: 0, height: 0 }}
+      animate={{
+        opacity: 1,
+        height: isExpanded ? "auto" : "42px",
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 200,
+        damping: 20,
+        duration: 0.1,
+      }}
     >
-      <div className="px-3 py-2 h-full flex flex-col">
+      <motion.div
+        className="px-3 py-2 h-full flex flex-col"
+        animate={{
+          paddingBottom: isExpanded ? "20px" : "40px",
+        }}
+        transition={{ duration: 0.1 }}
+      >
         <div className="flex items-center justify-between mb-1">
           <div className="rounded-full text-xs font-medium">
-            Assistant Response
+            {currentMessage.isTextMessage() &&
+            (currentMessage as TextMessage).role === MessageRole.Assistant
+              ? "Assistant"
+              : "User"}
           </div>
-          {currentMessage.timestamp && (
+          {currentMessage && currentMessage.createdAt && (
             <div className="text-xs text-muted-foreground">
-              {currentMessage.timestamp.toLocaleTimeString()}
+              {currentMessage.createdAt.toLocaleTimeString()}
             </div>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <motion.div
+          className="flex-1 overflow-hidden"
+          animate={{
+            maxHeight: isExpanded ? "200px" : "42px",
+          }}
+          transition={{ duration: 0.1 }}
+        >
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={activeIndex}
               custom={direction}
-              variants={slideVariants}
+              variants={fadeVariants}
               initial="enter"
               animate="center"
               exit="exit"
               transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 0.3
+                type: "tween",
+                duration: 0.1,
+                ease: "easeInOut",
               }}
             >
-              <p className="text-sm leading-relaxed text-foreground">
-                {currentMessage.content}
+              <p className="text-sm leading-relaxed text-foreground overflow-y-auto">
+                {currentMessage.isTextMessage() &&
+                  (currentMessage as TextMessage).content}
               </p>
             </motion.div>
           </AnimatePresence>
-        </div>
+        </motion.div>
 
-        {isExpanded && messages.length > 1 && (
-          <motion.div 
-            className="flex justify-between items-center mt-2"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <button 
-              onClick={handlePrevMessage} 
-              disabled={activeIndex === 0}
-              className="rounded-full hover:bg-muted transition-colors disabled:text-muted-foreground disabled:hover:bg-transparent"
+        <AnimatePresence>
+          {isExpanded && filteredMessages.length > 1 && (
+            <motion.div
+              className="flex justify-between items-center mt-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.1 }}
             >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">
-                {activeIndex + 1} / {messages.length}
-              </span>
-            </div>
-            <button 
-              onClick={handleNextMessage} 
-              disabled={activeIndex === messages.length - 1}
-              className="rounded-full hover:bg-muted transition-colors disabled:text-muted-foreground disabled:hover:bg-transparent"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </motion.div>
-        )}
-      </div>
+              <button
+                onClick={handlePrevMessage}
+                disabled={activeIndex === 0}
+                className="rounded-full hover:bg-muted transition-colors disabled:text-muted-foreground disabled:hover:bg-transparent"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {activeIndex + 1} / {filteredMessages.length}
+                </span>
+              </div>
+              <button
+                onClick={handleNextMessage}
+                disabled={activeIndex === filteredMessages.length - 1}
+                className="rounded-full hover:bg-muted transition-colors disabled:text-muted-foreground disabled:hover:bg-transparent"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </motion.div>
   );
 };

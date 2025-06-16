@@ -13,6 +13,7 @@
     "@copilotkit/react-core": "^1.8.14",
     "@copilotkit/react-ui": "^1.8.14",
     "@copilotkit/runtime": "^1.8.14",
+    "@copilotkit/runtime-client-gql": "^1.8.14",
     "@hookform/resolvers": "^5.0.1",
     "@payloadcms/db-postgres": "^3.41.0",
     "@payloadcms/next": "^3.41.0",
