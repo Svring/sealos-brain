@@ -170,6 +170,7 @@ export function devboxVersionListOptions(
   currentUser: any,
   regionUrl: string | undefined,
   devboxName: string,
+  devboxUid: string,
   postprocess: (data: any) => any = (d) => d
 ) {
   return queryOptions({
@@ -177,19 +178,21 @@ export function devboxVersionListOptions(
       "devbox",
       "getVersionList",
       devboxName,
+      devboxUid,
       regionUrl,
       currentUser?.id,
     ],
-    enabled: !!currentUser && !!regionUrl && !!devboxName,
+    enabled: !!currentUser && !!regionUrl && !!devboxName && !!devboxUid,
     queryFn: async () => {
       queryDebugLog("devboxVersionListOptions", {
         regionUrl,
         userId: currentUser?.id,
         devboxName,
+        devboxUid,
       });
       const headers = getDevboxHeaders(currentUser);
       const response = await axios.get(
-        `/api/sealos/devbox/getDevboxVersionList?regionUrl=${regionUrl}&devboxName=${devboxName}`,
+        `/api/sealos/devbox/getDevboxVersionList?regionUrl=${regionUrl}&devboxName=${devboxName}&devboxUid=${devboxUid}`,
         { headers }
       );
       return response.data.data;

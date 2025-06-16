@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   ReactFlow,
   Background,
@@ -25,7 +25,7 @@ import { PromptInputBox } from "@/components/ai/ai-prompt-box";
 
 import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
-import { ChevronDown, ChevronUp, MessageSquareMore } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useSidebarControl } from "@/hooks/use-sidebar-control";
 
 const initialNodes: Node[] = [];
@@ -51,34 +51,53 @@ export default function App() {
     error: devboxListError,
   } = useQuery(devboxListOptions(currentUser, regionUrl));
 
-  // Responsive window width for layout calculation
+  /* ---------------- Layout Calculation Helpers ---------------- */
   const [windowWidth, setWindowWidth] = useState(0);
+
+  // Track window width for responsive calculations
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const updateWidth = () => setWindowWidth(window.innerWidth);
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // Panel width (fixed as 40vw)
-  const panelWidth = panelId ? windowWidth * 0.4 : 0;
-  // Sidebar width (from state, or fallback to 280px)
-  const sidebarW = sidebarOpen ? sidebarWidth || 280 : 0;
-  // Available space between sidebar and panel
-  const availableSpace = windowWidth - sidebarW - panelWidth;
-  // Max width for the box
-  const maxBoxWidth = Math.min(availableSpace, 640); // 640px = max-w-xl
-  // Center position for the box when both sidebar and panel are open
-  const centerLeft = sidebarW + (windowWidth - panelWidth - sidebarW) / 2;
+  // Memoized layout for the message / prompt box
+  const boxAnimate = useMemo(() => {
+    const panelOpen = Boolean(panelId);
 
-  // Animate props for Framer Motion
-  const boxAnimate = (sidebarOpen && panelId)
-    ? { left: centerLeft, x: '-51%', width: Math.min(availableSpace - 48, 640) } // 32px for padding
-    : panelId
-      ? { left: '30vw', x: '-50%', width: '60vw' }
-      : sidebarOpen
-        ? { left: sidebarW + (windowWidth - sidebarW) / 2, x: '-50%', width: Math.min(windowWidth - sidebarW, 640) }
-        : { left: '50%', x: '-50%', width: maxBoxWidth };
+    // Helpers
+    const sidebarW = sidebarOpen ? sidebarWidth || 280 : 0;
+    const panelW = panelOpen ? windowWidth * 0.4 : 0; // Panel is 40vw when open
+
+    // When both sidebar & panel are open → center between them
+    if (sidebarOpen && panelOpen) {
+      const freeW = windowWidth - sidebarW - panelW;
+      return {
+        left: sidebarW + freeW / 2,
+        x: "-51%",
+        width: Math.min(freeW, 640 - 48),
+      };
+    }
+
+    // When only panel is open → center inside the left 60% (fixed behaviour)
+    if (panelOpen) {
+      return { left: "30vw", x: "-50%", width: "60vw" };
+    }
+
+    // When only sidebar is open → center in remaining space on the right
+    if (sidebarOpen) {
+      const freeW = windowWidth - sidebarW;
+      return {
+        left: sidebarW + freeW / 2,
+        x: "-50%",
+        width: Math.min(freeW, 640),
+      };
+    }
+
+    // Neither open → simple centered max-w-xl
+    return { left: "50%", x: "-50%", width: 640 };
+  }, [panelId, sidebarOpen, sidebarWidth, windowWidth]);
 
   // Transform devbox list data into nodes and set them locally
   useEffect(() => {
@@ -165,7 +184,7 @@ export default function App() {
           className="fixed bottom-2 w-full z-40"
           initial={false}
           animate={boxAnimate}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
           <motion.div className="translate-y-3 relative z-0">
             <MessageSwiper

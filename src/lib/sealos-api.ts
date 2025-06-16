@@ -1,3 +1,5 @@
+import axios, { AxiosResponse, AxiosRequestConfig } from "axios";
+
 interface RequestHeaders {
   authorization: string;
   authorizationBearer?: string;
@@ -9,28 +11,69 @@ interface ApiResponse<T = any> {
   status: number;
 }
 
+// Helper function to handle axios responses consistently
+function handleAxiosResponse<T>(response: AxiosResponse<T>): ApiResponse<T> {
+  return {
+    data: response.data,
+    status: response.status,
+  };
+}
+
+// Helper function to handle axios errors consistently
+function handleAxiosError(error: any): ApiResponse {
+  if (error.response) {
+    const { data, status } = error.response;
+    return {
+      message: data?.message || data?.detail || "Request failed",
+      status,
+    };
+  }
+  return {
+    message: error.message || "Network error",
+    status: 500,
+  };
+}
+
+// Helper function to create axios config
+function createAxiosConfig(
+  headers: Partial<RequestHeaders>,
+  method: "GET" | "POST" | "DELETE" = "GET",
+  data?: any
+): AxiosRequestConfig {
+  const config: AxiosRequestConfig = {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: headers.authorization,
+    },
+  };
+
+  if (headers.authorizationBearer) {
+    config.headers!["Authorization-Bearer"] = headers.authorizationBearer;
+  }
+
+  if (data && method !== "GET") {
+    config.data = data;
+  }
+
+  return config;
+}
+
 // Pure function for making account API requests
 export async function makeAccountApiRequest(
   regionUrl: string,
   endpoint: string,
   headers: Pick<RequestHeaders, "authorization">
 ): Promise<ApiResponse> {
-  const backendUrl = `https://${regionUrl}/api/account/${endpoint}`;
+  try {
+    const url = `https://${regionUrl}/api/account/${endpoint}`;
+    const config = createAxiosConfig(headers);
 
-  const response = await fetch(backendUrl, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: headers.authorization,
-    },
-  });
-
-  const data = await response.json();
-  return {
-    data: response.ok ? data : undefined,
-    message: !response.ok ? data.message || data.detail : undefined,
-    status: response.status,
-  };
+    const response = await axios(url, config);
+    return handleAxiosResponse(response);
+  } catch (error) {
+    return handleAxiosError(error);
+  }
 }
 
 // Pure function for making auth API requests
@@ -39,22 +82,15 @@ export async function makeAuthApiRequest(
   endpoint: string,
   headers: Pick<RequestHeaders, "authorization">
 ): Promise<ApiResponse> {
-  const backendUrl = `https://${regionUrl}/api/auth/${endpoint}`;
+  try {
+    const url = `https://${regionUrl}/api/auth/${endpoint}`;
+    const config = createAxiosConfig(headers);
 
-  const response = await fetch(backendUrl, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: headers.authorization,
-    },
-  });
-
-  const data = await response.json();
-  return {
-    data: response.ok ? data : undefined,
-    message: !response.ok ? data.message || data.detail : undefined,
-    status: response.status,
-  };
+    const response = await axios(url, config);
+    return handleAxiosResponse(response);
+  } catch (error) {
+    return handleAxiosError(error);
+  }
 }
 
 // Pure function for making devbox API requests
@@ -65,33 +101,42 @@ export async function makeDevboxApiRequest(
   queryParams?: Record<string, string>,
   options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
 ): Promise<ApiResponse> {
-  const baseUrl = `https://devbox.${regionUrl}/api/${endpoint}`;
-  const url = queryParams
-    ? `${baseUrl}?${new URLSearchParams(queryParams).toString()}`
-    : baseUrl;
+  try {
+    const baseUrl = `https://devbox.${regionUrl}/api/${endpoint}`;
+    const config = createAxiosConfig(headers, options?.method, options?.data);
 
-  const method = options?.method || "GET";
-  const requestInit: RequestInit = {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: headers.authorization,
-      "Authorization-Bearer": headers.authorizationBearer!,
-    },
-  };
+    if (queryParams) {
+      config.params = queryParams;
+    }
 
-  if (method === "POST" && options?.data) {
-    requestInit.body = JSON.stringify(options.data);
+    const response = await axios(baseUrl, config);
+    return handleAxiosResponse(response);
+  } catch (error) {
+    return handleAxiosError(error);
   }
+}
 
-  const response = await fetch(url, requestInit);
+// Pure function for making platform API requests
+export async function makePlatformApiRequest(
+  regionUrl: string,
+  endpoint: string,
+  headers: Pick<RequestHeaders, "authorization">,
+  queryParams?: Record<string, string>,
+  options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
+): Promise<ApiResponse> {
+  try {
+    const baseUrl = `https://devbox.${regionUrl}/api/platform/${endpoint}`;
+    const config = createAxiosConfig(headers, options?.method, options?.data);
 
-  const data = await response.json();
-  return {
-    data: response.ok ? data : undefined,
-    message: !response.ok ? data.message || data.detail : undefined,
-    status: response.status,
-  };
+    if (queryParams) {
+      config.params = queryParams;
+    }
+
+    const response = await axios(baseUrl, config);
+    return handleAxiosResponse(response);
+  } catch (error) {
+    return handleAxiosError(error);
+  }
 }
 
 // Pure function for validating required headers
@@ -115,42 +160,6 @@ export function validateHeaders(
   }
 
   return { isValid: true };
-}
-
-// Pure function for making platform API requests
-export async function makePlatformApiRequest(
-  regionUrl: string,
-  endpoint: string,
-  headers: Pick<RequestHeaders, "authorization">,
-  queryParams?: Record<string, string>,
-  options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
-): Promise<ApiResponse> {
-  const baseUrl = `https://devbox.${regionUrl}/api/platform/${endpoint}`;
-  const url = queryParams
-    ? `${baseUrl}?${new URLSearchParams(queryParams).toString()}`
-    : baseUrl;
-
-  const method = options?.method || "GET";
-  const requestInit: RequestInit = {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: headers.authorization,
-    },
-  };
-
-  if (method === "POST" && options?.data) {
-    requestInit.body = JSON.stringify(options.data);
-  }
-
-  const response = await fetch(url, requestInit);
-
-  const data = await response.json();
-  return {
-    data: response.ok ? data : undefined,
-    message: !response.ok ? data.message || data.detail : undefined,
-    status: response.status,
-  };
 }
 
 // Pure function for validating required query parameters

@@ -2,6 +2,7 @@
 
 import { useCoAgent } from "@copilotkit/react-core";
 import { createContext, useContext, ReactNode } from "react";
+import { activateDevboxActions } from "@/lib/devbox/devbox-action";
 
 type AgentState = {
   sealos_data: unknown;
@@ -134,6 +135,8 @@ export function CopilotStateProvider({ children }: { children: ReactNode }) {
       },
     },
   });
+
+  activateDevboxActions();
 
   return (
     <CopilotStateContext.Provider value={{ state, setState, systemPrompt }}>

@@ -106,3 +106,48 @@ export function createDevboxMutation(
     },
   });
 }
+
+// Release Devbox
+export function releaseDevboxMutation(
+  currentUser: any,
+  regionUrl: string | undefined
+) {
+  return useMutation({
+    mutationFn: async ({
+      devboxName,
+      devboxUid,
+      tag,
+      releaseDes,
+    }: {
+      devboxName: string;
+      devboxUid: string;
+      tag: string | number;
+      releaseDes: string;
+    }) => {
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.post(
+        `/api/sealos/devbox/releaseDevbox?regionUrl=${regionUrl}`,
+        { devboxName, devboxUid, tag, releaseDes },
+        { headers }
+      );
+      return response.data;
+    },
+  });
+}
+
+// Delete Devbox Version
+export function deleteDevboxVersionMutation(
+  currentUser: any,
+  regionUrl: string | undefined
+) {
+  return useMutation({
+    mutationFn: async (versionName: string) => {
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.delete(
+        `/api/sealos/devbox/delDevboxVersionByName?regionUrl=${regionUrl}&versionName=${versionName}`,
+        { headers }
+      );
+      return response.data;
+    },
+  });
+}

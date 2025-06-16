@@ -72,18 +72,18 @@ export default async function RootLayout({
           <SidebarProvider>
             <QueryProvider>
               <SealosStoreHydrator user={user} />
-              <CopilotKit
-                runtimeUrl={runtimeUrl}
-                publicApiKey={publicApiKey}
-                agent={agentName}
-              >
-                <CopilotStateProvider>
-                  <AppSidebar />
-                  <PanelProvider>
+              <PanelProvider>
+                <CopilotKit
+                  runtimeUrl={runtimeUrl}
+                  publicApiKey={publicApiKey}
+                  agent={agentName}
+                >
+                  <CopilotStateProvider>
+                    <AppSidebar />
                     <main>{children}</main>
-                  </PanelProvider>
-                </CopilotStateProvider>
-              </CopilotKit>
+                  </CopilotStateProvider>
+                </CopilotKit>
+              </PanelProvider>
             </QueryProvider>
           </SidebarProvider>
         </ThemeProvider>
