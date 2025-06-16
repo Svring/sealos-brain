@@ -6,6 +6,7 @@ import path from "path";
 import { buildConfig } from "payload";
 import { fileURLToPath } from "url";
 import sharp from "sharp";
+import dotenv from "dotenv";
 
 import { Users } from "./database/collections/Users";
 import { Media } from "./database/collections/Media";
@@ -22,13 +23,13 @@ export default buildConfig({
   },
   collections: [Users, Media],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || "",
+  secret: dotenv.config().parsed?.PAYLOAD_SECRET || "",
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts"),
   },
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URI || "",
+      connectionString: dotenv.config().parsed?.DATABASE_URI || "",
     },
     idType: "uuid",
     tablesFilter: [

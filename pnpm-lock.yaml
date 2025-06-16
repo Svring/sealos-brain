@@ -140,6 +140,9 @@ importers:
       date-fns:
         specifier: ^3.6.0
         version: 3.6.0
+      dotenv:
+        specifier: ^16.5.0
+        version: 16.5.0
       effect:
         specifier: ^3.16.5
         version: 3.16.5
