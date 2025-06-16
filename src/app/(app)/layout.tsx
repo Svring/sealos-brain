@@ -6,7 +6,7 @@ import { Nunito } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/providers/app-sidebar-provider";
-import { PanelProvider } from "@/components/node/panel-provider";
+import { PanelProvider } from "@/components/providers/panel-provider";
 import { SealosStoreHydrator } from "@/components/providers/sealos-store-hydrator";
 import { CopilotStateProvider } from "@/components/providers/copilot-state-provider";
 import { QueryProvider } from "@/components/providers/query-provider";

@@ -46,11 +46,11 @@ export const PanelProvider = ({ children }: { children: ReactNode }) => {
       <AnimatePresence>
         {Id && Content && (
           <motion.div
-            initial={{ opacity: 0, x: "-30%" }}
+            initial={{ opacity: 0, x: "30%" }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}
             transition={{ duration: 0.2 }}
-            className="fixed top-4 right-4 bottom-4 w-[40%] bg-card border border-border rounded-lg shadow-lg p-4 z-50 overflow-auto"
+            className="fixed top-2 right-2 bottom-2 w-[40%] bg-card border border-border rounded-lg shadow-lg p-4 z-50 overflow-auto"
           >
             {Content}
           </motion.div>

@@ -15,7 +15,7 @@ import { devboxListOptions } from "@/lib/devbox/devbox-query";
 import { useSealosStore } from "@/store/sealos-store";
 import { transformDevboxListIntoNode } from "@/lib/devbox/devbox-transform";
 import nodeTypes from "@/components/node/node-types";
-import { usePanel } from "@/components/node/panel-provider";
+import { usePanel } from "@/components/providers/panel-provider";
 import NodeCreateView from "@/components/node/create/node-create-view";
 import edgeTypes from "@/components/edge/edge-types";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { PromptInputBox } from "@/components/ai/ai-prompt-box";
 import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import { ChevronDown, ChevronUp, MessageSquareMore } from "lucide-react";
+import { useSidebarControl } from "@/hooks/use-sidebar-control";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
@@ -35,7 +36,8 @@ export default function App() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const { regionUrl, currentUser } = useSealosStore();
-  const { closePanel, openPanel } = usePanel();
+  const { closePanel, openPanel, Id: panelId } = usePanel();
+  const { open: sidebarOpen, width: sidebarWidth } = useSidebarControl();
 
   const { visibleMessages, appendMessage, isLoading } = useCopilotChat();
 
@@ -48,6 +50,35 @@ export default function App() {
     isLoading: devboxListLoading,
     error: devboxListError,
   } = useQuery(devboxListOptions(currentUser, regionUrl));
+
+  // Responsive window width for layout calculation
+  const [windowWidth, setWindowWidth] = useState(0);
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Panel width (fixed as 40vw)
+  const panelWidth = panelId ? windowWidth * 0.4 : 0;
+  // Sidebar width (from state, or fallback to 280px)
+  const sidebarW = sidebarOpen ? sidebarWidth || 280 : 0;
+  // Available space between sidebar and panel
+  const availableSpace = windowWidth - sidebarW - panelWidth;
+  // Max width for the box
+  const maxBoxWidth = Math.min(availableSpace, 640); // 640px = max-w-xl
+  // Center position for the box when both sidebar and panel are open
+  const centerLeft = sidebarW + (windowWidth - panelWidth - sidebarW) / 2;
+
+  // Animate props for Framer Motion
+  const boxAnimate = (sidebarOpen && panelId)
+    ? { left: centerLeft, x: '-51%', width: Math.min(availableSpace - 48, 640) } // 32px for padding
+    : panelId
+      ? { left: '30vw', x: '-50%', width: '60vw' }
+      : sidebarOpen
+        ? { left: sidebarW + (windowWidth - sidebarW) / 2, x: '-50%', width: Math.min(windowWidth - sidebarW, 640) }
+        : { left: '50%', x: '-50%', width: maxBoxWidth };
 
   // Transform devbox list data into nodes and set them locally
   useEffect(() => {
@@ -130,7 +161,12 @@ export default function App() {
       </ReactFlow>
 
       <AnimatePresence>
-        <motion.div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-xl">
+        <motion.div
+          className="fixed bottom-2 w-full z-40"
+          initial={false}
+          animate={boxAnimate}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        >
           <motion.div className="translate-y-3 relative z-0">
             <MessageSwiper
               messages={visibleMessages}

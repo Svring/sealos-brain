@@ -15,7 +15,7 @@ import {
   deleteDevboxMutation,
 } from "@/lib/devbox/devbox-mutation";
 import { toast } from "sonner";
-import { usePanel } from "@/components/node/panel-provider";
+import { usePanel } from "@/components/providers/panel-provider";
 import {
   AlertDialog,
   AlertDialogAction,

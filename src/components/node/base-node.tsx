@@ -1,4 +1,4 @@
-import { usePanel } from "@/components/node/panel-provider";
+import { usePanel } from "@/components/providers/panel-provider";
 import { Glass } from "@/components/ui/glass-effect";
 
 interface BaseNodeProps {
