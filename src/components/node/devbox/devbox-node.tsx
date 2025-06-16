@@ -1,7 +1,7 @@
 import { useNodeId } from "@xyflow/react";
 import Image from "next/image";
 import BaseNode from "../base-node";
-import DevboxDetails from "./detail/view/devbox-detail-view";
+import DevboxDetails from "./detail/devbox-detail-view";
 
 export interface DevboxNodeData {
   id: string;
