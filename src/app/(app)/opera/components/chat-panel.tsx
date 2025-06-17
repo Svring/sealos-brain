@@ -4,12 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PromptInputBox } from "@/components/ai/ai-prompt-box";
 import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
-import { 
-  ChatBubble, 
-  ChatBubbleAvatar, 
-  ChatBubbleMessage, 
+import {
+  ChatBubble,
+  ChatBubbleAvatar,
+  ChatBubbleMessage,
   ChatBubbleTimestamp,
-  ChatBubbleStatus 
+  ChatBubbleStatus,
 } from "./chat-bubble";
 import { ChatMessageList } from "./chat-message-list";
 import { ChatErrorBoundary } from "./chat-error-boundary";
@@ -26,10 +26,7 @@ interface ChatPanelProps {
   generatedFiles: GeneratedFile[];
 }
 
-export function ChatPanel({
-  activeTab,
-  setActiveTab,
-}: ChatPanelProps) {
+export function ChatPanel({ activeTab, setActiveTab }: ChatPanelProps) {
   const {
     visibleMessages,
     appendMessage,
@@ -46,20 +43,20 @@ export function ChatPanel({
   };
 
   const handleRetryMessage = (messageId: string) => {
-    const message = visibleMessages.find(msg => msg.id === messageId);
+    const message = visibleMessages.find((msg) => msg.id === messageId);
     if (message && message.isTextMessage()) {
       // Remove from failed messages
-      setFailedMessages(prev => {
+      setFailedMessages((prev) => {
         const newSet = new Set(prev);
         newSet.delete(messageId);
         return newSet;
       });
-      
+
       // Resend the message
       appendMessage(
-        new TextMessage({ 
-          content: (message as TextMessage).content, 
-          role: MessageRole.User 
+        new TextMessage({
+          content: (message as TextMessage).content,
+          role: MessageRole.User,
         })
       );
     }
@@ -75,7 +72,7 @@ export function ChatPanel({
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="flex-1 flex flex-col"
+        className="flex-1 flex flex-col min-h-0"
       >
         <TabsList className="flex flex-row w-full bg-background border-border rounded-lg">
           <TabsTrigger
@@ -92,13 +89,21 @@ export function ChatPanel({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="chat" className="flex-1 flex flex-col mt-0 p-2">
-          <div className="flex-1 space-y-4">
+        <TabsContent value="chat" className="flex-1 flex flex-col mt-0 p-2 min-h-0">
+          <div className="flex-1 min-h-0">
             <ChatMessageList>
               {visibleMessages.map((message) => {
                 const isTextMessage = message.isTextMessage();
-                const textMessage = isTextMessage ? message as TextMessage : null;
-                const isUser = textMessage?.role === MessageRole.User;
+                const textMessage = isTextMessage
+                  ? (message as TextMessage)
+                  : null;
+
+                // Skip non-text messages
+                if (!isTextMessage || !textMessage?.content) {
+                  return null;
+                }
+
+                const isUser = textMessage.role === MessageRole.User;
                 const isVisible = !hiddenMessages.has(message.id);
                 const hasError = failedMessages.has(message.id);
 
@@ -106,7 +111,7 @@ export function ChatPanel({
                   <ChatErrorBoundary key={message.id}>
                     <ChatBubble
                       messageId={message.id}
-                      variant={isUser ? "sent" : "received"}
+                      variant="received"
                       isVisible={isVisible}
                     >
                       <ChatBubbleAvatar
@@ -118,26 +123,29 @@ export function ChatPanel({
                         }
                         fallback={isUser ? "US" : "AI"}
                         isOnline={!isUser}
-                        isTyping={!isUser && isChatLoading && message.id === visibleMessages[visibleMessages.length - 1]?.id}
+                        isTyping={
+                          !isUser &&
+                          isChatLoading &&
+                          message.id ===
+                            visibleMessages[visibleMessages.length - 1]?.id
+                        }
                       />
-                      
+
                       <div className="flex flex-col gap-1 flex-1">
                         <ChatBubbleMessage
-                          variant={isUser ? "sent" : "received"}
+                          variant="received"
                           hasError={hasError}
                           onRetry={() => handleRetryMessage(message.id)}
-                          onCopy={() => handleCopyMessage(textMessage?.content || "")}
+                          onCopy={() => handleCopyMessage(textMessage.content)}
                         >
-                          {textMessage?.content || "Unknown message type"}
+                          {textMessage.content}
                         </ChatBubbleMessage>
-                        
-                        <div className={`flex items-center gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                          <ChatBubbleTimestamp 
-                            timestamp={message.createdAt} 
-                          />
+
+                        <div className="flex items-center gap-2 justify-start">
+                          <ChatBubbleTimestamp timestamp={message.createdAt} />
                           {isUser && (
-                            <ChatBubbleStatus 
-                              status={hasError ? "failed" : "sent"} 
+                            <ChatBubbleStatus
+                              status={hasError ? "failed" : "sent"}
                             />
                           )}
                         </div>
@@ -146,30 +154,16 @@ export function ChatPanel({
                   </ChatErrorBoundary>
                 );
               })}
-
-              {isChatLoading && (
-                <ChatErrorBoundary>
-                  <ChatBubble variant="received">
-                    <ChatBubbleAvatar
-                      className="h-8 w-8 shrink-0"
-                      src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&q=80&crop=faces&fit=crop"
-                      fallback="AI"
-                      isTyping={true}
-                    />
-                    <div className="flex flex-col gap-1 flex-1">
-                      <ChatBubbleMessage isLoading />
-                    </div>
-                  </ChatBubble>
-                </ChatErrorBoundary>
-              )}
             </ChatMessageList>
           </div>
 
-          {/* Chat Input */}
-          <PromptInputBox onSend={handleSendMessage} />
+          {/* Chat Input - Fixed at bottom */}
+          <div className="flex-shrink-0 mt-2">
+            <PromptInputBox onSend={handleSendMessage} />
+          </div>
         </TabsContent>
 
-        <TabsContent value="design" className="flex-1 p-4">
+        <TabsContent value="design" className="flex-1 p-4 overflow-y-auto">
           <div className="text-center text-muted-foreground mt-8">
             Design tools coming soon...
           </div>

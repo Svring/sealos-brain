@@ -8,15 +8,11 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/context/app-sidebar-provider";
 import { PanelProvider } from "@/context/panel-provider";
 import { SealosStoreHydrator } from "@/context/sealos-store-hydrator";
-import { CopilotStateProvider } from "@/context/copilot-state-provider";
 import { QueryProvider } from "@/context/query-provider";
 
 // UI Components
 import LoginPanel from "@/components/ui/login-panel";
 import { Toaster } from "@/components/ui/sonner";
-
-// Third-Party Library Components
-import { CopilotKit } from "@copilotkit/react-core";
 
 // Database Actions
 import { getCurrentUser } from "@/database/actions/user-actions";
@@ -25,11 +21,6 @@ import { getCurrentUser } from "@/database/actions/user-actions";
 import "./globals.css";
 import "@xyflow/react/dist/style.css";
 import "@copilotkit/react-ui/styles.css";
-
-// Environment Variables
-const runtimeUrl = process.env.NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL;
-const publicApiKey = process.env.NEXT_PUBLIC_COPILOT_API_KEY;
-const agentName = process.env.NEXT_PUBLIC_COPILOTKIT_AGENT_NAME;
 
 // Metadata configuration
 export const metadata: Metadata = {
@@ -74,17 +65,9 @@ export default async function RootLayout({
             <QueryProvider>
               <SealosStoreHydrator user={user} />
               <PanelProvider>
-                <CopilotKit
-                  runtimeUrl={runtimeUrl}
-                  publicApiKey={publicApiKey}
-                  agent={agentName}
-                >
-                  <CopilotStateProvider>
-                    <AppSidebar />
-                    <main>{children}</main>
-                    <Toaster />
-                  </CopilotStateProvider>
-                </CopilotKit>
+                <AppSidebar />
+                <main>{children}</main>
+                <Toaster />
               </PanelProvider>
             </QueryProvider>
           </SidebarProvider>

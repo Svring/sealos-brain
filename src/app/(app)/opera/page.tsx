@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -8,6 +8,10 @@ import {
 } from "@/components/ui/resizable";
 import { ChatPanel } from "./components/chat-panel";
 import { PreviewPanel } from "./components/preview-panel";
+import { 
+  CopilotStateProvider, 
+  useCopilotConfig 
+} from "@/context/copilot-state-provider";
 
 const generatedFiles = [
   { name: "app/layout.tsx", status: "Generated" },
@@ -17,7 +21,7 @@ const generatedFiles = [
   { name: "components/theme-toggle.tsx", status: "Generated" },
 ];
 
-export default function OperaPage() {
+function OperaPageContent() {
   const [activeTab, setActiveTab] = useState("chat");
   const [previewTab, setPreviewTab] = useState("preview");
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -47,5 +51,32 @@ export default function OperaPage() {
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
+  );
+}
+
+function OperaPageWithConfig() {
+  const { updateConfig } = useCopilotConfig();
+
+  useEffect(() => {
+    // Configure copilot for code operations
+    updateConfig({
+      runtimeUrl: "/api/code",
+      agent: "code",
+    });
+  }, [updateConfig]);
+
+  return <OperaPageContent />;
+}
+
+export default function OperaPage() {
+  return (
+    <CopilotStateProvider
+      initialConfig={{
+        runtimeUrl: "/api/code",
+        agent: "code",
+      }}
+    >
+      <OperaPageWithConfig />
+    </CopilotStateProvider>
   );
 }

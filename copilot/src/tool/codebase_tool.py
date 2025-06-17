@@ -1,10 +1,7 @@
-import asyncio
 import aiohttp
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
-from typing import List, Optional, Union, Literal, Annotated
-from langgraph.prebuilt import InjectedState
-from langgraph.prebuilt.chat_agent_executor import AgentState
+from typing import List, Optional, Literal
 from langchain_core.runnables import RunnableConfig
 
 
@@ -130,10 +127,12 @@ async def codebase_find_files(
     dir: str,
     suffixes: List[str],
     exclude_dirs: Optional[List[str]] = None,
-    state: Annotated[AgentState, InjectedState] = None,
     config: RunnableConfig = None,
 ) -> dict:
     """Find files in the project matching specific suffixes and excluding directories."""
+    if not config or "configurable" not in config:
+        return {"success": False, "error": "Missing configuration"}
+
     token = config["configurable"]["token"]
     url = config["configurable"]["project_address"]
     async with aiohttp.ClientSession() as session:
@@ -172,10 +171,12 @@ async def codebase_editor_command(
     new_str: Optional[str] = None,
     old_str: Optional[str] = None,
     view_range: Optional[List[int]] = None,
-    state: Annotated[AgentState, InjectedState] = None,
     config: RunnableConfig = None,
 ) -> dict:
     """Send an editor command (view, create, str_replace, insert, undo_edit) to the backend for file operations."""
+    if not config or "configurable" not in config:
+        return {"success": False, "error": "Missing configuration"}
+
     token = config["configurable"]["token"]
     url = config["configurable"]["project_address"]
     # Validation logic similar to TypeScript superRefine
@@ -241,10 +242,12 @@ async def codebase_editor_command(
 @tool("codebase_npm_script", args_schema=NpmScriptParams)
 async def codebase_npm_script(
     script: Literal["lint", "format"],
-    state: Annotated[AgentState, InjectedState] = None,
     config: RunnableConfig = None,
 ) -> dict:
     """Run npm scripts (lint or format) in the project root and return their output."""
+    if not config or "configurable" not in config:
+        return {"success": False, "error": "Missing configuration"}
+
     token = config["configurable"]["token"]
     url = config["configurable"]["project_address"]
     async with aiohttp.ClientSession() as session:
@@ -255,36 +258,3 @@ async def codebase_npm_script(
             method="POST",
         )
         return result
-
-
-@tool("codebase_update_project_structure", args_schema=UpdateProjectStructureParams)
-async def codebase_update_project_structure(
-    project_structure: dict,
-    state: Annotated[AgentState, InjectedState] = None,
-    config: RunnableConfig = None,
-) -> dict:
-    """Update the project structure with the given project structure."""
-    return {
-        "success": True,
-        "project_structure": project_structure,
-        "message": "Project structure updated",
-    }
-
-
-@tool("task_completion", args_schema=TaskCompletionParams)
-def task_completion(
-    summary: str,
-    functionalities_completed: List[str],
-    files_modified: Optional[List[str]] = None,
-    state: Annotated[AgentState, InjectedState] = None,
-    config: RunnableConfig = None,
-) -> dict:
-    """Indicate that the task implementation is complete. Use this tool when all functionalities have been implemented and tested."""
-    return {
-        "success": True,
-        "task_completed": True,
-        "summary": summary,
-        "functionalities_completed": functionalities_completed,
-        "files_modified": files_modified or [],
-        "message": "Task completion indicated by agent",
-    }

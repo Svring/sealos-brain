@@ -89,21 +89,15 @@ export function ChatBubbleMessage({
     }
   };
 
-  const handleRetry = () => {
-    if (onRetry) {
-      onRetry();
-    }
-  };
-
   return (
-    <div className="flex flex-col gap-2 max-w-[80%]">
+    <div className="flex flex-col gap-2">
       <motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
         className={cn(
-          "rounded-lg p-3 relative",
-          variant === "sent" 
-            ? "bg-primary text-primary-foreground ml-auto" 
+          "rounded-lg p-3 py-1.5 relative",
+          variant === "sent"
+            ? "bg-primary text-primary-foreground ml-auto"
             : "bg-muted",
           hasError && "border-destructive border",
           isLoading && "animate-pulse",
@@ -126,34 +120,6 @@ export function ChatBubbleMessage({
           </div>
         )}
       </motion.div>
-
-      {/* Message Actions */}
-      {showActions && !isLoading && (
-        <ChatBubbleActionWrapper className={cn(
-          "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-          variant === "sent" ? "justify-end" : "justify-start"
-        )}>
-          {hasError && onRetry && (
-            <ChatBubbleAction
-              icon={<RotateCcw className="h-3 w-3" />}
-              onClick={handleRetry}
-              className="text-muted-foreground hover:text-foreground"
-              aria-label="Retry message"
-            />
-          )}
-          {!hasError && children && (
-            <ChatBubbleAction
-              icon={copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              onClick={handleCopy}
-              className={cn(
-                "text-muted-foreground hover:text-foreground",
-                copied && "text-green-600"
-              )}
-              aria-label="Copy message"
-            />
-          )}
-        </ChatBubbleActionWrapper>
-      )}
     </div>
   );
 }
@@ -179,7 +145,7 @@ export function ChatBubbleAvatar({
         {src && <AvatarImage src={src} />}
         <AvatarFallback>{fallback}</AvatarFallback>
       </Avatar>
-      
+
       {/* Online/Typing Indicator */}
       {(isOnline || isTyping) && (
         <div className="absolute -bottom-1 -right-1">
@@ -235,7 +201,7 @@ export function ChatBubbleActionWrapper({
   children: React.ReactNode;
 }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn("flex items-center gap-1", className)}
@@ -259,8 +225,10 @@ export function ChatBubbleTimestamp({
 
   const formatTime = (date: Date) => {
     const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
+    const diffInMinutes = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60)
+    );
+
     if (diffInMinutes < 1) return "just now";
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
@@ -284,13 +252,25 @@ export function ChatBubbleStatus({ status, className }: ChatBubbleStatusProps) {
   const getStatusIcon = () => {
     switch (status) {
       case "sending":
-        return <div className="w-3 h-3 border border-muted-foreground border-t-transparent rounded-full animate-spin" />;
+        return (
+          <div className="w-3 h-3 border border-muted-foreground border-t-transparent rounded-full animate-spin" />
+        );
       case "sent":
         return <Check className="w-3 h-3 text-muted-foreground" />;
       case "delivered":
-        return <div className="flex"><Check className="w-3 h-3 text-muted-foreground" /><Check className="w-3 h-3 text-muted-foreground -ml-1" /></div>;
+        return (
+          <div className="flex">
+            <Check className="w-3 h-3 text-muted-foreground" />
+            <Check className="w-3 h-3 text-muted-foreground -ml-1" />
+          </div>
+        );
       case "read":
-        return <div className="flex"><Check className="w-3 h-3 text-blue-500" /><Check className="w-3 h-3 text-blue-500 -ml-1" /></div>;
+        return (
+          <div className="flex">
+            <Check className="w-3 h-3 text-blue-500" />
+            <Check className="w-3 h-3 text-blue-500 -ml-1" />
+          </div>
+        );
       case "failed":
         return <AlertCircle className="w-3 h-3 text-destructive" />;
       default:

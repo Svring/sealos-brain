@@ -139,6 +139,16 @@
   animation: slide-up 0.3s ease-out;
 }
 
+/* Hide scrollbar while maintaining functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
