@@ -1,6 +1,6 @@
 import { useCopilotAction } from "@copilotkit/react-core";
 import { useSealosStore } from "@/store/sealos-store";
-import { usePanel } from "@/components/providers/panel-provider";
+import { usePanel } from "@/context/panel-provider";
 import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create-view";
 import React from "react";
 import {

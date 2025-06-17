@@ -17,7 +17,7 @@ from langchain_core.messages import (
 from langchain_core.runnables import RunnableConfig
 from langgraph.managed import RemainingSteps
 
-from src.provider.backbone.backbone_provider import get_sealos_model
+from provider.backbone_provider import get_sealos_model
 
 
 class ChatAgentState(CopilotKitState):

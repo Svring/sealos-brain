@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Box, Database, Code, Globe, Settings } from "lucide-react";
-import { usePanel } from "@/components/providers/panel-provider";
+import { usePanel } from "@/context/panel-provider";
 import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create-view";
 
 interface NodeCreateViewProps {

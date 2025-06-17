@@ -1,17 +1,21 @@
 "use client";
 
 // React and third-party imports
-import React, { useEffect } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
   Box,
+  CodeXml,
   Database,
   Home,
   Pin,
   PinOff,
   Sparkle,
+  SquareChartGantt,
+  Theater,
   User2,
+  Workflow,
 } from "lucide-react";
 
 // UI Components
@@ -30,7 +34,7 @@ import { MainSection, NavigationItem } from "@/components/ui/sidebar-section";
 
 // Hooks and store
 import { useSealosStore } from "@/store/sealos-store";
-import { useSidebarControl } from "@/hooks/use-sidebar-control";
+import { useSidebarVisibility } from "@/hooks/use-sidebar-visibility";
 import { accountAmountOptions } from "@/lib/account/account-query";
 
 // Utils
@@ -40,28 +44,39 @@ import { transformAccountAmountIntoBalance } from "@/lib/account/account-transfo
 const NAVIGATION_ITEMS: NavigationItem[] = [
   {
     title: "Dashboard",
-    icon: Home,
+    icon: SquareChartGantt,
     group: "overview",
+    path: "/dashboard",
   },
   {
     title: "Graph",
-    icon: BarChart3,
+    icon: Workflow,
     group: "overview",
+    path: "/graph",
+  },
+  {
+    title: "Opera",
+    icon: Theater,
+    group: "overview",
+    path: "/opera",
   },
   {
     title: "DevBox",
     icon: Box,
     group: "application",
+    path: "/preview/devbox",
   },
   {
     title: "Database",
     icon: Database,
     group: "application",
+    path: "/database",
   },
   {
     title: "AI Proxy",
     icon: Sparkle,
     group: "application",
+    path: "/ai-proxy",
   },
 ];
 
@@ -81,37 +96,32 @@ export function AppSidebar() {
   const {
     open,
     pinned,
-    width: sidebarWidth,
     setOpen,
-    togglePin: handlePinClick,
-    enterHotZone: handleHotZoneEnter,
-    leaveSidebar: handleSidebarLeave,
-    enterSidebar: handleSidebarEnter,
-    handleMouseDown: handleResizeMouseDown,
-  } = useSidebarControl();
+    enterHotZone,
+    leaveSidebar,
+    enterSidebar,
+    togglePin,
+  } = useSidebarVisibility();
 
-  // Render
+  // Default width for the sidebar
+  const defaultWidth = 240;
+
   return (
     <>
       {!open && !pinned && (
         <div
-          className="fixed left-0 top-0 w-12 h-screen z-[100]"
-          onMouseEnter={handleHotZoneEnter}
+          className="fixed left-0 top-0 w-8 h-screen z-[100]"
+          onMouseEnter={enterHotZone}
         />
       )}
       <SidebarProvider open={open} onOpenChange={setOpen}>
         <Sidebar
           variant="floating"
           className="fixed top-0 left-0 h-full z-50"
-          style={{ width: sidebarWidth }}
-          onMouseEnter={handleSidebarEnter}
-          onMouseLeave={handleSidebarLeave}
+          style={{ width: defaultWidth }}
+          onMouseEnter={enterSidebar}
+          onMouseLeave={leaveSidebar}
         >
-          <div
-            className="absolute top-0 right-0 h-full w-2 cursor-ew-resize z-50 bg-transparent transition-colors"
-            onMouseDown={handleResizeMouseDown}
-            style={{ userSelect: "none" }}
-          />
           <SidebarHeader className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -122,7 +132,7 @@ export function AppSidebar() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handlePinClick}
+                onClick={togglePin}
                 aria-label={pinned ? "Unpin sidebar" : "Pin sidebar"}
                 className="h-8 w-8"
               >

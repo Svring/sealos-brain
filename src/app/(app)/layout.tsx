@@ -3,16 +3,17 @@ import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 
 // Provider Components
-import { ThemeProvider } from "@/components/providers/theme-provider";
+import { ThemeProvider } from "@/context/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/providers/app-sidebar-provider";
-import { PanelProvider } from "@/components/providers/panel-provider";
-import { SealosStoreHydrator } from "@/components/providers/sealos-store-hydrator";
-import { CopilotStateProvider } from "@/components/providers/copilot-state-provider";
-import { QueryProvider } from "@/components/providers/query-provider";
+import { AppSidebar } from "@/context/app-sidebar-provider";
+import { PanelProvider } from "@/context/panel-provider";
+import { SealosStoreHydrator } from "@/context/sealos-store-hydrator";
+import { CopilotStateProvider } from "@/context/copilot-state-provider";
+import { QueryProvider } from "@/context/query-provider";
 
 // UI Components
 import LoginPanel from "@/components/ui/login-panel";
+import { Toaster } from "@/components/ui/sonner";
 
 // Third-Party Library Components
 import { CopilotKit } from "@copilotkit/react-core";
@@ -81,6 +82,7 @@ export default async function RootLayout({
                   <CopilotStateProvider>
                     <AppSidebar />
                     <main>{children}</main>
+                    <Toaster />
                   </CopilotStateProvider>
                 </CopilotKit>
               </PanelProvider>

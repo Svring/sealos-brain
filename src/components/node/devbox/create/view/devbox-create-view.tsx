@@ -17,7 +17,7 @@ import { useControlStore } from "@/store/control-store";
 import { useSealosStore } from "@/store/sealos-store";
 import { createDevboxMutation } from "@/lib/devbox/devbox-mutation";
 import { toast } from "sonner";
-import { usePanel } from "@/components/providers/panel-provider";
+import { usePanel } from "@/context/panel-provider";
 
 // Create a custom nanoid with lowercase alphabet and size 12
 const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 12);

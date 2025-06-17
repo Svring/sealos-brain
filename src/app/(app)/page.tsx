@@ -9,7 +9,7 @@ import {
   Edge,
 } from "@xyflow/react";
 import nodeTypes from "@/components/node/node-types";
-import { usePanel } from "@/components/providers/panel-provider";
+import { usePanel } from "@/context/panel-provider";
 import NodeCreateView from "@/components/node/create/node-create-view";
 import edgeTypes from "@/components/edge/edge-types";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { PromptInputBox } from "@/components/ai/ai-prompt-box";
 
 import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { useSidebarControl } from "@/hooks/use-sidebar-control";
 import { useGraphNode } from "@/hooks/use-graph-node";
 
@@ -27,14 +27,18 @@ const initialEdges: Edge[] = [];
 
 export default function App() {
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
-  
+
   // Use the new hook for node management
   const { nodes, onNodesChange, isLoading, error } = useGraphNode();
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
   const { open: sidebarOpen, width: sidebarWidth } = useSidebarControl();
 
-  const { visibleMessages, appendMessage, isLoading: isChatLoading } = useCopilotChat();
+  const {
+    visibleMessages,
+    appendMessage,
+    isLoading: isChatLoading,
+  } = useCopilotChat();
 
   // Add expand state for MessageSwiper
   const [isMessageSwiperExpanded, setIsMessageSwiperExpanded] = useState(false);
@@ -87,19 +91,18 @@ export default function App() {
     return { left: "50%", x: "-50%", width: 640 };
   }, [panelId, sidebarOpen, sidebarWidth, windowWidth]);
 
-
-
   return (
     <div className="h-screen w-screen">
       {/* Top-right button to open node-create view */}
       <div className="absolute top-4 right-4 z-50">
         <Button
           variant="default"
+          className="rounded-xl"
           onClick={() =>
             openPanel("node-create", <NodeCreateView onCreateNode={() => {}} />)
           }
         >
-          +
+          <Plus className="w-4 h-4" />
         </Button>
       </div>
       <ReactFlow
@@ -161,7 +164,6 @@ export default function App() {
                 );
                 console.log("🔍 Appended message:", content);
               }}
-              isLoading={isChatLoading}
             />
           </motion.div>
         </motion.div>

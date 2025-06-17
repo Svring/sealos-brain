@@ -1,4 +1,5 @@
 import React from "react";
+import { useRouter } from "next/navigation";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -22,6 +23,7 @@ export interface NavigationItem {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
   group: "overview" | "application";
+  path: string;
 }
 
 export interface MainSectionProps {
@@ -30,44 +32,52 @@ export interface MainSectionProps {
 
 export const MainSection: React.FC<MainSectionProps> = ({
   navigationItems,
-}) => (
-  <>
-    <SidebarGroup>
-      <SidebarGroupLabel>Overview</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {navigationItems
-            .filter((item) => item.group === "overview")
-            .map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton>
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-    <SidebarGroup>
-      <SidebarGroupLabel>Application</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {navigationItems
-            .filter((item) => item.group === "application")
-            .map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton>
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  </>
-);
+}) => {
+  const router = useRouter();
+
+  const handleNavigation = (path: string) => {
+    router.push(path);
+  };
+
+  return (
+    <>
+      <SidebarGroup>
+        <SidebarGroupLabel>Overview</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {navigationItems
+              .filter((item) => item.group === "overview")
+              .map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton onClick={() => handleNavigation(item.path)}>
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+      <SidebarGroup>
+        <SidebarGroupLabel>Application</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {navigationItems
+              .filter((item) => item.group === "application")
+              .map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton onClick={() => handleNavigation(item.path)}>
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </>
+  );
+};
 
 export const DashboardSection: React.FC<{
   getAccountBalance: () => string;

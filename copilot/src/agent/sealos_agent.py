@@ -19,7 +19,7 @@ from langgraph.graph import StateGraph, END
 from langgraph.types import Command
 from langgraph.prebuilt import ToolNode
 
-from src.provider.backbone.backbone_provider import get_sealos_model
+from src.provider.backbone_provider import get_sealos_model
 
 from langchain_core.tools import tool
 
