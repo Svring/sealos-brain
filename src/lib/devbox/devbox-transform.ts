@@ -94,3 +94,50 @@ export const transformTemplateList = (data: any) => {
     return [];
   }
 };
+
+/**
+ * Transform getDevboxByName response to extract preview and galatea addresses
+ * Returns URLs for port 3000 (preview) and port 3051 (galatea)
+ */
+export const transformDevboxAddresses = (data: any) => {
+  if (!data?.networks || !Array.isArray(data.networks)) {
+    return {
+      error: "Devbox is not controlled - no network information available",
+    };
+  }
+
+  const previewNetwork = data.networks.find(
+    (network: any) => network.port === 3000
+  );
+  const galateaNetwork = data.networks.find(
+    (network: any) => network.port === 3051
+  );
+
+  if (!previewNetwork?.publicDomain || !galateaNetwork?.publicDomain) {
+    return {
+      error:
+        "Devbox is not controlled - required ports (3000, 3051) or their public domains are not available",
+    };
+  }
+
+  return {
+    preview_address: `https://${previewNetwork.publicDomain}`,
+    galatea_address: `https://${galateaNetwork.publicDomain}`,
+  };
+};
+
+/**
+ * Transform devbox list API response into a simple array of devbox names
+ */
+export const transformDevboxListToNames = (data: DataSchema): string[] => {
+  return data
+    .map((pair) => {
+      const devbox = pair.find((item: any) => item.kind === "Devbox") as
+        | DevboxSchema
+        | undefined;
+      return devbox?.metadata.name;
+    })
+    .filter(
+      (name): name is string => typeof name === "string" && name.length > 0
+    );
+};

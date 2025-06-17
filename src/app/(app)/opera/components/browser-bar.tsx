@@ -9,19 +9,26 @@ import {
   Share,
   Maximize2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface BrowserBarProps {
   url: string;
   onUrlChange: (url: string) => void;
   onRefresh: () => void;
+  readOnly?: boolean;
 }
 
-export function BrowserBar({ url, onUrlChange, onRefresh }: BrowserBarProps) {
+export function BrowserBar({ url, onUrlChange, onRefresh, readOnly = false }: BrowserBarProps) {
   const [inputUrl, setInputUrl] = useState(url);
+
+  // Update local state when prop changes
+  useEffect(() => {
+    setInputUrl(url);
+  }, [url]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return; // Prevent changes when read-only
     let finalUrl = inputUrl.trim();
     
     // Add https:// if no protocol is specified
@@ -37,7 +44,7 @@ export function BrowserBar({ url, onUrlChange, onRefresh }: BrowserBarProps) {
   };
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-background border-b border-border">
+    <div className="flex items-center gap-2 px-4 py-2 bg-background border-b border-border rounded-t-lg">
       <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground">
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -59,6 +66,7 @@ export function BrowserBar({ url, onUrlChange, onRefresh }: BrowserBarProps) {
           placeholder="Enter website URL..."
           className="bg-background text-sm"
           onBlur={handleSubmit}
+          readOnly={readOnly}
         />
       </form>
       <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground">

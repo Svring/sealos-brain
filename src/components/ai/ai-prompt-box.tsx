@@ -659,7 +659,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
               isRecording ? "opacity-0 invisible h-0" : "opacity-100 visible"
             )}
           >
-            <PromptInputAction tooltip="Upload image">
+            {/* <PromptInputAction tooltip="Upload image">
               <button
                 onClick={() => uploadInputRef.current?.click()}
                 className="flex h-8 w-8 text-[#9CA3AF] cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-gray-600/30 hover:text-[#D1D5DB]"
@@ -677,10 +677,10 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                   accept="image/*"
                 />
               </button>
-            </PromptInputAction>
+            </PromptInputAction> */}
 
             <div className="flex items-center">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => handleToggleChange("search")}
                 className={cn(
@@ -714,9 +714,9 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                 </AnimatePresence>
               </button>
 
-              <CustomDivider />
+              <CustomDivider /> */}
 
-              <button
+              {/* <button
                 type="button"
                 onClick={() => handleToggleChange("think")}
                 className={cn(
@@ -750,9 +750,9 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                 </AnimatePresence>
               </button>
 
-              <CustomDivider />
+              <CustomDivider /> */}
 
-              <button
+              {/* <button
                 type="button"
                 onClick={handleCanvasToggle}
                 className={cn(
@@ -784,7 +784,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                     </motion.span>
                   )}
                 </AnimatePresence>
-              </button>
+              </button> */}
             </div>
           </div>
 

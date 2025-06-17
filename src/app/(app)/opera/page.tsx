@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -12,19 +12,72 @@ import {
   CopilotStateProvider,
   useCopilotConfig,
 } from "@/context/copilot-state-provider";
+import { useSealosStore } from "@/store/sealos-store";
+import { useQuery, useQueries } from "@tanstack/react-query";
+import {
+  devboxListOptions,
+  devboxByNameOptions,
+} from "@/lib/devbox/devbox-query";
+import {
+  transformDevboxListToNames,
+  transformDevboxAddresses,
+} from "@/lib/devbox/devbox-transform";
 
-const generatedFiles = [
-  { name: "app/layout.tsx", status: "Generated" },
-  { name: "components/theme-switcher.tsx", status: "Generated" },
-  { name: "app/globals.css", status: "Generated" },
-  { name: "app/page.tsx", status: "Generated" },
-  { name: "components/theme-toggle.tsx", status: "Generated" },
-];
+interface DevboxOption {
+  name: string;
+  preview_address: string;
+  galatea_address: string;
+}
 
 function OperaPageContent() {
   const [activeTab, setActiveTab] = useState("chat");
-  const [previewTab, setPreviewTab] = useState("preview");
   const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // Sealos store for auth/region context
+  const { currentUser, regionUrl } = useSealosStore();
+
+  // Fetch devbox names list
+  const { data: devboxNames = [] } = useQuery(
+    devboxListOptions(currentUser, regionUrl, transformDevboxListToNames)
+  );
+
+  // Fetch addresses for each devbox name
+  const devboxAddressQueries = useQueries({
+    queries: devboxNames.map((name: string) =>
+      devboxByNameOptions(currentUser, regionUrl, name, (data: any) => {
+        const addresses = transformDevboxAddresses(data);
+        return { name, ...addresses };
+      })
+    ),
+  });
+
+  // Combine results into devbox options with both addresses present
+  const devboxOptions: DevboxOption[] = useMemo(() => {
+    return devboxAddressQueries
+      .map((q) => q.data as DevboxOption | (DevboxOption & { error?: string }) | undefined)
+      .filter((opt): opt is DevboxOption => {
+        if (!opt) return false;
+        return !(opt as any).error;
+      });
+  }, [devboxAddressQueries]);
+
+  // Selected devbox name state
+  const [selectedDevboxName, setSelectedDevboxName] = useState<string | undefined>(
+    undefined
+  );
+
+  // Auto-select first devbox when available
+  useEffect(() => {
+    if (!selectedDevboxName && devboxOptions.length > 0) {
+      setSelectedDevboxName(devboxOptions[0].name);
+    }
+  }, [devboxOptions, selectedDevboxName]);
+
+  const selectedDevbox = devboxOptions.find(
+    (opt) => opt.name === selectedDevboxName
+  );
+
+  const previewUrl = selectedDevbox?.preview_address || "";
 
   return (
     <div className="h-screen w-screen text-foreground flex flex-col p-2">
@@ -34,7 +87,9 @@ function OperaPageContent() {
           <ChatPanel
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            generatedFiles={generatedFiles}
+            devboxOptions={devboxOptions}
+            selectedDevboxName={selectedDevboxName}
+            onSelectDevbox={(name: string) => setSelectedDevboxName(name)}
           />
         </ResizablePanel>
 
@@ -42,7 +97,11 @@ function OperaPageContent() {
 
         {/* Right Panel - Preview */}
         <ResizablePanel defaultSize={75} className="rounded-lg">
-          <PreviewPanel isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+          <PreviewPanel
+            isDarkMode={isDarkMode}
+            setIsDarkMode={setIsDarkMode}
+            previewUrl={previewUrl}
+          />
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

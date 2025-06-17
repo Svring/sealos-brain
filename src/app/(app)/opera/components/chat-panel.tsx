@@ -1,8 +1,6 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PromptInputBox } from "@/components/ai/ai-prompt-box";
 import { useCopilotChat } from "@copilotkit/react-core";
 import { useCopilotConfig } from "@/context/copilot-state-provider";
@@ -16,20 +14,36 @@ import {
 } from "./chat-bubble";
 import { ChatMessageList } from "./chat-message-list";
 import { ChatErrorBoundary } from "./chat-error-boundary";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-interface GeneratedFile {
+interface DevboxOption {
   name: string;
-  status: string;
+  preview_address: string;
+  galatea_address: string;
 }
 
 interface ChatPanelProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  generatedFiles: GeneratedFile[];
+  devboxOptions: DevboxOption[];
+  selectedDevboxName?: string;
+  onSelectDevbox: (name: string) => void;
 }
 
-export function ChatPanel({ activeTab, setActiveTab }: ChatPanelProps) {
+export function ChatPanel({
+  activeTab,
+  setActiveTab,
+  devboxOptions,
+  selectedDevboxName,
+  onSelectDevbox,
+}: ChatPanelProps) {
   const {
     visibleMessages,
     appendMessage,
@@ -37,9 +51,14 @@ export function ChatPanel({ activeTab, setActiveTab }: ChatPanelProps) {
   } = useCopilotChat();
 
   const { config, updateConfig } = useCopilotConfig();
-  const [projectAddress, setProjectAddress] = useState(
-    config.project_address || "https://lzqezjdjzvjs.sealosbja.site"
-  );
+
+  // Update Copilot config when selected devbox changes
+  useEffect(() => {
+    const selected = devboxOptions.find((d) => d.name === selectedDevboxName);
+    if (selected && selected.galatea_address !== config.project_address) {
+      updateConfig({ project_address: selected.galatea_address });
+    }
+  }, [selectedDevboxName, devboxOptions, updateConfig, config.project_address]);
 
   const [failedMessages, setFailedMessages] = useState<Set<string>>(new Set());
   const [hiddenMessages] = useState<Set<string>>(new Set());
@@ -74,25 +93,23 @@ export function ChatPanel({ activeTab, setActiveTab }: ChatPanelProps) {
     navigator.clipboard.writeText(content);
   };
 
-  const handleProjectAddressChange = (value: string) => {
-    setProjectAddress(value);
-    updateConfig({ project_address: value });
-  };
-
   return (
     <div className="h-full flex flex-col bg-background border border-border rounded-lg">
-      {/* Project Address Input - only show for code agent */}
+      {/* Devbox Select - only show for code agent */}
       {config.agent === "code" && (
         <div className="p-2 border-b border-border">
-          <div>
-            <Input
-              id="project-address"
-              placeholder="https://lzqezjdjzvjs.sealosbja.site"
-              value={projectAddress}
-              onChange={(e) => handleProjectAddressChange(e.target.value)}
-              className="mt-1"
-            />
-          </div>
+          <Select value={selectedDevboxName} onValueChange={onSelectDevbox}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Devbox" />
+            </SelectTrigger>
+            <SelectContent>
+              {devboxOptions.map((opt) => (
+                <SelectItem key={opt.name} value={opt.name}>
+                  {opt.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
