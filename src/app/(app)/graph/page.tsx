@@ -20,12 +20,13 @@ import { PromptInputBox } from "@/components/ai/ai-prompt-box";
 import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import { ChevronDown, Plus } from "lucide-react";
-import { useSidebarVisibility } from "@/hooks/use-sidebar-visibility";
+import { useSidebarWidth } from "@/hooks/use-sidebar-width";
 import { useGraphNode } from "@/hooks/use-graph-node";
 import {
   CopilotStateProvider,
   useCopilotConfig,
 } from "@/context/copilot-state-provider";
+import { useSidebarState } from "@/context/sidebar-state-provider";
 
 const initialEdges: Edge[] = [];
 
@@ -36,8 +37,9 @@ function GraphPageContent() {
   const { nodes, onNodesChange, isLoading, error } = useGraphNode();
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
-  const { open: sidebarOpen } = useSidebarVisibility();
-  const sidebarWidth = 240; // Default sidebar width
+  // Use centralized sidebar control hook for visibility and width
+  const { open: sidebarOpen } = useSidebarState();
+  const sidebarWidth = useSidebarWidth();
 
   const {
     visibleMessages,
@@ -154,7 +156,7 @@ function GraphPageContent() {
 
       <AnimatePresence>
         <motion.div
-          className="fixed bottom-2 w-full z-40"
+          className="fixed bottom-2 z-40 max-w-xl"
           initial={false}
           animate={boxAnimate}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}

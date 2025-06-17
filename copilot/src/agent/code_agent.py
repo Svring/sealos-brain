@@ -1,4 +1,4 @@
-# python -m agents.codebase_agent.codebase_agent
+# python -m src.agent.code_agent
 from typing import Any, Literal
 
 from copilotkit import CopilotKitState
@@ -25,7 +25,7 @@ class CodebaseState(CopilotKitState):
     place_holder: Any = None
 
 
-llm = get_sealos_model("gemini-2.5-flash-preview-05-20")
+llm = get_sealos_model("gpt-4o")
 tools = [
     codebase_find_files,
     codebase_editor_command,

@@ -85,11 +85,24 @@ export type CodeAgentState = {
   recent_operations: string[];
 };
 
-export const codeAgentConfig = {
+export interface CodeAgentConfig {
+  name: string;
+  systemPrompt: string;
+  defaultConfig: {
+    runtimeUrl: string;
+    agent: string;
+  };
+  project_address: string;
+  token: string;
+}
+
+export const codeAgentConfig: CodeAgentConfig = {
   name: "code",
   systemPrompt: codeSystemPrompt,
   defaultConfig: {
     runtimeUrl: "/api/code",
     agent: "code",
   },
+  project_address: "https://lzqezjdjzvjs.sealosbja.site",
+  token: "",
 };

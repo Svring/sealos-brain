@@ -23,6 +23,8 @@ interface CopilotConfig {
   runtimeUrl?: string;
   publicApiKey?: string;
   agent?: string;
+  project_address?: string;
+  token?: string;
 }
 
 interface CopilotStateContextType {
@@ -54,6 +56,15 @@ export function useCopilotState() {
 export function useCopilotConfig() {
   const { config, updateConfig } = useCopilotState();
   return { config, updateConfig };
+}
+
+// DevboxActionsProvider - Component to handle devbox actions activation
+function DevboxActionsProvider({ agent }: { agent?: string }) {
+  // Only activate devbox actions when the agent is copilot
+  if (agent === "copilot") {
+    activateDevboxActions();
+  }
+  return null;
 }
 
 // Props
@@ -88,6 +99,7 @@ export function CopilotStateProvider({
       agent={config.agent}
     >
       <InnerProvider config={config} updateConfig={updateConfig}>
+        <DevboxActionsProvider agent={config.agent} />
         {children}
       </InnerProvider>
     </CopilotKit>
@@ -107,13 +119,27 @@ function InnerProvider({ children, config, updateConfig }: InnerProviderProps) {
     [config.agent]
   );
 
+  // Create the configurable object based on agent type
+  const configurableConfig = useMemo(() => {
+    const baseConfig = { system_prompt: agentConfig.systemPrompt };
+    
+    // Add project_address and token for code agent only
+    if (config.agent === "code") {
+      return {
+        ...baseConfig,
+        project_address: config.project_address,
+        token: config.token || (agentConfig as any).token,
+      };
+    }
+    
+    return baseConfig;
+  }, [agentConfig.systemPrompt, config.agent, config.project_address, config.token, agentConfig]);
+
   const { state, setState } = useCoAgent<AgentState>({
     name: agentConfig.name,
     initialState: {},
-    config: { configurable: { system_prompt: agentConfig.systemPrompt } },
+    config: { configurable: configurableConfig },
   });
-
-  activateDevboxActions();
 
   return (
     <CopilotStateContext.Provider

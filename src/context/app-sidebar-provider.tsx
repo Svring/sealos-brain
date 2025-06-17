@@ -34,7 +34,7 @@ import { MainSection, NavigationItem } from "@/components/ui/sidebar-section";
 
 // Hooks and store
 import { useSealosStore } from "@/store/sealos-store";
-import { useSidebarVisibility } from "@/hooks/use-sidebar-visibility";
+import { useSidebarState } from "@/context/sidebar-state-provider";
 import { accountAmountOptions } from "@/lib/account/account-query";
 
 // Utils
@@ -101,7 +101,7 @@ export function AppSidebar() {
     leaveSidebar,
     enterSidebar,
     togglePin,
-  } = useSidebarVisibility();
+  } = useSidebarState();
 
   // Default width for the sidebar
   const defaultWidth = 240;

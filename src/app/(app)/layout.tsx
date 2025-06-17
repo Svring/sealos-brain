@@ -9,6 +9,7 @@ import { AppSidebar } from "@/context/app-sidebar-provider";
 import { PanelProvider } from "@/context/panel-provider";
 import { SealosStoreHydrator } from "@/context/sealos-store-hydrator";
 import { QueryProvider } from "@/context/query-provider";
+import { SidebarStateProvider } from "@/context/sidebar-state-provider";
 
 // UI Components
 import LoginPanel from "@/components/ui/login-panel";
@@ -64,11 +65,13 @@ export default async function RootLayout({
           <SidebarProvider>
             <QueryProvider>
               <SealosStoreHydrator user={user} />
-              <PanelProvider>
-                <AppSidebar />
-                <main>{children}</main>
-                <Toaster />
-              </PanelProvider>
+              <SidebarStateProvider>
+                <PanelProvider>
+                  <AppSidebar />
+                  <main>{children}</main>
+                  <Toaster />
+                </PanelProvider>
+              </SidebarStateProvider>
             </QueryProvider>
           </SidebarProvider>
         </ThemeProvider>

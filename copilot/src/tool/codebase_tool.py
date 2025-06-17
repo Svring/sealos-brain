@@ -145,7 +145,7 @@ async def codebase_find_files(
 
         result = await fetch_with_timeout_and_retry(
             session=session,
-            url=f"{url}/galatea/api/editor/find-files",
+            url=f"{url}/api/editor/find-files",
             token=token,
             method="POST",
             json_data=request_data,
@@ -230,7 +230,7 @@ async def codebase_editor_command(
 
         result = await fetch_with_timeout_and_retry(
             session=session,
-            url=f"{url}/galatea/api/editor/command",
+            url=f"{url}/api/editor/command",
             token=token,
             method="POST",
             json_data=body,
@@ -253,7 +253,7 @@ async def codebase_npm_script(
     async with aiohttp.ClientSession() as session:
         result = await fetch_with_timeout_and_retry(
             session=session,
-            url=f"{url}/galatea/api/editor/{script}",
+            url=f"{url}/api/editor/{script}",
             token=token,
             method="POST",
         )

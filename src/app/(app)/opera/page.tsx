@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/resizable";
 import { ChatPanel } from "./components/chat-panel";
 import { PreviewPanel } from "./components/preview-panel";
-import { 
-  CopilotStateProvider, 
-  useCopilotConfig 
+import {
+  CopilotStateProvider,
+  useCopilotConfig,
 } from "@/context/copilot-state-provider";
 
 const generatedFiles = [
@@ -42,12 +42,7 @@ function OperaPageContent() {
 
         {/* Right Panel - Preview */}
         <ResizablePanel defaultSize={75} className="rounded-lg">
-          <PreviewPanel
-            previewTab={previewTab}
-            setPreviewTab={setPreviewTab}
-            isDarkMode={isDarkMode}
-            setIsDarkMode={setIsDarkMode}
-          />
+          <PreviewPanel isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
@@ -62,6 +57,8 @@ function OperaPageWithConfig() {
     updateConfig({
       runtimeUrl: "/api/code",
       agent: "code",
+      project_address: "https://lzqezjdjzvjs.sealosbja.site",
+      token: "",
     });
   }, [updateConfig]);
 
@@ -74,6 +71,8 @@ export default function OperaPage() {
       initialConfig={{
         runtimeUrl: "/api/code",
         agent: "code",
+        project_address: "https://lzqezjdjzvjs.sealosbja.site",
+        token: "",
       }}
     >
       <OperaPageWithConfig />
