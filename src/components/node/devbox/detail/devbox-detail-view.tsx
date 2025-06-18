@@ -1,13 +1,17 @@
 import React from "react";
+import Image from "next/image";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 import { useSealosStore } from "@/store/sealos-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Play, Power, RotateCcw, Trash2, Link } from "lucide-react";
+import { Play, Power, RotateCcw, Trash2, Link, Link2Off } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { devboxByNameOptions, sshConnectionInfoOptions } from "@/lib/devbox/devbox-query";
+import {
+  devboxByNameOptions,
+  sshConnectionInfoOptions,
+} from "@/lib/devbox/devbox-query";
 import { namespaceListOptions } from "@/lib/auth/auth-query";
 import { getFirstNamespaceId } from "@/lib/auth/auth-transform";
 import {
@@ -34,6 +38,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  activateGalateaForDevbox,
+  cleanupGalateaFilesOnDevbox,
+} from "@/lib/devbox/devbox-ssh";
 
 export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   const { currentUser, regionUrl } = useSealosStore();
@@ -70,9 +78,10 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
         return;
       }
 
-      const { base64PrivateKey, userName, workingDir, token } = sshConnectionInfo;
+      const { base64PrivateKey, userName, workingDir, token } =
+        sshConnectionInfo;
       const sshPort = devbox.sshPort;
-      const idePrefix = 'cursor://';
+      const idePrefix = "cursor://";
       const sealosDomain = regionUrl;
 
       const fullUri = `${idePrefix}labring.devbox-aio?sshDomain=${encodeURIComponent(
@@ -82,7 +91,7 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
       )}&sshHostLabel=${encodeURIComponent(
         `${sealosDomain}_${namespaceId}_${devboxName}`
       )}&workingDir=${encodeURIComponent(workingDir)}&token=${encodeURIComponent(token)}`;
-      
+
       window.location.href = fullUri;
     } catch (error: any) {
       console.error("Failed to open IDE:", error);
@@ -100,6 +109,58 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
       console.error("Failed to delete devbox:", error);
       toast.error(error?.message || "Failed to delete devbox", {
         id: "delete-devbox",
+      });
+    }
+  };
+
+  const handleControl = async () => {
+    try {
+      if (!sshConnectionInfo || !devbox) {
+        toast.error("Required SSH or devbox info not available");
+        return;
+      }
+      toast.loading("Activating Galatea...", { id: "galatea-activate" });
+      const devboxInfo = {
+        ssh_credentials: {
+          host: regionUrl,
+          port: devbox.sshPort,
+          username: sshConnectionInfo.userName,
+          privateKey: sshConnectionInfo.base64PrivateKey,
+        },
+        project_public_address: devbox.projectPublicAddress || "",
+      };
+      await activateGalateaForDevbox(devboxInfo);
+      toast.success("Galatea activated!", { id: "galatea-activate" });
+    } catch (error: any) {
+      console.error("Failed to activate Galatea:", error);
+      toast.error(error?.message || "Failed to activate Galatea", {
+        id: "galatea-activate",
+      });
+    }
+  };
+
+  const handleControlUpdate = async () => {
+    try {
+      if (!sshConnectionInfo || !devbox) {
+        toast.error("Required SSH or devbox info not available");
+        return;
+      }
+      toast.loading("Cleaning up Galatea...", { id: "galatea-cleanup" });
+      const devboxInfo = {
+        ssh_credentials: {
+          host: regionUrl,
+          port: devbox.sshPort,
+          username: sshConnectionInfo.userName,
+          privateKey: sshConnectionInfo.base64PrivateKey,
+        },
+        project_public_address: devbox.projectPublicAddress || "",
+      };
+      await cleanupGalateaFilesOnDevbox(devboxInfo);
+      toast.success("Galatea cleaned up!", { id: "galatea-cleanup" });
+    } catch (error: any) {
+      console.error("Failed to cleanup Galatea:", error);
+      toast.error(error?.message || "Failed to cleanup Galatea", {
+        id: "galatea-cleanup",
       });
     }
   };
@@ -430,13 +491,44 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
         <div className="flex gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" onClick={handleControl}>
+                <Link className="w-4 h-4" />
+                <span className="sr-only">Control</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Control</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleControlUpdate}
+              >
+                <Link2Off className="w-4 h-4" />
+                <span className="sr-only">Clean Up Control</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Clean Up Control</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
                 variant="outline"
                 size="icon"
                 onClick={handleOpenIDE}
                 disabled={!isRunning}
               >
-                <Link className="w-4 h-4" />
+                <Image
+                  src="https://www.cursor.com/favicon.ico"
+                  alt="Cursor"
+                  width={32}
+                  height={32}
+                />
                 <span className="sr-only">Open IDE</span>
               </Button>
             </TooltipTrigger>
@@ -453,7 +545,9 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                 disabled={isRunning || isStarting}
               >
                 <Play className="w-4 h-4" />
-                <span className="sr-only">{isStarting ? "Starting..." : "Start"}</span>
+                <span className="sr-only">
+                  {isStarting ? "Starting..." : "Start"}
+                </span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -471,7 +565,9 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                 disabled={!isRunning || isShuttingDown}
               >
                 <Power className="w-4 h-4" />
-                <span className="sr-only">{isShuttingDown ? "Shutting down..." : "Shutdown"}</span>
+                <span className="sr-only">
+                  {isShuttingDown ? "Shutting down..." : "Shutdown"}
+                </span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -487,7 +583,9 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                 disabled={!isRunning || isRestarting}
               >
                 <RotateCcw className="w-4 h-4" />
-                <span className="sr-only">{isRestarting ? "Restarting..." : "Restart"}</span>
+                <span className="sr-only">
+                  {isRestarting ? "Restarting..." : "Restart"}
+                </span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -504,7 +602,9 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                     disabled={isDeleting}
                   >
                     <Trash2 className="w-4 h-4" />
-                    <span className="sr-only">{isDeleting ? "Deleting..." : "Delete"}</span>
+                    <span className="sr-only">
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </span>
                   </Button>
                 </AlertDialogTrigger>
               </TooltipTrigger>

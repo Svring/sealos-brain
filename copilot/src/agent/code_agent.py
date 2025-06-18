@@ -25,7 +25,7 @@ class CodebaseState(CopilotKitState):
     place_holder: Any = None
 
 
-llm = get_sealos_model("gpt-4o")
+llm = get_sealos_model("claude-sonnet-4-20250514")
 tools = [
     codebase_find_files,
     codebase_editor_command,

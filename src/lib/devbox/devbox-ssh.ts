@@ -28,14 +28,21 @@ function formatPrivateKey(privateKey?: string): string | undefined {
     return undefined;
   }
 
-  // Check if the key already has markers
-  if (privateKey.includes("-----BEGIN RSA PRIVATE KEY-----")) {
-    return privateKey;
+  let decodedKey = privateKey;
+
+  // Try to decode base64 if it doesn't contain PEM markers
+  if (!privateKey.includes("-----BEGIN") && !privateKey.includes("-----END")) {
+    try {
+      // Decode base64 in Node.js environment
+      decodedKey = Buffer.from(privateKey, "base64").toString("utf-8");
+    } catch (error) {
+      console.error("Failed to decode base64 private key:", error);
+      throw new Error("Invalid base64 private key format");
+    }
   }
 
-  // Remove any whitespace and add markers
-  const cleanKey = privateKey.trim();
-  return `-----BEGIN RSA PRIVATE KEY-----\n${cleanKey}\n-----END RSA PRIVATE KEY-----`;
+  // Return the decoded key as-is (do not add markers)
+  return decodedKey;
 }
 
 /**
@@ -83,7 +90,7 @@ export async function activateGalateaForDevbox(
       host: sshConfig.host,
       port: sshConfig.port,
       username: sshConfig.username,
-      password: sshConfig.password,
+      // password: sshConfig.password,
       privateKey: sshConfig.privateKey,
     });
 
@@ -140,7 +147,8 @@ export async function activateGalateaForDevbox(
 }
 
 /**
- * Helper function to download Galatea binary directly to the devbox.
+ * Helper function to upload Galatea binary to the devbox.
+ * Downloads to local temp file first, then uploads to server.
  *
  * @param sshConfig - SSH connection configuration
  */
@@ -150,36 +158,58 @@ async function uploadGalateaBinary(sshConfig: SSHConfig): Promise<void> {
     throw new Error("GALATEA_RELEASE environment variable is not set");
   }
 
-  const ssh = new NodeSSH();
-  await ssh.connect({
-    host: sshConfig.host,
-    port: sshConfig.port,
-    username: sshConfig.username,
-    password: sshConfig.password,
-    privateKey: sshConfig.privateKey,
-  });
+  let tempFilePath: string | null = null;
 
   try {
-    console.log("Downloading Galatea binary directly to devbox...");
+    console.log("Downloading Galatea binary to local temp file...");
 
-    // Download the binary directly to the devbox using wget or curl
-    const downloadResult = await ssh.execCommand(
-      `wget -O galatea "${galateaRelease}" || curl -L -o galatea "${galateaRelease}"`,
-      { cwd: "/home/devbox" }
-    );
-
-    if (downloadResult.code !== 0) {
-      throw new Error(
-        `Failed to download Galatea binary: ${downloadResult.stderr}`
-      );
+    // Download to local temporary file
+    const response = await fetch(galateaRelease);
+    if (!response.ok) {
+      throw new Error(`Failed to download Galatea: ${response.statusText}`);
     }
 
-    console.log("Galatea binary downloaded successfully");
+    // Create temporary file
+    const tempDir = path.join(process.cwd(), "tmp");
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+
+    tempFilePath = path.join(tempDir, `galatea-${Date.now()}`);
+    const buffer = await response.arrayBuffer();
+    fs.writeFileSync(tempFilePath, Buffer.from(buffer));
+
+    console.log("Uploading Galatea binary to devbox...");
+
+    // Upload to remote using node-ssh
+    const ssh = new NodeSSH();
+    await ssh.connect({
+      host: sshConfig.host,
+      port: sshConfig.port,
+      username: sshConfig.username,
+      // password: sshConfig.password,
+      privateKey: sshConfig.privateKey,
+    });
+
+    try {
+      await ssh.putFile(tempFilePath, "/home/devbox/galatea");
+      console.log("Galatea binary uploaded successfully");
+    } finally {
+      ssh.dispose();
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to download Galatea binary: ${errorMessage}`);
+    throw new Error(`Failed to upload Galatea binary: ${errorMessage}`);
   } finally {
-    ssh.dispose();
+    // Clean up temporary file
+    if (tempFilePath && fs.existsSync(tempFilePath)) {
+      try {
+        fs.unlinkSync(tempFilePath);
+        console.log("Cleaned up temporary file");
+      } catch (cleanupError) {
+        console.warn("Failed to cleanup temporary file:", cleanupError);
+      }
+    }
   }
 }
 
@@ -209,7 +239,7 @@ export async function cleanupGalateaFilesOnDevbox(
       privateKey: formatPrivateKey(devboxInfo.ssh_credentials.privateKey),
     };
 
-    const cleanupCmd = `cd /home/${sshUser} && sudo rm -rf galatea_files project galatea galatea.log`;
+    const cleanupCmd = `cd /home/${sshUser} && sudo chmod -R 755 project 2>/dev/null || true && sudo rm -rf galatea_files project galatea galatea.log command.log`;
 
     console.log(
       `Connecting to devbox for cleanup at ${sshConfig.host}:${sshConfig.port}`
