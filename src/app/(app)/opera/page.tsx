@@ -109,18 +109,6 @@ function OperaPageContent() {
 }
 
 function OperaPageWithConfig() {
-  const { updateConfig } = useCopilotConfig();
-
-  useEffect(() => {
-    // Configure copilot for code operations
-    updateConfig({
-      runtimeUrl: "/api/code",
-      agent: "code",
-      project_address: "https://lzqezjdjzvjs.sealosbja.site",
-      token: "",
-    });
-  }, [updateConfig]);
-
   return <OperaPageContent />;
 }
 
@@ -130,7 +118,7 @@ export default function OperaPage() {
       initialConfig={{
         runtimeUrl: "/api/code",
         agent: "code",
-        project_address: "https://lzqezjdjzvjs.sealosbja.site",
+        project_address: "",
         token: "",
       }}
     >

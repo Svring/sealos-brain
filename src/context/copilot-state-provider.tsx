@@ -98,7 +98,15 @@ export function CopilotStateProvider({
       publicApiKey={config.publicApiKey}
       agent={config.agent}
     >
-      <InnerProvider config={config} updateConfig={updateConfig}>
+      <InnerProvider
+        key={
+          config.agent === "code"
+            ? `${config.agent}-${config.project_address}`
+            : config.agent
+        }
+        config={config}
+        updateConfig={updateConfig}
+      >
         <DevboxActionsProvider agent={config.agent} />
         {children}
       </InnerProvider>

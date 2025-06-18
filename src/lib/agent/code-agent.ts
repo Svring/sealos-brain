@@ -132,7 +132,7 @@ User Prompt: "Add a new dashboard page with a card-based layout and a theme togg
 Interpret Intent: Create a new dashboard page (app/dashboard/page.tsx) with a responsive card layout using Shadcn/ui components and include a theme toggle.
 Subtasks:
 Check if app/dashboard/page.tsx exists using codebase_find_files.
-Create app/dashboard/page.tsx if it doesn’t exist using codebase_editor_command with create.
+Create app/dashboard/page.tsx if it doesn't exist using codebase_editor_command with create.
 Use Shadcn/ui Card and ThemeToggle components, styled with Tailwind CSS.
 Ensure the layout is responsive and supports both themes.
 Run codebase_npm_script with "format" to standardize the code.
@@ -144,7 +144,7 @@ Proceed with generating or modifying code based on the user's prompt, adhering s
 `;
 
 export type CodeAgentState = {
-  current_file: string | null;
+  project_address?: string;
   project_context: {
     framework?: string;
     language?: string;
@@ -171,6 +171,6 @@ export const codeAgentConfig: CodeAgentConfig = {
     runtimeUrl: "/api/code",
     agent: "code",
   },
-  project_address: "https://lzqezjdjzvjs.sealosbja.site",
+  project_address: "https://uwjpoiybnpbq.sealosbja.site",
   token: "",
 };

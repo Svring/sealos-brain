@@ -1,7 +1,5 @@
 # python -m src.agent.code_agent
-from typing import Any, Literal
-
-from copilotkit import CopilotKitState
+from typing import Literal
 
 from langgraph.graph import StateGraph, END
 from langgraph.types import Command
@@ -13,6 +11,7 @@ from langchain_core.messages import (
 )
 from langchain_core.runnables import RunnableConfig
 
+from src.state.codebase_state import CodebaseState
 from src.provider.backbone_provider import get_sealos_model
 from src.tool.codebase_tool import (
     codebase_find_files,
@@ -21,18 +20,14 @@ from src.tool.codebase_tool import (
 )
 
 
-class CodebaseState(CopilotKitState):
-    place_holder: Any = None
-
-
-llm = get_sealos_model("claude-sonnet-4-20250514")
+llm = get_sealos_model("o3")
 tools = [
     codebase_find_files,
     codebase_editor_command,
     codebase_npm_script,
 ]
 
-llm_with_tools = llm.bind_tools(tools, parallel_tool_calls=False)
+llm_with_tools = llm.bind_tools(tools)
 
 
 async def code_agent_node(

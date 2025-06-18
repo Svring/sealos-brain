@@ -3,6 +3,10 @@ from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 from typing import List, Optional, Literal
 from langchain_core.runnables import RunnableConfig
+from typing import Annotated
+from src.state.codebase_state import CodebaseState
+from langgraph.prebuilt import InjectedState
+from langgraph.prebuilt.chat_agent_executor import AgentState
 
 
 class FindFilesParams(BaseModel):
@@ -127,14 +131,19 @@ async def codebase_find_files(
     dir: str,
     suffixes: List[str],
     exclude_dirs: Optional[List[str]] = None,
+    state: Annotated[CodebaseState, InjectedState] = None,
     config: RunnableConfig = None,
 ) -> dict:
     """Find files in the project matching specific suffixes and excluding directories."""
     if not config or "configurable" not in config:
         return {"success": False, "error": "Missing configuration"}
 
+    # if not state or "project_address" not in state:
+    #     return {"success": False, "error": f"Missing state: {state}"}
+
     token = config["configurable"]["token"]
-    url = config["configurable"]["project_address"]
+    url = "https://uwjpoiybnpbq.sealosbja.site"
+
     async with aiohttp.ClientSession() as session:
         request_data = {
             "dir": dir,
@@ -172,13 +181,14 @@ async def codebase_editor_command(
     old_str: Optional[str] = None,
     view_range: Optional[List[int]] = None,
     config: RunnableConfig = None,
+    state: Annotated[CodebaseState, InjectedState] = None,
 ) -> dict:
     """Send an editor command (view, create, str_replace, insert, undo_edit) to the backend for file operations."""
-    if not config or "configurable" not in config:
-        return {"success": False, "error": "Missing configuration"}
+    # if not state or "project_address" not in state:
+    #     return {"success": False, "error": "Missing configuration"}
 
     token = config["configurable"]["token"]
-    url = config["configurable"]["project_address"]
+    url = "https://uwjpoiybnpbq.sealosbja.site"
     # Validation logic similar to TypeScript superRefine
     if command == "view":
         if not path and (not paths or len(paths) == 0):
@@ -243,13 +253,14 @@ async def codebase_editor_command(
 async def codebase_npm_script(
     script: Literal["lint", "format"],
     config: RunnableConfig = None,
+    state: Annotated[CodebaseState, InjectedState] = None,
 ) -> dict:
     """Run npm scripts (lint or format) in the project root and return their output."""
     if not config or "configurable" not in config:
         return {"success": False, "error": "Missing configuration"}
 
     token = config["configurable"]["token"]
-    url = config["configurable"]["project_address"]
+    url = "https://uwjpoiybnpbq.sealosbja.site"
     async with aiohttp.ClientSession() as session:
         result = await fetch_with_timeout_and_retry(
             session=session,

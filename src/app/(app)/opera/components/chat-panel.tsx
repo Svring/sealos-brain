@@ -2,7 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PromptInputBox } from "@/components/ai/ai-prompt-box";
-import { useCopilotChat } from "@copilotkit/react-core";
+import { useCopilotChat, useCoAgent } from "@copilotkit/react-core";
 import { useCopilotConfig } from "@/context/copilot-state-provider";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import {
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CodeAgentState } from "@/lib/agent/code-agent";
 
 interface DevboxOption {
   name: string;
@@ -51,14 +52,50 @@ export function ChatPanel({
   } = useCopilotChat();
 
   const { config, updateConfig } = useCopilotConfig();
+  
+  // Use useCoAgent for state management
+  const { state, setState } = useCoAgent<CodeAgentState>({
+    name: "code",
+    initialState: {
+      project_address: "",
+      project_context: {},
+      recent_operations: [],
+    },
+  });
 
-  // Update Copilot config when selected devbox changes
+  // Update Copilot config and agent state when selected devbox changes
   useEffect(() => {
     const selected = devboxOptions.find((d) => d.name === selectedDevboxName);
-    if (selected && selected.galatea_address !== config.project_address) {
-      updateConfig({ project_address: selected.galatea_address });
+    if (selected) {
+      const newAddress = selected.galatea_address;
+      if (newAddress) {
+        // Update context config (triggers agent re-initialization via re-keying)
+        if (newAddress !== config.project_address) {
+          console.log("Selected devbox:", selectedDevboxName);
+          console.log("Galatea address:", newAddress);
+          console.log("Preview address:", selected.preview_address);
+          console.log(
+            "Updating project_address from:",
+            config.project_address,
+            "to:",
+            newAddress
+          );
+          updateConfig({ project_address: newAddress });
+        }
+
+        // Update agent's internal state using useCoAgent setState
+        setState({
+          ...state,
+          project_address: newAddress,
+        });
+      }
     }
-  }, [selectedDevboxName, devboxOptions, updateConfig, config.project_address]);
+  }, [
+    selectedDevboxName,
+    devboxOptions,
+    updateConfig,
+    config.project_address,
+  ]);
 
   const [failedMessages, setFailedMessages] = useState<Set<string>>(new Set());
   const [hiddenMessages] = useState<Set<string>>(new Set());

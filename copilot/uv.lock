@@ -366,7 +366,7 @@ wheels = [
 [[package]]
 name = "copilot"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "asyncio" },
@@ -380,6 +380,11 @@ dependencies = [
     { name = "returns" },
 ]
 
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.12.13" },
@@ -391,8 +396,10 @@ requires-dist = [
     { name = "langgraph-cli", extras = ["inmem"], specifier = ">=0.3.1" },
     { name = "pydantic", specifier = ">=2.11.5" },
     { name = "pytest", specifier = ">=8.4.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.0" },
     { name = "returns", specifier = ">=0.25.0" },
 ]
+provides-extras = ["dev"]
 
 [[package]]
 name = "copilotkit"
