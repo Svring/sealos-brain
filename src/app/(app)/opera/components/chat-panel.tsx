@@ -2,8 +2,8 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PromptInputBox } from "@/components/ai/ai-prompt-box";
-import { useCopilotChat, useCoAgent } from "@copilotkit/react-core";
-import { useCopilotConfig } from "@/context/copilot-state-provider";
+import { useCopilotChat } from "@copilotkit/react-core";
+import { useCopilotState } from "@/context/copilot-state-provider";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import {
   ChatBubble,
@@ -34,7 +34,7 @@ interface ChatPanelProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   devboxOptions: DevboxOption[];
-  selectedDevboxName?: string;
+  selectedDevboxName: string;
   onSelectDevbox: (name: string) => void;
 }
 
@@ -51,17 +51,7 @@ export function ChatPanel({
     isLoading: isChatLoading,
   } = useCopilotChat();
 
-  const { config, updateConfig } = useCopilotConfig();
-  
-  // Use useCoAgent for state management
-  const { state, setState } = useCoAgent<CodeAgentState>({
-    name: "code",
-    initialState: {
-      project_address: "",
-      project_context: {},
-      recent_operations: [],
-    },
-  });
+  const { config, updateConfig, setState } = useCopilotState();
 
   // Update Copilot config and agent state when selected devbox changes
   useEffect(() => {
@@ -83,11 +73,11 @@ export function ChatPanel({
           updateConfig({ project_address: newAddress });
         }
 
-        // Update agent's internal state using useCoAgent setState
-        setState({
-          ...state,
+        // Update agent's internal state using centralized setState
+        setState((prevState) => ({
+          ...(prevState as CodeAgentState),
           project_address: newAddress,
-        });
+        }));
       }
     }
   }, [

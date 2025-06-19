@@ -12,7 +12,7 @@ from langchain_core.messages import (
 from langchain_core.runnables import RunnableConfig
 
 from src.state.codebase_state import CodebaseState
-from src.provider.backbone_provider import get_sealos_model
+from src.provider.backbone_provider import get_sealos_model, get_vercel_model
 from src.tool.codebase_tool import (
     codebase_find_files,
     codebase_editor_command,
@@ -20,7 +20,8 @@ from src.tool.codebase_tool import (
 )
 
 
-llm = get_sealos_model("o3")
+llm = get_sealos_model("gpt-4o-mini")
+# llm = get_vercel_model("v0-1.5-md")
 tools = [
     codebase_find_files,
     codebase_editor_command,

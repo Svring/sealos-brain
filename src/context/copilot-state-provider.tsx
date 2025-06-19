@@ -129,8 +129,11 @@ function InnerProvider({ children, config, updateConfig }: InnerProviderProps) {
 
   // Create the configurable object based on agent type
   const configurableConfig = useMemo(() => {
-    const baseConfig = { system_prompt: agentConfig.systemPrompt };
-    
+    const baseConfig = {
+      system_prompt: agentConfig.systemPrompt,
+      recursion_limit: 50,
+    };
+
     // Add project_address and token for code agent only
     if (config.agent === "code") {
       return {
@@ -139,9 +142,15 @@ function InnerProvider({ children, config, updateConfig }: InnerProviderProps) {
         token: config.token || (agentConfig as any).token,
       };
     }
-    
+
     return baseConfig;
-  }, [agentConfig.systemPrompt, config.agent, config.project_address, config.token, agentConfig]);
+  }, [
+    agentConfig.systemPrompt,
+    config.agent,
+    config.project_address,
+    config.token,
+    agentConfig,
+  ]);
 
   const { state, setState } = useCoAgent<AgentState>({
     name: agentConfig.name,

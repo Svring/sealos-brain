@@ -1,7 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Node, useNodesState } from "@xyflow/react";
-import { useQuery } from "@tanstack/react-query";
-import { devboxListOptions } from "@/lib/devbox/devbox-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
+import {
+  devboxListOptions,
+  devboxByNameOptions,
+} from "@/lib/devbox/devbox-query";
 import { dbProviderListOptions } from "@/lib/dbprovider/dbprovider-query";
 import { transformDevboxListIntoNode } from "@/lib/devbox/devbox-transform";
 import {
@@ -9,6 +12,10 @@ import {
   type DBProviderNodeDisplayData,
 } from "@/lib/dbprovider/dbprovider-transform";
 import { useSealosStore } from "@/store/sealos-store";
+import {
+  transformDevboxNetworks,
+  transformDevboxListToNames,
+} from "@/lib/devbox/devbox-transform";
 
 import { NodeChange } from "@xyflow/react";
 
@@ -31,6 +38,24 @@ export function useGraphNode(): UseGraphNodeReturn {
     error: devboxListError,
   } = useQuery(devboxListOptions(currentUser, regionUrl));
 
+  // Memoize devbox names for fetching network data
+  const devboxNames: string[] = useMemo(() => {
+    if (!devboxList) return [];
+    try {
+      return transformDevboxListToNames(devboxList);
+    } catch (e) {
+      console.error("Error extracting devbox names", e);
+      return [];
+    }
+  }, [devboxList]);
+
+  // Fetch network details for each devbox
+  const networkQueries = useQueries({
+    queries: devboxNames.map((name: string) =>
+      devboxByNameOptions(currentUser, regionUrl, name, transformDevboxNetworks)
+    ),
+  });
+
   // Fetch dbprovider list
   const {
     data: dbproviderList,
@@ -45,87 +70,90 @@ export function useGraphNode(): UseGraphNodeReturn {
   );
 
   // Combined loading state
-  const isLoading = devboxListLoading || dbproviderListLoading;
+  const networkLoading = networkQueries.some((q) => q.isLoading);
+  const isLoading =
+    devboxListLoading || dbproviderListLoading || networkLoading;
 
   // Combined error state
+  const networkError = networkQueries.find((q) => q.error)?.error as
+    | Error
+    | undefined;
   const error =
-    devboxListError?.message || dbproviderListError?.message || null;
+    devboxListError?.message ||
+    dbproviderListError?.message ||
+    networkError?.message ||
+    null;
 
   // Transform data into nodes and set them
   useEffect(() => {
-    console.log("🔍 Query states:", {
-      devbox: {
-        loading: devboxListLoading,
-        error: devboxListError,
-        data: devboxList,
-      },
-      dbprovider: {
-        loading: dbproviderListLoading,
-        error: dbproviderListError,
-        data: dbproviderList,
-      },
-      currentUser: currentUser?.id,
-      regionUrl,
-    });
-
     const allNodes: Node[] = [];
+    const devboxPositionMap: Record<string, { x: number; y: number }> = {};
 
-    // Process devbox nodes
     if (devboxList && devboxList.length > 0) {
       try {
-        console.log("🔄 Transforming devbox list to nodes:", devboxList);
         const lightweightData = transformDevboxListIntoNode(devboxList);
-        const devboxNodes = lightweightData.map((item, index) => ({
-          id: item.id,
-          type: "devbox",
-          position: { x: 300 + index * 280, y: 200 },
-          data: item,
-        }));
+        const devboxNodes = lightweightData.map((item, index) => {
+          const position = { x: 300 + index * 280, y: 200 };
+          devboxPositionMap[item.devboxName] = position;
+          return {
+            id: item.id,
+            type: "devbox",
+            position,
+            data: item,
+          } as Node;
+        });
         allNodes.push(...devboxNodes);
-        console.log("✅ Generated devbox nodes:", devboxNodes);
       } catch (error) {
-        console.error("❌ Error transforming devbox list to nodes:", error);
+        console.error("Error transforming devbox list to nodes:", error);
       }
     }
 
-    // Process dbprovider nodes (data is already transformed)
+    // Stable network data
+    const networkData = networkQueries.map((q) => q.data);
+
+    networkData.forEach((networks, queryIdx) => {
+      const devboxName = devboxNames[queryIdx];
+      const basePosition = devboxPositionMap[devboxName] || {
+        x: 300 + queryIdx * 280,
+        y: 200,
+      };
+
+      (networks || []).forEach((netItem: any, idx: number) => {
+        allNodes.push({
+          id: `${devboxName}-network-${netItem.port}-${netItem.portName ?? ""}`,
+          type: "network",
+          position: {
+            x: basePosition.x,
+            y: basePosition.y + 150 + idx * 150,
+          },
+          data: netItem,
+        });
+      });
+    });
+
     if (dbproviderList && dbproviderList.length > 0) {
       try {
-        console.log(
-          "🔄 Creating dbprovider nodes from transformed data:",
-          dbproviderList
-        );
         const dbproviderNodes = dbproviderList.map(
           (item: DBProviderNodeDisplayData, index: number) => ({
             id: item.id,
             type: "dbprovider",
-            position: { x: 300 + index * 280, y: 400 }, // Position below devbox nodes
+            position: { x: 300 + index * 280, y: 400 },
             data: item,
           })
         );
         allNodes.push(...dbproviderNodes);
-        console.log("✅ Generated dbprovider nodes:", dbproviderNodes);
       } catch (error) {
-        console.error("❌ Error creating dbprovider nodes:", error);
+        console.error("Error creating dbprovider nodes:", error);
       }
     }
 
-    // Set all nodes at once
     setNodes(allNodes);
-
-    if (allNodes.length === 0) {
-      console.log("📭 No nodes found, clearing flow");
-    }
   }, [
     devboxList,
     dbproviderList,
     setNodes,
-    devboxListLoading,
-    dbproviderListLoading,
-    devboxListError,
-    dbproviderListError,
-    currentUser,
-    regionUrl,
+    devboxNames.join(","), // joins to form a stable string
+    ...networkQueries.map((q) => q.data), // stable deps
   ]);
 
   return {

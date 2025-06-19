@@ -51,3 +51,5 @@ agent/sample_agent.egg-info
 cypress/fixtures
 
 system-prompt.txt
+
+.turbo

@@ -141,3 +141,23 @@ export const transformDevboxListToNames = (data: DataSchema): string[] => {
       (name): name is string => typeof name === "string" && name.length > 0
     );
 };
+
+/**
+ * Transform getDevboxByName response to extract just the networks array
+ * Returns array of network configurations including ports, domains, etc.
+ */
+export const transformDevboxNetworks = (data: any) => {
+  if (!data?.networks || !Array.isArray(data.networks)) {
+    return [];
+  }
+
+  return data.networks.map((network: any) => ({
+    portName: network.portName,
+    port: network.port,
+    protocol: network.protocol,
+    networkName: network.networkName,
+    openPublicDomain: network.openPublicDomain,
+    publicDomain: network.publicDomain,
+    customDomain: network.customDomain,
+  }));
+};

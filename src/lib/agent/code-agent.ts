@@ -104,6 +104,9 @@ Write production-ready code using Next.js, React, Shadcn/ui, and Tailwind CSS.
 Ensure responsive design with Tailwind CSS utilities (e.g., sm:, md:, lg: prefixes).
 Support both bright and dark themes, leveraging the existing theme system.
 Import Shadcn/ui components as needed (e.g., import { Button } from "@/components/ui/button").
+You should add "use client" at the top of the file if it is a client component, for example: using useState, useEffect, etc.
+Run lint and format after you finish the code.
+Do not try to create a json file cause you'll mess it up.
 
 
 Organize Code:

@@ -239,7 +239,7 @@ export async function cleanupGalateaFilesOnDevbox(
       privateKey: formatPrivateKey(devboxInfo.ssh_credentials.privateKey),
     };
 
-    const cleanupCmd = `cd /home/${sshUser} && sudo chmod -R 755 project 2>/dev/null || true && sudo rm -rf galatea_files project galatea galatea.log command.log`;
+    const cleanupCmd = `cd /home/${sshUser} && sudo pkill -f galatea 2>/dev/null || true && sleep 2 && sudo chmod -R 755 project 2>/dev/null || true && sudo rm -rf galatea_files project galatea galatea.log command.log || (sleep 3 && sudo chmod -R 777 project 2>/dev/null && sudo rm -rf galatea_files project galatea galatea.log command.log)`;
 
     console.log(
       `Connecting to devbox for cleanup at ${sshConfig.host}:${sshConfig.port}`

@@ -61,17 +61,32 @@ function OperaPageContent() {
       });
   }, [devboxAddressQueries]);
 
-  // Selected devbox name state
-  const [selectedDevboxName, setSelectedDevboxName] = useState<string | undefined>(
-    undefined
-  );
+  // Selected devbox name state with localStorage persistence
+  const [selectedDevboxName, setSelectedDevboxName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('selectedDevboxName') || '';
+    }
+    return '';
+  });
 
-  // Auto-select first devbox when available
+  // Auto-select first devbox when available and no selection exists
   useEffect(() => {
     if (!selectedDevboxName && devboxOptions.length > 0) {
-      setSelectedDevboxName(devboxOptions[0].name);
+      const firstDevbox = devboxOptions[0].name;
+      setSelectedDevboxName(firstDevbox);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('selectedDevboxName', firstDevbox);
+      }
     }
   }, [devboxOptions, selectedDevboxName]);
+
+  // Persist selection to localStorage
+  const handleSelectDevbox = (name: string) => {
+    setSelectedDevboxName(name);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedDevboxName', name);
+    }
+  };
 
   const selectedDevbox = devboxOptions.find(
     (opt) => opt.name === selectedDevboxName
@@ -88,8 +103,8 @@ function OperaPageContent() {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             devboxOptions={devboxOptions}
-            selectedDevboxName={selectedDevboxName}
-            onSelectDevbox={(name: string) => setSelectedDevboxName(name)}
+            selectedDevboxName={selectedDevboxName || (devboxOptions[0]?.name || '')}
+            onSelectDevbox={handleSelectDevbox}
           />
         </ResizablePanel>
 

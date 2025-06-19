@@ -6,7 +6,6 @@ from langchain_core.runnables import RunnableConfig
 from typing import Annotated
 from src.state.codebase_state import CodebaseState
 from langgraph.prebuilt import InjectedState
-from langgraph.prebuilt.chat_agent_executor import AgentState
 
 
 class FindFilesParams(BaseModel):
@@ -20,6 +19,7 @@ class FindFilesParams(BaseModel):
         default=None,
         description="Directories to exclude (e.g., ['node_modules', 'dist']).",
     )
+    state: Annotated[CodebaseState, InjectedState]
 
 
 class EditorCommandParams(BaseModel):
@@ -51,18 +51,21 @@ class EditorCommandParams(BaseModel):
         default=None,
         description="The line range to view (e.g., [1, 10] or [5, -1] for all lines from 5). Applied to all files in a multi-file view.",
     )
+    state: Annotated[CodebaseState, InjectedState]
 
 
 class NpmScriptParams(BaseModel):
     script: Literal["lint", "format"] = Field(
         description="The npm script to run: 'lint' or 'format'."
     )
+    state: Annotated[CodebaseState, InjectedState]
 
 
 class UpdateProjectStructureParams(BaseModel):
     project_structure: dict = Field(
         description="The project structure to update. The project structure is a dictionary with the following structure: {project_name: [file_name, file_name, ...], project_name: [file_name, file_name, ...], ...}"
     )
+    state: Annotated[CodebaseState, InjectedState]
 
 
 class TaskCompletionParams(BaseModel):
@@ -76,6 +79,7 @@ class TaskCompletionParams(BaseModel):
         default=None,
         description="List of files that were created or modified during implementation.",
     )
+    state: Annotated[CodebaseState, InjectedState]
 
 
 async def fetch_with_timeout_and_retry(
@@ -138,11 +142,13 @@ async def codebase_find_files(
     if not config or "configurable" not in config:
         return {"success": False, "error": "Missing configuration"}
 
-    # if not state or "project_address" not in state:
-    #     return {"success": False, "error": f"Missing state: {state}"}
+    if not state or "project_address" not in state:
+        return {"success": False, "error": f"Missing state: {state}"}
+
+    print("state of codebase_find_files", state)
 
     token = config["configurable"]["token"]
-    url = "https://uwjpoiybnpbq.sealosbja.site"
+    url = state["project_address"]
 
     async with aiohttp.ClientSession() as session:
         request_data = {
@@ -184,11 +190,14 @@ async def codebase_editor_command(
     state: Annotated[CodebaseState, InjectedState] = None,
 ) -> dict:
     """Send an editor command (view, create, str_replace, insert, undo_edit) to the backend for file operations."""
-    # if not state or "project_address" not in state:
-    #     return {"success": False, "error": "Missing configuration"}
+    if not state or "project_address" not in state:
+        return {"success": False, "error": f"Missing state: {state}"}
+
+    if not config or "configurable" not in config:
+        return {"success": False, "error": "Missing configuration"}
 
     token = config["configurable"]["token"]
-    url = "https://uwjpoiybnpbq.sealosbja.site"
+    url = state["project_address"]
     # Validation logic similar to TypeScript superRefine
     if command == "view":
         if not path and (not paths or len(paths) == 0):
@@ -259,8 +268,11 @@ async def codebase_npm_script(
     if not config or "configurable" not in config:
         return {"success": False, "error": "Missing configuration"}
 
+    if not state or "project_address" not in state:
+        return {"success": False, "error": f"Missing state: {state}"}
+
     token = config["configurable"]["token"]
-    url = "https://uwjpoiybnpbq.sealosbja.site"
+    url = state["project_address"]
     async with aiohttp.ClientSession() as session:
         result = await fetch_with_timeout_and_retry(
             session=session,
