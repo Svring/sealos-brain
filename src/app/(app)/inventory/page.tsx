@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DevboxTable } from "@/components/inventory/devbox/devbox-table";
 import { DatabaseTable } from "@/components/inventory/database/database-table";
+import { AppLaunchpadTable } from "@/components/inventory/applaunchpad/applaunchpad-table";
 
 export default function InventoryPage() {
   return (
@@ -27,15 +28,7 @@ export default function InventoryPage() {
         </TabsContent>
 
         <TabsContent value="launchpad" className="mt-6">
-          <div className="rounded-lg border p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Launchpad Applications
-            </h2>
-            <p className="text-muted-foreground">
-              Monitor and control your deployed applications.
-            </p>
-            {/* Add Launchpad content here */}
-          </div>
+          <AppLaunchpadTable />
         </TabsContent>
 
         <TabsContent value="ai-proxy" className="mt-6">
