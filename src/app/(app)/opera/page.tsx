@@ -131,7 +131,7 @@ export default function OperaPage() {
   return (
     <CopilotStateProvider
       initialConfig={{
-        runtimeUrl: "/api/code",
+        runtimeUrl: "/api/agent/code",
         agent: "code",
         project_address: "",
         token: "",

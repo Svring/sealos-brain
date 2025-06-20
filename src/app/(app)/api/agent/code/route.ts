@@ -12,13 +12,11 @@ const runtime = new CopilotRuntime({
   remoteEndpoints: [
     langGraphPlatformEndpoint({
       deploymentUrl: process.env.LANGGRAPH_DEPLOYMENT_URL || "",
-      langsmithApiKey: process.env.LANGSMITH_API_KEY || "", // only used in LangGraph Platform deployments
+      langsmithApiKey: process.env.LANGSMITH_API_KEY || "",
       agents: [
         {
-          name: "copilot",
-          description:
-            process.env.NEXT_PUBLIC_COPILOTKIT_AGENT_DESCRIPTION ||
-            "A helpful LLM agent.",
+          name: "code",
+          description: "A code assistant agent.",
         },
       ],
     }),
@@ -29,7 +27,7 @@ export const POST = async (req: NextRequest) => {
   const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
     runtime,
     serviceAdapter,
-    endpoint: "/api/copilot",
+    endpoint: "/api/agent/code",
   });
 
   return handleRequest(req);

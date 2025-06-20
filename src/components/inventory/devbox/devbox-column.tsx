@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { DevboxColumn } from "./devbox-table-schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Play, Square, RotateCcw } from "lucide-react";
+import { MoreHorizontal, Play, Square, RotateCcw, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSealosStore } from "@/store/sealos-store";
+import { 
+  startDevboxMutation, 
+  shutdownDevboxMutation, 
+  restartDevboxMutation, 
+  deleteDevboxMutation 
+} from "@/lib/devbox/devbox-mutation";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export const devboxColumns: ColumnDef<DevboxColumn>[] = [
   {
@@ -86,15 +95,77 @@ export const devboxColumns: ColumnDef<DevboxColumn>[] = [
     header: "Actions",
     cell: ({ row }) => {
       const devbox = row.original;
+      const { currentUser, regionUrl } = useSealosStore();
+      const queryClient = useQueryClient();
+      
       const isRunning = devbox.status.toLowerCase() === "running";
       const isStopped = devbox.status.toLowerCase() === "stopped";
+
+      const startMutation = startDevboxMutation(currentUser, regionUrl);
+      const shutdownMutation = shutdownDevboxMutation(currentUser, regionUrl);
+      const restartMutation = restartDevboxMutation(currentUser, regionUrl);
+      const deleteMutation = deleteDevboxMutation(currentUser, regionUrl);
+
+      const handleStart = async () => {
+        try {
+          await startMutation.mutateAsync(devbox.name);
+          toast.success(`Devbox "${devbox.name}" started successfully`);
+          queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to start devbox: ${error.message}`);
+        }
+      };
+
+      const handleStop = async () => {
+        try {
+          await shutdownMutation.mutateAsync({
+            devboxName: devbox.name,
+            shutdownMode: "Stopped"
+          });
+          toast.success(`Devbox "${devbox.name}" stopped successfully`);
+          queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to stop devbox: ${error.message}`);
+        }
+      };
+
+      const handleRestart = async () => {
+        try {
+          await restartMutation.mutateAsync(devbox.name);
+          toast.success(`Devbox "${devbox.name}" restarted successfully`);
+          queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to restart devbox: ${error.message}`);
+        }
+      };
+
+      const handleDelete = async () => {
+        if (!confirm(`Are you sure you want to delete devbox "${devbox.name}"? This action cannot be undone.`)) {
+          return;
+        }
+        
+        try {
+          await deleteMutation.mutateAsync(devbox.name);
+          toast.success(`Devbox "${devbox.name}" deleted successfully`);
+          queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to delete devbox: ${error.message}`);
+        }
+      };
+
+      const isLoading = startMutation.isPending || shutdownMutation.isPending || 
+                      restartMutation.isPending || deleteMutation.isPending;
 
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0" disabled={isLoading}>
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <MoreHorizontal className="h-4 w-4" />
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -106,25 +177,31 @@ export const devboxColumns: ColumnDef<DevboxColumn>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {isStopped && (
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleStart} disabled={isLoading}>
                 <Play className="mr-2 h-4 w-4" />
                 Start
               </DropdownMenuItem>
             )}
             {isRunning && (
               <>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleStop} disabled={isLoading}>
                   <Square className="mr-2 h-4 w-4" />
                   Stop
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleRestart} disabled={isLoading}>
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Restart
                 </DropdownMenuItem>
               </>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={handleDelete} 
+              disabled={isLoading}
+              className="text-red-600"
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { AppLaunchpadColumn } from "./applaunchpad-table-schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Play, Square, RotateCcw, Rocket, ExternalLink } from "lucide-react";
+import { MoreHorizontal, Play, Square, RotateCcw, Rocket, ExternalLink, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSealosStore } from "@/store/sealos-store";
+import { 
+  startAppMutation, 
+  restartAppMutation, 
+  pauseAppMutation, 
+  delAppMutation 
+} from "@/lib/applaunchpad/applaunchpad-mutation";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
   {
@@ -103,16 +112,75 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
     header: "Actions",
     cell: ({ row }) => {
       const app = row.original;
+      const { currentUser, regionUrl } = useSealosStore();
+      const queryClient = useQueryClient();
+      
       const isRunning = app.status.toLowerCase() === "running";
       const isStopped = app.status.toLowerCase() === "stopped";
       const isCreating = app.status.toLowerCase() === "creating";
 
+      const startMutation = startAppMutation(currentUser, regionUrl);
+      const restartMutation = restartAppMutation(currentUser, regionUrl);
+      const pauseMutation = pauseAppMutation(currentUser, regionUrl);
+      const deleteMutation = delAppMutation(currentUser, regionUrl);
+
+      const handleStart = async () => {
+        try {
+          await startMutation.mutateAsync(app.name);
+          toast.success(`Application "${app.name}" started successfully`);
+          queryClient.invalidateQueries({ queryKey: ["applaunchpad", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to start application: ${error.message}`);
+        }
+      };
+
+      const handlePause = async () => {
+        try {
+          await pauseMutation.mutateAsync(app.name);
+          toast.success(`Application "${app.name}" paused successfully`);
+          queryClient.invalidateQueries({ queryKey: ["applaunchpad", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to pause application: ${error.message}`);
+        }
+      };
+
+      const handleRestart = async () => {
+        try {
+          await restartMutation.mutateAsync(app.name);
+          toast.success(`Application "${app.name}" restarted successfully`);
+          queryClient.invalidateQueries({ queryKey: ["applaunchpad", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to restart application: ${error.message}`);
+        }
+      };
+
+      const handleDelete = async () => {
+        if (!confirm(`Are you sure you want to delete application "${app.name}"? This action cannot be undone.`)) {
+          return;
+        }
+        
+        try {
+          await deleteMutation.mutateAsync(app.name);
+          toast.success(`Application "${app.name}" deleted successfully`);
+          queryClient.invalidateQueries({ queryKey: ["applaunchpad", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to delete application: ${error.message}`);
+        }
+      };
+
+      const isLoading = startMutation.isPending || restartMutation.isPending || 
+                      pauseMutation.isPending || deleteMutation.isPending;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0" disabled={isLoading}>
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <MoreHorizontal className="h-4 w-4" />
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -124,25 +192,25 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {isRunning && (
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled>
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Open App
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
             {isStopped && (
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleStart} disabled={isLoading}>
                 <Play className="mr-2 h-4 w-4" />
                 Start
               </DropdownMenuItem>
             )}
             {isRunning && (
               <>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handlePause} disabled={isLoading}>
                   <Square className="mr-2 h-4 w-4" />
                   Pause
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleRestart} disabled={isLoading}>
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Restart
                 </DropdownMenuItem>
@@ -151,13 +219,19 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
             {!isCreating && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>View Logs</DropdownMenuItem>
-                <DropdownMenuItem>View Metrics</DropdownMenuItem>
-                <DropdownMenuItem>Edit Configuration</DropdownMenuItem>
+                <DropdownMenuItem disabled>View Logs</DropdownMenuItem>
+                <DropdownMenuItem disabled>View Metrics</DropdownMenuItem>
+                <DropdownMenuItem disabled>Edit Configuration</DropdownMenuItem>
               </>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={handleDelete} 
+              disabled={isLoading}
+              className="text-red-600"
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

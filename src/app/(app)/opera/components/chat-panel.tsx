@@ -1,19 +1,18 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PromptInputBox } from "@/components/ai/ai-prompt-box";
+import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
 import { useCopilotChat } from "@copilotkit/react-core";
 import { useCopilotState } from "@/context/copilot-state-provider";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import {
   ChatBubble,
-  ChatBubbleAvatar,
   ChatBubbleMessage,
   ChatBubbleTimestamp,
   ChatBubbleStatus,
-} from "../../../../components/ai/chat-bubble";
-import { ChatMessageList } from "../../../../components/ai/chat-message-list";
-import { ChatErrorBoundary } from "../../../../components/ai/chat-error-boundary";
+} from "@/components/ai-chat/chat-bubble";
+import { ChatMessageList } from "@/components/ai-chat/chat-message-list";
+import { ChatErrorBoundary } from "@/components/ai-chat/chat-error-boundary";
 import { useState, useEffect } from "react";
 import {
   Select,
@@ -190,23 +189,6 @@ export function ChatPanel({
                         variant="received"
                         isVisible={isVisible}
                       >
-                        <ChatBubbleAvatar
-                          className="h-8 w-8 shrink-0"
-                          src={
-                            isUser
-                              ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&q=80&crop=faces&fit=crop"
-                              : "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&q=80&crop=faces&fit=crop"
-                          }
-                          fallback={isUser ? "US" : "AI"}
-                          isOnline={!isUser}
-                          isTyping={
-                            !isUser &&
-                            isChatLoading &&
-                            message.id ===
-                              visibleMessages[visibleMessages.length - 1]?.id
-                          }
-                        />
-
                         <div className="flex flex-col gap-1 flex-1">
                           <ChatBubbleMessage
                             variant="received"
@@ -278,22 +260,6 @@ export function ChatPanel({
                       variant="received"
                       isVisible={isVisible}
                     >
-                      <ChatBubbleAvatar
-                        className="h-8 w-8 shrink-0"
-                        src={
-                          isUser
-                            ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&q=80&crop=faces&fit=crop"
-                            : "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&q=80&crop=faces&fit=crop"
-                        }
-                        fallback={isUser ? "US" : "AI"}
-                        isOnline={!isUser}
-                        isTyping={
-                          !isUser &&
-                          isChatLoading &&
-                          message.id ===
-                            visibleMessages[visibleMessages.length - 1]?.id
-                        }
-                      />
 
                       <div className="flex flex-col gap-1 flex-1">
                         <ChatBubbleMessage

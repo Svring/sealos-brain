@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { DatabaseColumn } from "./database-table-schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Play, Square, RotateCcw, Database } from "lucide-react";
+import { MoreHorizontal, Play, Square, RotateCcw, Database, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSealosStore } from "@/store/sealos-store";
+import { 
+  startDBByNameMutation, 
+  pauseDBByNameMutation, 
+  delDBByNameMutation 
+} from "@/lib/dbprovider/dbprovider-mutation";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export const databaseColumns: ColumnDef<DatabaseColumn>[] = [
   {
@@ -109,15 +117,62 @@ export const databaseColumns: ColumnDef<DatabaseColumn>[] = [
     header: "Actions",
     cell: ({ row }) => {
       const database = row.original;
+      const { currentUser, regionUrl } = useSealosStore();
+      const queryClient = useQueryClient();
+      
       const isRunning = database.status.toLowerCase() === "running";
       const isStopped = database.status.toLowerCase() === "stopped" || database.status.toLowerCase() === "paused";
+
+      const startMutation = startDBByNameMutation(currentUser, regionUrl);
+      const pauseMutation = pauseDBByNameMutation(currentUser, regionUrl);
+      const deleteMutation = delDBByNameMutation(currentUser, regionUrl);
+
+      const handleStart = async () => {
+        try {
+          await startMutation.mutateAsync(database.name);
+          toast.success(`Database "${database.name}" started successfully`);
+          queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to start database: ${error.message}`);
+        }
+      };
+
+      const handlePause = async () => {
+        try {
+          await pauseMutation.mutateAsync(database.name);
+          toast.success(`Database "${database.name}" paused successfully`);
+          queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to pause database: ${error.message}`);
+        }
+      };
+
+      const handleDelete = async () => {
+        if (!confirm(`Are you sure you want to delete database "${database.name}"? This action cannot be undone.`)) {
+          return;
+        }
+        
+        try {
+          await deleteMutation.mutateAsync(database.name);
+          toast.success(`Database "${database.name}" deleted successfully`);
+          queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
+        } catch (error: any) {
+          toast.error(`Failed to delete database: ${error.message}`);
+        }
+      };
+
+      const isLoading = startMutation.isPending || pauseMutation.isPending || deleteMutation.isPending;
 
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0" disabled={isLoading}>
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <MoreHorizontal className="h-4 w-4" />
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -129,28 +184,34 @@ export const databaseColumns: ColumnDef<DatabaseColumn>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {isStopped && (
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleStart} disabled={isLoading}>
                 <Play className="mr-2 h-4 w-4" />
                 Start
               </DropdownMenuItem>
             )}
             {isRunning && (
               <>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handlePause} disabled={isLoading}>
                   <Square className="mr-2 h-4 w-4" />
-                  Stop
+                  Pause
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem disabled>
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Restart
                 </DropdownMenuItem>
               </>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Connection Info</DropdownMenuItem>
-            <DropdownMenuItem>Backup</DropdownMenuItem>
+            <DropdownMenuItem disabled>Connection Info</DropdownMenuItem>
+            <DropdownMenuItem disabled>Backup</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={handleDelete} 
+              disabled={isLoading}
+              className="text-red-600"
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

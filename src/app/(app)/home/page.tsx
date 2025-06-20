@@ -1,11 +1,11 @@
 "use client";
 
-import { AI_Prompt } from "@/components/ai/home/animated-ai-input";
-import { Hero } from "@/components/blocks/hero";
+import { AI_Prompt } from "@/components/ai-chat/home/animated-ai-input";
+import { Hero } from "@/components/ui/hero";
 import { motion } from "framer-motion";
 
-import { ChatMessageList } from "@/components/ai/chat-message-list";
-import { ChatBubble, ChatBubbleMessage } from "@/components/ai/chat-bubble";
+import { ChatMessageList } from "@/components/ai-chat/chat-message-list";
+import { ChatBubble, ChatBubbleMessage } from "@/components/ai-chat/chat-bubble";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { useCopilotChat } from "@copilotkit/react-core";
