@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import {
-  ReactFlow,
-  Background,
-  BackgroundVariant,
-} from "@xyflow/react";
+import { ReactFlow, Background, BackgroundVariant } from "@xyflow/react";
 import nodeTypes from "@/components/node/node-types";
 import { usePanel } from "@/context/panel-provider";
 import NodeCreateView from "@/components/node/create/node-create-view";
@@ -18,29 +14,18 @@ import { PromptInputBox } from "@/components/ai/ai-prompt-box";
 import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import { ChevronDown, Plus } from "lucide-react";
-import { useSidebarWidth } from "@/hooks/use-sidebar-width";
 import { useGraphNode } from "@/hooks/use-graph-node";
 import {
   CopilotStateProvider,
   useCopilotConfig,
 } from "@/context/copilot-state-provider";
-import { useSidebarState } from "@/context/sidebar-state-provider";
 
 function GraphPageContent() {
   // Use the new hook for node & edge management
-  const {
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    isLoading,
-    error,
-  } = useGraphNode();
+  const { nodes, edges, onNodesChange, onEdgesChange, isLoading, error } =
+    useGraphNode();
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
-  // Use centralized sidebar control hook for visibility and width
-  const { open: sidebarOpen } = useSidebarState();
-  const sidebarWidth = useSidebarWidth();
 
   const {
     visibleMessages,
@@ -77,42 +62,18 @@ function GraphPageContent() {
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // Memoized layout for the message / prompt box
+  // Simplified layout for the message / prompt box
   const boxAnimate = useMemo(() => {
     const panelOpen = Boolean(panelId);
 
-    // Helpers
-    const sidebarW = sidebarOpen ? sidebarWidth || 280 : 0;
-    const panelW = panelOpen ? windowWidth * 0.4 : 0; // Panel is 40vw when open
-
-    // When both sidebar & panel are open → center between them
-    if (sidebarOpen && panelOpen) {
-      const freeW = windowWidth - sidebarW - panelW;
-      return {
-        left: sidebarW + freeW / 2,
-        x: "-51%",
-        width: Math.min(freeW, 640 - 48),
-      };
-    }
-
-    // When only panel is open → center inside the left 60% (fixed behaviour)
+    // When panel is open → center inside the left 60%
     if (panelOpen) {
       return { left: "30vw", x: "-50%", width: "60vw" };
     }
 
-    // When only sidebar is open → center in remaining space on the right
-    if (sidebarOpen) {
-      const freeW = windowWidth - sidebarW;
-      return {
-        left: sidebarW + freeW / 2,
-        x: "-50%",
-        width: Math.min(freeW, 640),
-      };
-    }
-
-    // Neither open → simple centered max-w-xl
+    // Default → simple centered
     return { left: "50%", x: "-50%", width: 640 };
-  }, [panelId, sidebarOpen, sidebarWidth, windowWidth]);
+  }, [panelId]);
 
   return (
     <div className="h-screen w-screen">
@@ -195,20 +156,6 @@ function GraphPageContent() {
   );
 }
 
-function GraphPageWithConfig() {
-  const { updateConfig } = useCopilotConfig();
-
-  // Set specific configuration for the graph page
-  useEffect(() => {
-    updateConfig({
-      runtimeUrl: "/api/copilot",
-      agent: "copilot",
-    });
-  }, [updateConfig]);
-
-  return <GraphPageContent />;
-}
-
 export default function GraphPage() {
   return (
     <CopilotStateProvider
@@ -217,7 +164,7 @@ export default function GraphPage() {
         agent: "copilot",
       }}
     >
-      <GraphPageWithConfig />
+      <GraphPageContent />
     </CopilotStateProvider>
   );
 }

@@ -58,23 +58,6 @@ export const MainSection: React.FC<MainSectionProps> = ({
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
-      <SidebarGroup>
-        <SidebarGroupLabel>Application</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {navigationItems
-              .filter((item) => item.group === "application")
-              .map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton onClick={() => handleNavigation(item.path)}>
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
     </>
   );
 };
