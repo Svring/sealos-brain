@@ -11,9 +11,9 @@ import {
   ChatBubbleMessage,
   ChatBubbleTimestamp,
   ChatBubbleStatus,
-} from "./chat-bubble";
-import { ChatMessageList } from "./chat-message-list";
-import { ChatErrorBoundary } from "./chat-error-boundary";
+} from "../../../../components/ai/chat-bubble";
+import { ChatMessageList } from "../../../../components/ai/chat-message-list";
+import { ChatErrorBoundary } from "../../../../components/ai/chat-error-boundary";
 import { useState, useEffect } from "react";
 import {
   Select,

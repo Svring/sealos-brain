@@ -168,6 +168,29 @@ export async function makeDBProviderApiRequest(
   }
 }
 
+// Pure function for making AppLaunchpad API requests
+export async function makeAppLaunchpadApiRequest(
+  regionUrl: string,
+  endpoint: string,
+  headers: Pick<RequestHeaders, "authorization">,
+  queryParams?: Record<string, string>,
+  options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
+): Promise<ApiResponse> {
+  try {
+    const baseUrl = `https://applaunchpad.${regionUrl}/api/${endpoint}`;
+    const config = createAxiosConfig(headers, options?.method, options?.data);
+
+    if (queryParams) {
+      config.params = queryParams;
+    }
+
+    const response = await axios(baseUrl, config);
+    return handleAxiosResponse(response);
+  } catch (error) {
+    return handleAxiosError(error);
+  }
+}
+
 // Pure function for validating required headers
 export function validateHeaders(
   authorization: string | null,

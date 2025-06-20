@@ -3,10 +3,10 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { Button } from "@/components/ui/button";
 import { Copy, RotateCcw, AlertCircle, Check } from "lucide-react";
-import { MessageLoading } from "./message-loading";
+import { MessageLoading } from "@/components/ai/message-loading";
 import { toast } from "sonner";
 
 interface ChatBubbleProps {
@@ -124,45 +124,7 @@ export function ChatBubbleMessage({
   );
 }
 
-interface ChatBubbleAvatarProps {
-  src?: string;
-  fallback?: string;
-  className?: string;
-  isOnline?: boolean;
-  isTyping?: boolean;
-}
 
-export function ChatBubbleAvatar({
-  src,
-  fallback = "AI",
-  className,
-  isOnline,
-  isTyping,
-}: ChatBubbleAvatarProps) {
-  return (
-    <div className="relative">
-      <Avatar className={cn("h-8 w-8", className)}>
-        {src && <AvatarImage src={src} />}
-        <AvatarFallback>{fallback}</AvatarFallback>
-      </Avatar>
-
-      {/* Online/Typing Indicator */}
-      {(isOnline || isTyping) && (
-        <div className="absolute -bottom-1 -right-1">
-          {isTyping ? (
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
-              className="w-3 h-3 bg-blue-500 rounded-full border-2 border-background"
-            />
-          ) : isOnline ? (
-            <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
-          ) : null}
-        </div>
-      )}
-    </div>
-  );
-}
 
 interface ChatBubbleActionProps {
   icon?: React.ReactNode;

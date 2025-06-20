@@ -43,10 +43,10 @@ import { transformAccountAmountIntoBalance } from "@/lib/account/account-transfo
 // Constants
 const NAVIGATION_ITEMS: NavigationItem[] = [
   {
-    title: "Dashboard",
+    title: "Home",
     icon: SquareChartGantt,
     group: "overview",
-    path: "/dashboard",
+    path: "/home",
   },
   {
     title: "Graph",
