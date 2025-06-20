@@ -9,7 +9,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { activateDevboxActions } from "@/lib/devbox/devbox-action";
+import { activateDevboxActions } from "@/lib/sealos/devbox/devbox-action";
 import {
   copilotAgentConfig,
   CopilotAgentState,

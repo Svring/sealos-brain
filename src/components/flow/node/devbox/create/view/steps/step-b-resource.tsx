@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSealosStore } from "@/store/sealos-store";
-import { devboxQuotaOptions } from "@/lib/devbox/devbox-query";
+import { devboxQuotaOptions } from "@/lib/sealos/devbox/devbox-query";
 import React, { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { DevboxFormValues } from "@/components/node/devbox/create/schema/devbox-create-schema";
+import { DevboxFormValues } from "@/components/flow/node/devbox/create/schema/devbox-create-schema";
 import {
   Card,
   CardContent,

@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSealosStore } from "@/store/sealos-store";
-import { devboxListOptions } from "@/lib/devbox/devbox-query";
-import { transformDevboxListToTable } from "@/lib/devbox/devbox-transform";
+import { devboxListOptions } from "@/lib/sealos/devbox/devbox-query";
+import { transformDevboxListToTable } from "@/lib/sealos/devbox/devbox-transform";
 import { DataTable } from "../../ui/data-table";
 import { devboxColumns } from "./devbox-column";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

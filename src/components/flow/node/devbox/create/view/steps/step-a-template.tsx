@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import { DevboxFormValues } from "@/components/node/devbox/create/schema/devbox-create-schema";
+import { DevboxFormValues } from "@/components/flow/node/devbox/create/schema/devbox-create-schema";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Template } from "@/lib/devbox/schemas/template-list-schema";
+import { Template } from "@/lib/sealos/devbox/schemas/template-list-schema";
 import { customAlphabet } from "nanoid";
 import StepContainer from "../step-container";
 import { useQuery } from "@tanstack/react-query";
@@ -11,9 +11,29 @@ import { useSealosStore } from "@/store/sealos-store";
 import {
   templateRepositoryListOfficialOptions,
   templateRepositoryTemplateListOptions,
-} from "@/lib/devbox/devbox-query";
-import { transformTemplateRepositoryList, transformTemplateList } from "@/lib/devbox/devbox-transform";
-import { type TemplateRepository } from "@/store/control-store";
+} from "@/lib/sealos/devbox/devbox-query";
+import { transformTemplateRepositoryList, transformTemplateList } from "@/lib/sealos/devbox/devbox-transform";
+import { z } from "zod";
+
+// Define TemplateRepository type locally based on the schema
+const TemplateRepositorySchema = z.object({
+  kind: z.enum(["LANGUAGE", "FRAMEWORK", "OS", "SERVICE"]),
+  iconId: z.string(),
+  name: z.string(),
+  uid: z.string().uuid(),
+  description: z.string(),
+  templateRepositoryTags: z.array(z.object({
+    tag: z.object({
+      uid: z.string().uuid(),
+      type: z.enum(["OFFICIAL_CONTENT", "PROGRAMMING_LANGUAGE", "USE_CASE"]),
+      name: z.string(),
+      zhName: z.string(),
+      enName: z.string(),
+    }),
+  })),
+});
+
+type TemplateRepository = z.infer<typeof TemplateRepositorySchema>;
 
 // Create a custom nanoid with lowercase alphabet and size 12
 const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 12);

@@ -28,10 +28,10 @@ import { MainSection, NavigationItem } from "@/components/ui/sidebar-section";
 // Hooks and store
 import { useSealosStore } from "@/store/sealos-store";
 import { useSidebar } from "@/components/ui/sidebar";
-import { accountAmountOptions } from "@/lib/account/account-query";
+import { accountAmountOptions } from "@/lib/sealos/account/account-query";
 
 // Utils
-import { transformAccountAmountIntoBalance } from "@/lib/account/account-transform";
+import { transformAccountAmountIntoBalance } from "@/lib/sealos/account/account-transform";
 import { cn } from "@/lib/utils";
 
 // Constants

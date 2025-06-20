@@ -19,7 +19,7 @@ import {
   shutdownDevboxMutation, 
   restartDevboxMutation, 
   deleteDevboxMutation 
-} from "@/lib/devbox/devbox-mutation";
+} from "@/lib/sealos/devbox/devbox-mutation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

@@ -171,7 +171,7 @@ export const codeAgentConfig: CodeAgentConfig = {
   name: "code",
   systemPrompt: codeSystemPrompt,
   defaultConfig: {
-    runtimeUrl: "/api/code",
+    runtimeUrl: "/api/agent/code",
     agent: "code",
   },
   project_address: "https://uwjpoiybnpbq.sealosbja.site",

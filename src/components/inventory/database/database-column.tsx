@@ -18,7 +18,7 @@ import {
   startDBByNameMutation, 
   pauseDBByNameMutation, 
   delDBByNameMutation 
-} from "@/lib/dbprovider/dbprovider-mutation";
+} from "@/lib/sealos/dbprovider/dbprovider-mutation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

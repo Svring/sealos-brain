@@ -11,15 +11,15 @@ import { useQuery } from "@tanstack/react-query";
 import {
   devboxByNameOptions,
   sshConnectionInfoOptions,
-} from "@/lib/devbox/devbox-query";
-import { namespaceListOptions } from "@/lib/auth/auth-query";
-import { getFirstNamespaceId } from "@/lib/auth/auth-transform";
+} from "@/lib/sealos/devbox/devbox-query";
+import { namespaceListOptions } from "@/lib/sealos/auth/auth-query";
+import { getFirstNamespaceId } from "@/lib/sealos/auth/auth-transform";
 import {
   startDevboxMutation,
   shutdownDevboxMutation,
   restartDevboxMutation,
   deleteDevboxMutation,
-} from "@/lib/devbox/devbox-mutation";
+} from "@/lib/sealos/devbox/devbox-mutation";
 import { toast } from "sonner";
 import { usePanel } from "@/context/panel-provider";
 import {
@@ -41,7 +41,7 @@ import {
 import {
   activateGalateaForDevbox,
   cleanupGalateaFilesOnDevbox,
-} from "@/lib/devbox/devbox-ssh";
+} from "@/lib/sealos/devbox/devbox-ssh";
 
 export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   const { currentUser, regionUrl } = useSealosStore();

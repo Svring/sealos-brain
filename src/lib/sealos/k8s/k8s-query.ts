@@ -13,7 +13,7 @@ import {
   V1Secret,
 } from "@kubernetes/client-node";
 import { queryOptions } from "@tanstack/react-query";
-import { queryDebugLog } from "@/lib/tracing/query-debug-log";
+import { queryDebugLog } from "@/lib/query-debug-log";
 
 // Helper function to create KubeConfig from kubeconfig string
 function createKubeConfig(kubeconfigString: string): KubeConfig {

@@ -2,7 +2,7 @@
 
 import { queryOptions } from "@tanstack/react-query";
 import axios from "axios";
-import { queryDebugLog } from "@/lib/tracing/query-debug-log";
+import { queryDebugLog } from "@/lib/query-debug-log";
 
 function getRegionToken(currentUser: any) {
   return (

@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSealosStore } from "@/store/sealos-store";
-import { dbProviderListOptions } from "@/lib/dbprovider/dbprovider-query";
-import { transformDatabaseListToTable } from "@/lib/dbprovider/dbprovider-transform";
+import { dbProviderListOptions } from "@/lib/sealos/dbprovider/dbprovider-query";
+import { transformDatabaseListToTable } from "@/lib/sealos/dbprovider/dbprovider-transform";
 import { DataTable } from "@/components/ui/data-table";
 import { databaseColumns } from "./database-column";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

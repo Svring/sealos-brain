@@ -2,7 +2,7 @@ import { useNodeId } from "@xyflow/react";
 import Image from "next/image";
 import BaseNode from "../base-node";
 // import DBProviderDetails from "./detail/dbprovider-detail-view";
-import { getDBTypeIcon } from "@/lib/dbprovider/dbprovider-transform";
+import { getDBTypeIcon } from "@/lib/sealos/dbprovider/dbprovider-transform";
 
 export interface DBProviderNodeData {
   id: string;

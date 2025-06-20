@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSealosStore } from "@/store/sealos-store";
-import { appLaunchpadListOptions } from "@/lib/applaunchpad/applaunchpad-query";
-import { transformAppLaunchpadListToTable } from "@/lib/applaunchpad/applaunchpad-transform";
+import { appLaunchpadListOptions } from "@/lib/sealos/applaunchpad/applaunchpad-query";
+import { transformAppLaunchpadListToTable } from "@/lib/sealos/applaunchpad/applaunchpad-transform";
 import { DataTable } from "@/components/ui/data-table";
 import { appLaunchpadColumns } from "./applaunchpad-column";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

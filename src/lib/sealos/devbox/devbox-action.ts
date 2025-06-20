@@ -1,7 +1,7 @@
 import { useCopilotAction } from "@copilotkit/react-core";
 import { useSealosStore } from "@/store/sealos-store";
 import { usePanel } from "@/context/panel-provider";
-import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create-view";
+import DevboxCreateView from "@/components/flow/node/devbox/create/view/devbox-create-view";
 import React from "react";
 import {
   shutdownDevboxMutation,
@@ -9,7 +9,7 @@ import {
   deleteDevboxMutation,
   releaseDevboxMutation,
   deleteDevboxVersionMutation,
-} from "@/lib/devbox/devbox-mutation";
+} from "@/lib/sealos/devbox/devbox-mutation";
 
 type ShutdownModeType = "Stopped" | "Shutdown";
 

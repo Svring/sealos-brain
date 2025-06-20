@@ -19,7 +19,7 @@ import {
   restartAppMutation, 
   pauseAppMutation, 
   delAppMutation 
-} from "@/lib/applaunchpad/applaunchpad-mutation";
+} from "@/lib/sealos/applaunchpad/applaunchpad-mutation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

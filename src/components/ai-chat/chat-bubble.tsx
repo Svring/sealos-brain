@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Copy, RotateCcw, AlertCircle, Check } from "lucide-react";
-import { MessageLoading } from "@/components/ai/message-loading";
+import { MessageLoading } from "@/components/ai-chat/message-loading";
 import { toast } from "sonner";
 
 interface ChatBubbleProps {

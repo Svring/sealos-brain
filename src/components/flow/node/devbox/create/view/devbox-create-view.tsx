@@ -1,6 +1,6 @@
 import { defineStepper } from "@stepperize/react";
 import { FormProvider, useForm } from "react-hook-form";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   devboxCreateSchema,
@@ -13,9 +13,8 @@ import StepDSummary from "./steps/step-d-summary";
 import { Button } from "@/components/ui/button";
 import { StepIndicator } from "@/components/ui/step-indicator";
 import { customAlphabet } from "nanoid";
-import { useControlStore } from "@/store/control-store";
 import { useSealosStore } from "@/store/sealos-store";
-import { createDevboxMutation } from "@/lib/devbox/devbox-mutation";
+import { createDevboxMutation } from "@/lib/sealos/devbox/devbox-mutation";
 import { toast } from "sonner";
 import { usePanel } from "@/context/panel-provider";
 
@@ -63,8 +62,6 @@ export default function DevboxCreateView({
     isLast,
   } = useStepper();
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
-  const { setDevboxCreateStep, updateDevboxCreateForm, devboxCreateForm } =
-    useControlStore();
   const { currentUser, regionUrl } = useSealosStore();
   const { closePanel } = usePanel();
 
@@ -86,62 +83,6 @@ export default function DevboxCreateView({
   });
 
   const { handleSubmit, trigger, formState, watch } = methods;
-
-  // Sync current step with control store
-  useEffect(() => {
-    const stepMapping = {
-      "step-1": "template" as const,
-      "step-2": "resource" as const,
-      "step-3": "network" as const,
-      "step-4": "summary" as const,
-    };
-
-    const controlStoreStep =
-      stepMapping[current.id as keyof typeof stepMapping];
-    if (controlStoreStep) {
-      setDevboxCreateStep(controlStoreStep);
-    }
-  }, [current.id, setDevboxCreateStep]);
-
-  // Sync form values with control store for AI access
-  useEffect(() => {
-    const subscription = watch((formData) => {
-      // Convert form data to control store format
-      const controlStoreFormData = {
-        name: formData.name,
-        templateId: formData.templateUid,
-        cpu: formData.cpu ? Math.round(formData.cpu / 1000) : undefined, // Convert from millicores to cores
-        memory: formData.memory
-          ? Math.round(formData.memory / 1024)
-          : undefined, // Convert from MB to GB
-        gpu: formData.gpu
-          ? {
-              type: formData.gpu.type || "",
-              count: formData.gpu.amount || 0,
-            }
-          : undefined,
-      };
-
-      // Only update if there are actual changes to avoid infinite loops
-      const hasChanges = Object.entries(controlStoreFormData).some(
-        ([key, value]) => {
-          const currentValue =
-            devboxCreateForm[key as keyof typeof devboxCreateForm];
-          return value !== currentValue;
-        }
-      );
-
-      if (hasChanges) {
-        console.log(
-          "🔄 Syncing form data to control store:",
-          controlStoreFormData
-        );
-        updateDevboxCreateForm(controlStoreFormData);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [watch, updateDevboxCreateForm, devboxCreateForm]);
 
   const onSubmit = async (data: DevboxFormValues) => {
     try {
@@ -200,85 +141,106 @@ export default function DevboxCreateView({
       fieldsToValidate.map((field) => ({ [field]: currentValues[field] }))
     );
 
+    // Trigger validation for specific fields
     const isValid = await trigger(fieldsToValidate);
     console.log(`✅ Validation result for step ${current.id}:`, isValid);
 
-    if (!isValid) {
-      console.log("❌ Form errors:", formState.errors);
-    }
-
     if (isValid) {
-      // Mark current step as completed
-      if (!completedSteps.includes(current.id)) {
-        setCompletedSteps((prev) => [...prev, current.id]);
-      }
-      console.log(`🚀 Moving to next step from ${current.id}`);
+      // Mark step as completed
+      setCompletedSteps((prev) => [...prev, current.id]);
       next();
     } else {
-      console.log(
-        `🛑 Cannot proceed from step ${current.id} due to validation errors`
-      );
+      console.log("❌ Validation failed, staying on current step");
     }
   };
 
   const handlePrev = () => {
     // Remove current step from completed steps when going back
-    setCompletedSteps((prev) => prev.filter((stepId) => stepId !== current.id));
+    setCompletedSteps((prev) => prev.filter((id) => id !== current.id));
     prev();
   };
 
+  const isStepCompleted = (stepId: string) => completedSteps.includes(stepId);
+
   return (
-    <Scoped>
-      <FormProvider {...methods}>
-        <div className="w-full">
-          {/* Step Indicator */}
-          <div className="mb-8 px-6 pt-6">
-            <StepIndicator
-              steps={stepDefinitions}
-              currentStepId={current.id}
-              completedStepIds={completedSteps}
-            />
+    <div className="flex flex-col h-full">
+      {/* Header with step indicator */}
+      <div className="flex-shrink-0 p-6 border-b">
+        <div className="max-w-4xl mx-auto">
+                     <StepIndicator
+             steps={steps.map((step) => ({
+               id: step.id,
+               title: step.title,
+               description: step.description,
+             }))}
+             currentStepId={current.id}
+             completedStepIds={completedSteps}
+           />
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-4xl mx-auto p-6">
+          <FormProvider {...methods}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+              <Scoped>
+                {current.id === "step-1" && <StepATemplate />}
+                {current.id === "step-2" && <StepBResource />}
+                {current.id === "step-3" && <StepCNetwork />}
+                {current.id === "step-4" && <StepDSummary />}
+              </Scoped>
+            </form>
+          </FormProvider>
+        </div>
+      </div>
+
+      {/* Footer with navigation buttons */}
+      <div className="flex-shrink-0 p-6 border-t bg-background">
+        <div className="max-w-4xl mx-auto flex justify-between">
+          <div className="flex gap-2">
+            {!isFirst && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePrev}
+                disabled={isPending}
+              >
+                Previous
+              </Button>
+            )}
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            {/* Step Content */}
-            <div className="px-6">
-              {switchStep({
-                "step-1": () => <StepATemplate />,
-                "step-2": () => <StepBResource />,
-                "step-3": () => <StepCNetwork />,
-                "step-4": () => <StepDSummary />,
-              })}
-            </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleCancel}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between items-center px-6 pb-6">
-              <div className="flex gap-2">
-                <Button type="button" variant="ghost" onClick={handleCancel}>
-                  Cancel
-                </Button>
-                {!isFirst && (
-                  <Button type="button" variant="outline" onClick={handlePrev}>
-                    Previous
-                  </Button>
-                )}
-              </div>
-
-              <div className="flex gap-4">
-                {!isLast ? (
-                  <Button type="button" onClick={handleNext}>
-                    Next
-                  </Button>
-                ) : (
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Creating..." : "Create Devbox"}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </form>
+            {!isLast ? (
+              <Button
+                type="button"
+                onClick={handleNext}
+                disabled={isPending}
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={isPending || !formState.isValid}
+                className="min-w-[100px]"
+              >
+                {isPending ? "Creating..." : "Create Devbox"}
+              </Button>
+            )}
+          </div>
         </div>
-      </FormProvider>
-    </Scoped>
+      </div>
+    </div>
   );
 }

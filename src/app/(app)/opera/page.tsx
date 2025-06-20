@@ -17,11 +17,11 @@ import { useQuery, useQueries } from "@tanstack/react-query";
 import {
   devboxListOptions,
   devboxByNameOptions,
-} from "@/lib/devbox/devbox-query";
+} from "@/lib/sealos/devbox/devbox-query";
 import {
   transformDevboxListToNames,
   transformDevboxAddresses,
-} from "@/lib/devbox/devbox-transform";
+} from "@/lib/sealos/devbox/devbox-transform";
 
 interface DevboxOption {
   name: string;

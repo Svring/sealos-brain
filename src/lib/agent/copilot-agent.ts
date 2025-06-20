@@ -100,7 +100,7 @@ export const copilotAgentConfig = {
   name: "copilot",
   systemPrompt: copilotSystemPrompt,
   defaultConfig: {
-    runtimeUrl: "/api/copilot",
+    runtimeUrl: "/api/agent/copilot",
     agent: "copilot",
   },
 };

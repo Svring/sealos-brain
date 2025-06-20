@@ -11,18 +11,18 @@ import { useQuery, useQueries } from "@tanstack/react-query";
 import {
   devboxListOptions,
   devboxByNameOptions,
-} from "@/lib/devbox/devbox-query";
-import { dbProviderListOptions } from "@/lib/dbprovider/dbprovider-query";
-import { transformDevboxListIntoNode } from "@/lib/devbox/devbox-transform";
+} from "@/lib/sealos/devbox/devbox-query";
+import { dbProviderListOptions } from "@/lib/sealos/dbprovider/dbprovider-query";
+import { transformDevboxListIntoNode } from "@/lib/sealos/devbox/devbox-transform";
 import {
   transformDBProviderListIntoNode,
   type DBProviderNodeDisplayData,
-} from "@/lib/dbprovider/dbprovider-transform";
+} from "@/lib/sealos/dbprovider/dbprovider-transform";
 import { useSealosStore } from "@/store/sealos-store";
 import {
   transformDevboxNetworks,
   transformDevboxListToNames,
-} from "@/lib/devbox/devbox-transform";
+} from "@/lib/sealos/devbox/devbox-transform";
 
 import { NodeChange } from "@xyflow/react";
 
