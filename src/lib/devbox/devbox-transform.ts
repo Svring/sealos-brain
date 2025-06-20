@@ -127,7 +127,7 @@ export const transformDevboxAddresses = (data: any) => {
 };
 
 /**
- * Transform devbox list API response into a simple array of devbox names
+ * Transform devbox list API response into flat array of devbox names
  */
 export const transformDevboxListToNames = (data: DataSchema): string[] => {
   return data
@@ -140,6 +140,54 @@ export const transformDevboxListToNames = (data: DataSchema): string[] => {
     .filter(
       (name): name is string => typeof name === "string" && name.length > 0
     );
+};
+
+/**
+ * Transform devbox list into table data format
+ * Converts API response to format expected by the DevboxColumn schema
+ */
+export const transformDevboxListToTable = (data: DataSchema) => {
+  return data
+    .map((pair) => {
+      const devbox = pair.find((item: any) => item.kind === "Devbox") as
+        | DevboxSchema
+        | undefined;
+
+      const templateInfo = pair.find(
+        (item: any) => "templateRepository" in item
+      ) as DevboxTemplateSchema | undefined;
+
+      if (!devbox) return null;
+
+      const devboxName = devbox.metadata.name;
+
+      // Determine status from devbox spec or status
+      let status = "Unknown";
+      if (devbox.spec?.state) {
+        status = devbox.spec.state;
+      } else if (devbox.status?.phase) {
+        status = devbox.status.phase;
+      }
+
+      // Format creation timestamp
+      const createdAt = new Date(
+        devbox.metadata.creationTimestamp
+      ).toLocaleDateString();
+
+      // Calculate estimated cost (placeholder - you may want to implement real cost calculation)
+      const cpu = devbox.spec?.resource?.cpu || "0";
+      const memory = devbox.spec?.resource?.memory || "0";
+      const cost = `$${(parseFloat(cpu.replace(/[^0-9.]/g, "")) * 0.001 + parseFloat(memory.replace(/[^0-9.]/g, "")) * 0.0001).toFixed(2)}/day`;
+
+      return {
+        id: `devbox-${devboxName}`,
+        name: devboxName,
+        status,
+        createdAt,
+        cost,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 };
 
 /**

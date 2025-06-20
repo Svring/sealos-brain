@@ -173,3 +173,45 @@ export function getDBTypeIcon(dbType: string): string {
   // Fallback to a generic database icon
   return "/icons/database.svg";
 }
+
+/**
+ * Transform database list into table data format
+ * Converts API response to format expected by the DatabaseColumn schema
+ */
+export const transformDatabaseListToTable = (data: DBProviderAPIItem[]) => {
+  if (!Array.isArray(data)) {
+    console.error("Expected array but got:", typeof data, data);
+    return [];
+  }
+
+  return data
+    .map((database) => {
+      if (!database || typeof database !== "object") return null;
+
+      const dbName = database.name;
+      const dbType = capitalizeDBType(database.dbType);
+
+      // Get status from the database object
+      const status =
+        database.status?.label || database.status?.value || "Unknown";
+
+      // Format creation timestamp
+      const createdAt = new Date(database.createTime).toLocaleDateString();
+
+      // Calculate estimated cost based on resources
+      const cpu = database.cpu || 0;
+      const memory = database.memory || 0;
+      const storage = database.storage || 0;
+      const cost = `$${(cpu * 0.001 + memory * 0.0001 + storage * 0.01).toFixed(2)}/day`;
+
+      return {
+        id: `database-${dbName}`,
+        name: dbName,
+        type: dbType,
+        status,
+        createdAt,
+        cost,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+};

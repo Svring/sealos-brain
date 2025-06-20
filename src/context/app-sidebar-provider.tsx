@@ -4,23 +4,15 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  BarChart3,
-  Box,
-  CodeXml,
-  Database,
+  Boxes,
   DollarSign,
   Home,
-  Menu,
   PanelLeft,
-  Sparkle,
-  SquareChartGantt,
-  Theater,
   User2,
   Workflow,
 } from "lucide-react";
 
 // UI Components
-import { SpotlightCard } from "@/components/ui/spotlight-card";
 import {
   Sidebar,
   SidebarContent,
@@ -29,6 +21,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail
 } from "@/components/ui/sidebar";
 import { MainSection, NavigationItem } from "@/components/ui/sidebar-section";
 
@@ -39,7 +32,6 @@ import { accountAmountOptions } from "@/lib/account/account-query";
 
 // Utils
 import { transformAccountAmountIntoBalance } from "@/lib/account/account-transform";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Constants
@@ -50,6 +42,18 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     group: "overview",
     path: "/home",
   },
+  {
+    title: "Inventory",
+    icon: Boxes,
+    group: "overview",
+    path: "/inventory",
+  },
+  {
+    title: "Graph",
+    icon: Workflow,
+    group: "overview",
+    path: "/graph",
+  }
 ];
 
 // Main component
@@ -103,6 +107,7 @@ export default function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 }
