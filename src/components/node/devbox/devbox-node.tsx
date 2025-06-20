@@ -1,4 +1,4 @@
-import { useNodeId } from "@xyflow/react";
+import { Handle, Position, useNodeId } from "@xyflow/react";
 import Image from "next/image";
 import BaseNode from "../base-node";
 import DevboxDetails from "./detail/devbox-detail-view";
@@ -55,6 +55,13 @@ export default function DevboxNode({ data }: { data: DevboxNodeData }) {
           </div>
         </div>
       </BaseNode>
+      {/* Source handle for outgoing connections */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="source-bottom"
+        className="w-3 h-3 bg-blue-500"
+      />
     </>
   );
 }

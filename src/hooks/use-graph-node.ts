@@ -1,5 +1,12 @@
 import { useEffect, useMemo } from "react";
-import { Node, useNodesState } from "@xyflow/react";
+import {
+  Node,
+  Edge,
+  useNodesState,
+  useEdgesState,
+  MarkerType,
+  Position,
+} from "@xyflow/react";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import {
   devboxListOptions,
@@ -21,14 +28,17 @@ import { NodeChange } from "@xyflow/react";
 
 interface UseGraphNodeReturn {
   nodes: Node[];
+  edges: Edge[];
   setNodes: (nodes: Node[]) => void;
   onNodesChange: (changes: NodeChange[]) => void;
+  onEdgesChange: (changes: import("@xyflow/react").EdgeChange[]) => void;
   isLoading: boolean;
   error: string | null;
 }
 
 export function useGraphNode(): UseGraphNodeReturn {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const { regionUrl, currentUser } = useSealosStore();
 
   // Fetch devbox list
@@ -87,6 +97,7 @@ export function useGraphNode(): UseGraphNodeReturn {
   // Transform data into nodes and set them
   useEffect(() => {
     const allNodes: Node[] = [];
+    const allEdges: Edge[] = [];
     const devboxPositionMap: Record<string, { x: number; y: number }> = {};
 
     if (devboxList && devboxList.length > 0) {
@@ -99,6 +110,7 @@ export function useGraphNode(): UseGraphNodeReturn {
             id: item.id,
             type: "devbox",
             position,
+            sourcePosition: Position.Bottom,
             data: item,
           } as Node;
         });
@@ -119,15 +131,28 @@ export function useGraphNode(): UseGraphNodeReturn {
       };
 
       (networks || []).forEach((netItem: any, idx: number) => {
-        allNodes.push({
-          id: `${devboxName}-network-${netItem.port}-${netItem.portName ?? ""}`,
+        const networkNodeId = `${devboxName}-network-${netItem.port}-${netItem.portName ?? ""}`;
+        const node: Node = {
+          id: networkNodeId,
           type: "network",
           position: {
             x: basePosition.x,
             y: basePosition.y + 150 + idx * 150,
           },
+          targetPosition: Position.Top,
           data: netItem,
-        });
+        };
+        allNodes.push(node);
+
+        // Create edge between devbox and this network node
+        const edgeId = `${devboxName}-edge-${netItem.port}-${netItem.portName ?? ""}`;
+        allEdges.push({
+          id: edgeId,
+          source: `devbox-${devboxName}`,
+          target: networkNodeId,
+          type: "step-edge",
+          markerEnd: { type: MarkerType.ArrowClosed },
+        } as Edge);
       });
     });
 
@@ -148,18 +173,22 @@ export function useGraphNode(): UseGraphNodeReturn {
     }
 
     setNodes(allNodes);
+    setEdges(allEdges);
   }, [
     devboxList,
     dbproviderList,
     setNodes,
+    setEdges,
     devboxNames.join(","), // joins to form a stable string
     ...networkQueries.map((q) => q.data), // stable deps
   ]);
 
   return {
     nodes,
+    edges,
     setNodes,
     onNodesChange,
+    onEdgesChange,
     isLoading,
     error,
   };

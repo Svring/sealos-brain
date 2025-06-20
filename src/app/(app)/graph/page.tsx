@@ -4,9 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import {
   ReactFlow,
   Background,
-  useEdgesState,
   BackgroundVariant,
-  Edge,
 } from "@xyflow/react";
 import nodeTypes from "@/components/node/node-types";
 import { usePanel } from "@/context/panel-provider";
@@ -28,13 +26,16 @@ import {
 } from "@/context/copilot-state-provider";
 import { useSidebarState } from "@/context/sidebar-state-provider";
 
-const initialEdges: Edge[] = [];
-
 function GraphPageContent() {
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
-
-  // Use the new hook for node management
-  const { nodes, onNodesChange, isLoading, error } = useGraphNode();
+  // Use the new hook for node & edge management
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    isLoading,
+    error,
+  } = useGraphNode();
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
   // Use centralized sidebar control hook for visibility and width
