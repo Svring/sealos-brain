@@ -5,6 +5,7 @@ import {
   CustomObjectsApi,
   AppsV1Api,
   BatchV1Api,
+  CoreV1Api,
 } from "@kubernetes/client-node";
 
 // Resource definitions
@@ -58,7 +59,30 @@ function createApiClients(kubeconfig: string) {
     customApi: kc.makeApiClient(CustomObjectsApi),
     appsApi: kc.makeApiClient(AppsV1Api),
     batchApi: kc.makeApiClient(BatchV1Api),
+    coreApi: kc.makeApiClient(CoreV1Api),
   };
+}
+
+// Read devbox secret by name
+export async function readDevboxSecret(
+  kubeconfig: string,
+  devboxName: string,
+  namespace: string = "default"
+) {
+  try {
+    const { coreApi } = createApiClients(kubeconfig);
+
+    const res = await coreApi.readNamespacedSecret({
+      namespace: namespace,
+      name: devboxName,
+    });
+
+    // Convert to plain object to avoid serialization issues
+    return JSON.parse(JSON.stringify(res));
+  } catch (error) {
+    console.error(`Error reading secret for devbox ${devboxName}:`, error);
+    return { error: `Failed to read secret for devbox ${devboxName}` };
+  }
 }
 
 // List Devbox resources

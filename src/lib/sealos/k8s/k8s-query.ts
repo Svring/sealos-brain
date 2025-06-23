@@ -9,8 +9,48 @@ import {
   listCronJobs,
   listObjectStorageBuckets,
   listResourcesByType,
+  readDevboxSecret,
 } from "./k8s-actions";
 import { getKubeconfig, getNamespaceFromKubeconfig } from "./k8s-utils";
+
+// Direct Devbox secret query options
+export function directDevboxSecretOptions(
+  currentUser: any,
+  devboxName: string,
+  namespaceOverride?: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "k8s",
+      "direct",
+      "devbox",
+      "secret",
+      devboxName,
+      namespaceOverride,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser && !!devboxName,
+    queryFn: async () => {
+      const kubeconfig = getKubeconfig(currentUser);
+      if (!kubeconfig) {
+        throw new Error("No kubeconfig found");
+      }
+
+      const namespace =
+        namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+
+      queryDebugLog("directDevboxSecretOptions", {
+        devboxName,
+        namespace,
+        userId: currentUser?.id,
+      });
+
+      return await readDevboxSecret(kubeconfig, devboxName, namespace);
+    },
+    select: postprocess,
+  });
+}
 
 // Direct Devbox query options
 export function directDevboxListOptions(

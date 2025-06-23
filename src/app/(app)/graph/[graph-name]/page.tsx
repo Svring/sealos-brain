@@ -13,17 +13,18 @@ import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
 
 import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, ArrowLeft } from "lucide-react";
 import { useGraphNode } from "@/hooks/use-graph-node";
-import {
-  CopilotStateProvider,
-  useCopilotConfig,
-} from "@/context/copilot-state-provider";
+import { CopilotStateProvider } from "@/context/copilot-state-provider";
 
-function GraphPageContent() {
-  // Use the new hook for node & edge management
+interface GraphPageContentProps {
+  graphName: string;
+}
+
+function GraphPageContent({ graphName }: GraphPageContentProps) {
+  // Use the unified hook with specificGraphName parameter
   const { nodes, edges, onNodesChange, onEdgesChange, isLoading, error } =
-    useGraphNode();
+    useGraphNode(graphName);
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
 
@@ -103,14 +104,14 @@ function GraphPageContent() {
 
         {/* Loading indicator */}
         {isLoading && (
-          <div className="absolute top-4 left-4 bg-blue-100 text-blue-800 px-3 py-2 rounded-md shadow-md z-10">
-            Loading resources...
+          <div className="absolute top-20 left-4 bg-blue-100 text-blue-800 px-3 py-2 rounded-md shadow-md z-10">
+            Loading {graphName} resources...
           </div>
         )}
 
         {/* Error indicator */}
         {error && (
-          <div className="absolute top-4 left-4 bg-red-100 text-red-800 px-3 py-2 rounded-md shadow-md z-10">
+          <div className="absolute top-20 left-4 bg-red-100 text-red-800 px-3 py-2 rounded-md shadow-md z-10">
             Error loading: {error}
           </div>
         )}
@@ -156,7 +157,30 @@ function GraphPageContent() {
   );
 }
 
-export default function GraphPage() {
+interface GraphPageProps {
+  params: Promise<{ "graph-name": string }>;
+}
+
+export default function GraphPage({ params }: GraphPageProps) {
+  const [graphName, setGraphName] = useState<string>("");
+
+  useEffect(() => {
+    params.then((resolvedParams) => {
+      setGraphName(decodeURIComponent(resolvedParams["graph-name"]));
+    });
+  }, [params]);
+
+  if (!graphName) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading graph...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <CopilotStateProvider
       initialConfig={{
@@ -164,7 +188,7 @@ export default function GraphPage() {
         agent: "copilot",
       }}
     >
-      <GraphPageContent />
+      <GraphPageContent graphName={graphName} />
     </CopilotStateProvider>
   );
 }

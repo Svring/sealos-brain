@@ -7,23 +7,21 @@ import {
   MarkerType,
   Position,
 } from "@xyflow/react";
-import { useQuery, useQueries } from "@tanstack/react-query";
-import {
-  devboxListOptions,
-  devboxByNameOptions,
-} from "@/lib/sealos/devbox/devbox-query";
-import { dbProviderListOptions } from "@/lib/sealos/dbprovider/dbprovider-query";
-import { transformDevboxListIntoNode } from "@/lib/sealos/devbox/devbox-transform";
-import {
-  transformDBProviderListIntoNode,
-  type DBProviderNodeDisplayData,
-} from "@/lib/sealos/dbprovider/dbprovider-transform";
+import { useQuery } from "@tanstack/react-query";
 import { useSealosStore } from "@/store/sealos-store";
 import {
-  transformDevboxNetworks,
-  transformDevboxListToNames,
-} from "@/lib/sealos/devbox/devbox-transform";
-
+  directDevboxListOptions,
+  directClusterListOptions,
+  directDeploymentListOptions,
+  directCronJobListOptions,
+  directObjectStorageBucketListOptions,
+} from "@/lib/sealos/k8s/k8s-query";
+import {
+  transformResourcesByGraphName,
+  mergeGraphResourceGroups,
+  type ResourceList,
+  type GraphResourceGroup,
+} from "@/lib/sealos/k8s/k8s-transform";
 import { NodeChange } from "@xyflow/react";
 
 interface UseGraphNodeReturn {
@@ -34,154 +32,221 @@ interface UseGraphNodeReturn {
   onEdgesChange: (changes: import("@xyflow/react").EdgeChange[]) => void;
   isLoading: boolean;
   error: string | null;
+  mergedGraphs: GraphResourceGroup;
 }
 
-export function useGraphNode(): UseGraphNodeReturn {
+export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const { regionUrl, currentUser } = useSealosStore();
+  const { currentUser } = useSealosStore();
 
-  // Fetch devbox list
-  const {
-    data: devboxList,
-    isLoading: devboxListLoading,
-    error: devboxListError,
-  } = useQuery(devboxListOptions(currentUser, regionUrl));
-
-  // Memoize devbox names for fetching network data
-  const devboxNames: string[] = useMemo(() => {
-    if (!devboxList) return [];
-    try {
-      return transformDevboxListToNames(devboxList);
-    } catch (e) {
-      console.error("Error extracting devbox names", e);
-      return [];
-    }
-  }, [devboxList]);
-
-  // Fetch network details for each devbox
-  const networkQueries = useQueries({
-    queries: devboxNames.map((name: string) =>
-      devboxByNameOptions(currentUser, regionUrl, name, transformDevboxNetworks)
-    ),
-  });
-
-  // Fetch dbprovider list
-  const {
-    data: dbproviderList,
-    isLoading: dbproviderListLoading,
-    error: dbproviderListError,
-  } = useQuery(
-    dbProviderListOptions(
-      currentUser,
-      regionUrl,
-      transformDBProviderListIntoNode
-    )
+  // Query all five resource types
+  const devboxQuery = useQuery(directDevboxListOptions(currentUser));
+  const clusterQuery = useQuery(directClusterListOptions(currentUser));
+  const deploymentQuery = useQuery(directDeploymentListOptions(currentUser));
+  const cronJobQuery = useQuery(directCronJobListOptions(currentUser));
+  const bucketQuery = useQuery(
+    directObjectStorageBucketListOptions(currentUser)
   );
 
   // Combined loading state
-  const networkLoading = networkQueries.some((q) => q.isLoading);
-  const isLoading =
-    devboxListLoading || dbproviderListLoading || networkLoading;
+  const isLoading = [
+    devboxQuery,
+    clusterQuery,
+    deploymentQuery,
+    cronJobQuery,
+    bucketQuery,
+  ].some((query) => query.isLoading);
 
   // Combined error state
-  const networkError = networkQueries.find((q) => q.error)?.error as
-    | Error
-    | undefined;
   const error =
-    devboxListError?.message ||
-    dbproviderListError?.message ||
-    networkError?.message ||
-    null;
+    [
+      devboxQuery,
+      clusterQuery,
+      deploymentQuery,
+      cronJobQuery,
+      bucketQuery,
+    ].find((query) => query.error)?.error?.message || null;
 
-  // Transform data into nodes and set them
+  // Create merged graph list when all queries are complete
+  const mergedGraphs = useMemo(() => {
+    const allQueriesComplete = [
+      devboxQuery,
+      clusterQuery,
+      deploymentQuery,
+      cronJobQuery,
+      bucketQuery,
+    ].every((query) => !query.isLoading && query.data);
+
+    if (!allQueriesComplete) return {};
+
+    const transformedGroups = [
+      transformResourcesByGraphName(devboxQuery.data as ResourceList),
+      transformResourcesByGraphName(clusterQuery.data as ResourceList),
+      transformResourcesByGraphName(deploymentQuery.data as ResourceList),
+      transformResourcesByGraphName(cronJobQuery.data as ResourceList),
+      transformResourcesByGraphName(bucketQuery.data as ResourceList),
+    ];
+
+    return mergeGraphResourceGroups(transformedGroups);
+  }, [
+    devboxQuery.data,
+    clusterQuery.data,
+    deploymentQuery.data,
+    cronJobQuery.data,
+    bucketQuery.data,
+    devboxQuery.isLoading,
+    clusterQuery.isLoading,
+    deploymentQuery.isLoading,
+    cronJobQuery.isLoading,
+    bucketQuery.isLoading,
+  ]);
+
+  // Transform graphs into nodes and edges for visualization
   useEffect(() => {
-    const allNodes: Node[] = [];
-    const allEdges: Edge[] = [];
-    const devboxPositionMap: Record<string, { x: number; y: number }> = {};
-
-    if (devboxList && devboxList.length > 0) {
-      try {
-        const lightweightData = transformDevboxListIntoNode(devboxList);
-        const devboxNodes = lightweightData.map((item, index) => {
-          const position = { x: 300 + index * 280, y: 200 };
-          devboxPositionMap[item.devboxName] = position;
-          return {
-            id: item.id,
-            type: "devbox",
-            position,
-            sourcePosition: Position.Bottom,
-            data: item,
-          } as Node;
-        });
-        allNodes.push(...devboxNodes);
-      } catch (error) {
-        console.error("Error transforming devbox list to nodes:", error);
-      }
+    if (!mergedGraphs || Object.keys(mergedGraphs).length === 0) {
+      setNodes([]);
+      setEdges([]);
+      return;
     }
 
-    // Stable network data
-    const networkData = networkQueries.map((q) => q.data);
+    const allNodes: Node[] = [];
+    const allEdges: Edge[] = [];
 
-    networkData.forEach((networks, queryIdx) => {
-      const devboxName = devboxNames[queryIdx];
-      const basePosition = devboxPositionMap[devboxName] || {
-        x: 300 + queryIdx * 280,
-        y: 200,
-      };
-
-      (networks || []).forEach((netItem: any, idx: number) => {
-        const networkNodeId = `${devboxName}-network-${netItem.port}-${netItem.portName ?? ""}`;
-        const node: Node = {
-          id: networkNodeId,
-          type: "network",
-          position: {
-            x: basePosition.x,
-            y: basePosition.y + 150 + idx * 150,
-          },
-          targetPosition: Position.Top,
-          data: netItem,
-        };
-        allNodes.push(node);
-
-        // Create edge between devbox and this network node
-        const edgeId = `${devboxName}-edge-${netItem.port}-${netItem.portName ?? ""}`;
-        allEdges.push({
-          id: edgeId,
-          source: `devbox-${devboxName}`,
-          target: networkNodeId,
-          type: "step-edge",
-          markerEnd: { type: MarkerType.ArrowClosed },
-        } as Edge);
-      });
-    });
-
-    if (dbproviderList && dbproviderList.length > 0) {
-      try {
-        const dbproviderNodes = dbproviderList.map(
-          (item: DBProviderNodeDisplayData, index: number) => ({
-            id: item.id,
-            type: "dbprovider",
-            position: { x: 300 + index * 280, y: 400 },
-            data: item,
-          })
-        );
-        allNodes.push(...dbproviderNodes);
-      } catch (error) {
-        console.error("Error creating dbprovider nodes:", error);
+    // If specificGraphName is provided, show only that graph's resources
+    if (specificGraphName) {
+      const graphResources = mergedGraphs[specificGraphName];
+      if (!graphResources) {
+        setNodes([]);
+        setEdges([]);
+        return;
       }
+
+      let xOffset = 300;
+      let yOffset = 200;
+
+      // Create nodes for each resource type in the specific graph
+      Object.entries(graphResources).forEach(
+        ([resourceKind, resourceNames], resourceTypeIndex) => {
+          resourceNames.forEach((resourceName, resourceIndex) => {
+            const nodeId = `${resourceKind}-${resourceName}`;
+            const position = {
+              x: xOffset + resourceTypeIndex * 400,
+              y: yOffset + resourceIndex * 150,
+            };
+
+            // Create node based on resource type
+            const node: Node = {
+              id: nodeId,
+              type: resourceKind, // Use resource kind as node type
+              position,
+              data: {
+                id: nodeId,
+                name: resourceName,
+                resourceKind,
+                graphName: specificGraphName,
+                // Add basic display data structure
+                [getResourceDisplayKey(resourceKind)]: resourceName,
+              },
+            };
+
+            allNodes.push(node);
+
+            // Create connections between resources of the same graph
+            // Connect to the first resource of the previous type (simple chain pattern)
+            if (resourceTypeIndex > 0 && resourceIndex === 0) {
+              const prevResourceKind =
+                Object.keys(graphResources)[resourceTypeIndex - 1];
+              const prevResourceNames = graphResources[prevResourceKind];
+              if (prevResourceNames && prevResourceNames.length > 0) {
+                const sourceNodeId = `${prevResourceKind}-${prevResourceNames[0]}`;
+                const edgeId = `${sourceNodeId}-${nodeId}`;
+
+                allEdges.push({
+                  id: edgeId,
+                  source: sourceNodeId,
+                  target: nodeId,
+                  type: "step-edge",
+                  markerEnd: { type: MarkerType.ArrowClosed },
+                } as Edge);
+              }
+            }
+          });
+        }
+      );
+    } else {
+      // Show all graphs as a high-level overview
+      let graphIndex = 0;
+
+      Object.entries(mergedGraphs).forEach(([graphName, graphResources]) => {
+        const totalResources = Object.values(graphResources).reduce(
+          (acc, resourceList) => acc + resourceList.length,
+          0
+        );
+
+        // Create a graph summary node
+        const graphNode: Node = {
+          id: `graph-${graphName}`,
+          type: "graph", // You'll need to create this node type
+          position: {
+            x: 300 + (graphIndex % 3) * 400,
+            y: 200 + Math.floor(graphIndex / 3) * 300,
+          },
+          data: {
+            id: `graph-${graphName}`,
+            graphName,
+            totalResources,
+            resourceTypes: Object.keys(graphResources),
+            resources: graphResources,
+          },
+        };
+
+        allNodes.push(graphNode);
+
+        // Create resource type nodes for each graph
+        let resourceTypeIndex = 0;
+        Object.entries(graphResources).forEach(
+          ([resourceKind, resourceNames]) => {
+            const resourceTypeNodeId = `${graphName}-${resourceKind}`;
+            const resourceTypeNode: Node = {
+              id: resourceTypeNodeId,
+              type: resourceKind,
+              position: {
+                x: 100 + (graphIndex % 3) * 400 + resourceTypeIndex * 100,
+                y: 350 + Math.floor(graphIndex / 3) * 300,
+              },
+              data: {
+                id: resourceTypeNodeId,
+                resourceKind,
+                resourceNames,
+                graphName,
+                count: resourceNames.length,
+              },
+            };
+
+            allNodes.push(resourceTypeNode);
+
+            // Create edge from graph to resource type
+            const edgeId = `${graphNode.id}-${resourceTypeNodeId}`;
+            allEdges.push({
+              id: edgeId,
+              source: graphNode.id,
+              target: resourceTypeNodeId,
+              type: "step-edge",
+              markerEnd: { type: MarkerType.ArrowClosed },
+            } as Edge);
+
+            resourceTypeIndex++;
+          }
+        );
+
+        graphIndex++;
+      });
     }
 
     setNodes(allNodes);
     setEdges(allEdges);
-  }, [
-    devboxList,
-    dbproviderList,
-    setNodes,
-    setEdges,
-    devboxNames.join(","), // joins to form a stable string
-    ...networkQueries.map((q) => q.data), // stable deps
-  ]);
+  }, [mergedGraphs, specificGraphName, setNodes, setEdges]);
 
   return {
     nodes,
@@ -191,5 +256,24 @@ export function useGraphNode(): UseGraphNodeReturn {
     onEdgesChange,
     isLoading,
     error,
+    mergedGraphs,
   };
+}
+
+// Helper function to get the appropriate display key for each resource type
+function getResourceDisplayKey(resourceKind: string): string {
+  switch (resourceKind) {
+    case "devbox":
+      return "devboxName";
+    case "cluster":
+      return "clusterName";
+    case "deployment":
+      return "deploymentName";
+    case "cronjob":
+      return "cronJobName";
+    case "objectstoragebucket":
+      return "bucketName";
+    default:
+      return "name";
+  }
 }
