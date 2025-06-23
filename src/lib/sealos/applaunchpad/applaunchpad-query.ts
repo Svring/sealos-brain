@@ -28,7 +28,7 @@ export function appLaunchpadListOptions(
         `/api/sealos/applaunchpad/getApps?regionUrl=${regionUrl}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -54,7 +54,7 @@ export function appLaunchpadByNameOptions(
         `/api/sealos/applaunchpad/getAppByAppName?regionUrl=${regionUrl}&appName=${appName}&mock=false`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -80,7 +80,7 @@ export function appLaunchpadPodsByAppNameOptions(
         `/api/sealos/applaunchpad/getAppPodsByAppName?regionUrl=${regionUrl}&name=${appName}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -112,7 +112,7 @@ export function appLaunchpadCheckReadyOptions(
         `/api/sealos/applaunchpad/checkReady?regionUrl=${regionUrl}&appName=${appName}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -138,7 +138,7 @@ export function appLaunchpadMonitorDataOptions(
         `/api/sealos/applaunchpad/monitor/getMonitorData?regionUrl=${regionUrl}&${new URLSearchParams(params).toString()}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -170,7 +170,7 @@ export function appLaunchpadPodsMetricsOptions(
         `/api/sealos/applaunchpad/getPodsMetrics?regionUrl=${regionUrl}&appName=${appName}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });

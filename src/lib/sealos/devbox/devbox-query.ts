@@ -30,7 +30,7 @@ export function devboxListOptions(
         `/api/sealos/devbox/getDevboxList?regionUrl=${regionUrl}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -56,7 +56,7 @@ export function devboxByNameOptions(
         `/api/sealos/devbox/getDevboxByName?regionUrl=${regionUrl}&devboxName=${devboxName}&mock=false`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -82,7 +82,7 @@ export function sshConnectionInfoOptions(
         `/api/sealos/devbox/getSSHConnectionInfo?regionUrl=${regionUrl}&devboxName=${devboxName}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -108,7 +108,7 @@ export function devboxReadyStatusOptions(
         `/api/sealos/devbox/checkReady?regionUrl=${regionUrl}&devboxName=${devboxName}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -134,7 +134,7 @@ export function appsByDevboxIdOptions(
         `/api/sealos/devbox/getAppsByDevboxId?regionUrl=${regionUrl}&devboxId=${devboxId}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -160,7 +160,7 @@ export function devboxPodsByDevboxNameOptions(
         `/api/sealos/devbox/getDevboxPodsByDevboxName?regionUrl=${regionUrl}&devboxName=${devboxName}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -195,7 +195,7 @@ export function devboxVersionListOptions(
         `/api/sealos/devbox/getDevboxVersionList?regionUrl=${regionUrl}&devboxName=${devboxName}&devboxUid=${devboxUid}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -221,7 +221,7 @@ export function devboxEnvOptions(
         `/api/sealos/devbox/getEnv?regionUrl=${regionUrl}&devboxName=${devboxName}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -247,7 +247,7 @@ export function monitorDataOptions(
         `/api/sealos/devbox/monitor/getMonitorData?regionUrl=${regionUrl}&${new URLSearchParams(params).toString()}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -271,7 +271,7 @@ export function templateRepositoryListOptions(
         `/api/sealos/devbox/templateRepository/list?regionUrl=${regionUrl}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -301,7 +301,7 @@ export function templateRepositoryListOfficialOptions(
         `/api/sealos/devbox/templateRepository/listOfficial?regionUrl=${regionUrl}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -331,7 +331,7 @@ export function templateRepositoryListPrivateOptions(
         `/api/sealos/devbox/templateRepository/listPrivate?regionUrl=${regionUrl}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -365,7 +365,7 @@ export function templateRepositoryTagListOptions(
         `/api/sealos/devbox/templateRepository/tag/list?regionUrl=${regionUrl}&${new URLSearchParams(params).toString()}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -391,7 +391,7 @@ export function templateRepositoryGetOptions(
         `/api/sealos/devbox/templateRepository/get?regionUrl=${regionUrl}&id=${id}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -425,7 +425,7 @@ export function templateRepositoryTemplateGetConfigOptions(
         `/api/sealos/devbox/templateRepository/template/getConfig?regionUrl=${regionUrl}&id=${id}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -459,7 +459,7 @@ export function templateRepositoryTemplateListOptions(
         `/api/sealos/devbox/templateRepository/template/list?regionUrl=${regionUrl}&${new URLSearchParams(params).toString()}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });

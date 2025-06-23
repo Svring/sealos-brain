@@ -28,7 +28,7 @@ export function dbProviderListOptions(
         `/api/sealos/dbprovider/getDBList?regionUrl=${regionUrl}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -54,7 +54,7 @@ export function dbProviderByNameOptions(
         `/api/sealos/dbprovider/getDBByName?regionUrl=${regionUrl}&name=${dbName}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -86,7 +86,7 @@ export function dbProviderConnectionInfoOptions(
         `/api/sealos/dbprovider/getConnectionInfo?regionUrl=${regionUrl}&name=${dbName}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -112,7 +112,7 @@ export function dbProviderStatusOptions(
         `/api/sealos/dbprovider/getDBStatus?regionUrl=${regionUrl}&name=${dbName}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });
@@ -138,7 +138,7 @@ export function dbProviderMonitorDataOptions(
         `/api/sealos/dbprovider/monitor/getMonitorData?regionUrl=${regionUrl}&${new URLSearchParams(params).toString()}`,
         { headers }
       );
-      return response.data.data;
+      return response.data;
     },
     select: postprocess,
   });

@@ -13,6 +13,22 @@ interface ApiResponse<T = any> {
 
 // Helper function to handle axios responses consistently
 function handleAxiosResponse<T>(response: AxiosResponse<T>): ApiResponse<T> {
+  const responseData = response.data as any;
+
+  // If response has the nested structure with code and data, extract the data
+  if (
+    responseData &&
+    typeof responseData === "object" &&
+    "code" in responseData &&
+    "data" in responseData
+  ) {
+    return {
+      data: responseData.data,
+      status: response.status,
+    };
+  }
+
+  // Otherwise return the response data as is
   return {
     data: response.data,
     status: response.status,

@@ -1,9 +1,9 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Box, Database, Code, Globe, Settings } from "lucide-react";
+import { Box, Database, Code, Globe, Settings, Zap, Clock, HardDrive } from "lucide-react";
 import { usePanel } from "@/context/panel-provider";
-import DevboxCreateView from "@/components/node/devbox/create/view/devbox-create-view";
+import DevboxCreateView from "@/components/flow/node/devbox/create/view/devbox-create-view";
 
 interface NodeCreateViewProps {
   onCreateNode: (nodeType: string) => void;
@@ -23,6 +23,27 @@ const nodeTypes = [
     description: "Set up a database instance",
     icon: Database,
     color: "bg-green-500",
+  },
+  {
+    id: "aiproxy",
+    title: "AI Proxy",
+    description: "Manage AI proxy tokens and access",
+    icon: Zap,
+    color: "bg-purple-500",
+  },
+  {
+    id: "cronjob",
+    title: "Cron Job",
+    description: "Schedule automated tasks",
+    icon: Clock,
+    color: "bg-orange-500",
+  },
+  {
+    id: "objectstorage",
+    title: "Object Storage",
+    description: "Manage object storage buckets",
+    icon: HardDrive,
+    color: "bg-indigo-500",
   },
 ];
 

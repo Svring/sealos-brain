@@ -2,6 +2,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DevboxTable } from "@/components/inventory/devbox/devbox-table";
 import { DatabaseTable } from "@/components/inventory/database/database-table";
 import { AppLaunchpadTable } from "@/components/inventory/applaunchpad/applaunchpad-table";
+import { AIProxyTable } from "@/components/inventory/aiproxy/aiproxy-table";
+import { CronJobTable } from "@/components/inventory/cronjob/cronjob-table";
+import { ObjectStorageTable } from "@/components/inventory/objectstorage/objectstorage-table";
 
 export default function InventoryPage() {
   return (
@@ -12,11 +15,13 @@ export default function InventoryPage() {
       </div>
 
       <Tabs defaultValue="devbox" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="devbox">Devbox</TabsTrigger>
           <TabsTrigger value="database">Database</TabsTrigger>
           <TabsTrigger value="launchpad">Launchpad</TabsTrigger>
           <TabsTrigger value="ai-proxy">AI Proxy</TabsTrigger>
+          <TabsTrigger value="cronjob">CronJob</TabsTrigger>
+          <TabsTrigger value="objectstorage">Object Storage</TabsTrigger>
         </TabsList>
 
         <TabsContent value="devbox" className="mt-6">
@@ -32,13 +37,15 @@ export default function InventoryPage() {
         </TabsContent>
 
         <TabsContent value="ai-proxy" className="mt-6">
-          <div className="rounded-lg border p-6">
-            <h2 className="text-xl font-semibold mb-4">AI Proxy Services</h2>
-            <p className="text-muted-foreground">
-              Configure and monitor your AI proxy endpoints.
-            </p>
-            {/* Add AI Proxy content here */}
-          </div>
+          <AIProxyTable />
+        </TabsContent>
+
+        <TabsContent value="cronjob" className="mt-6">
+          <CronJobTable />
+        </TabsContent>
+
+        <TabsContent value="objectstorage" className="mt-6">
+          <ObjectStorageTable />
         </TabsContent>
       </Tabs>
     </div>
