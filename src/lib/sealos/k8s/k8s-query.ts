@@ -1,379 +1,340 @@
-"use server";
+"use client";
 
-import {
-  KubeConfig,
-  CoreV1Api,
-  AppsV1Api,
-  V1Pod,
-  V1Service,
-  V1Deployment,
-  V1Namespace,
-  V1Node,
-  V1ConfigMap,
-  V1Secret,
-} from "@kubernetes/client-node";
 import { queryOptions } from "@tanstack/react-query";
 import { queryDebugLog } from "@/lib/query-debug-log";
+import {
+  listDevboxes,
+  listClusters,
+  listDeployments,
+  listCronJobs,
+  listObjectStorageBuckets,
+  listResourcesByType,
+} from "./k8s-actions";
 
-// Helper function to create KubeConfig from kubeconfig string
-function createKubeConfig(kubeconfigString: string): KubeConfig {
-  const kc = new KubeConfig();
-  kc.loadFromString(kubeconfigString);
-  return kc;
+// Helper function to get kubeconfig from user
+function getKubeconfig(currentUser: any): string {
+  return (
+    currentUser?.tokens?.find((t: any) => t.type === "kubeconfig")?.value || ""
+  );
 }
 
-// Helper function to get kubeconfig from currentUser
-function getKubeconfigString(currentUser: any): string {
-  const kubeconfig = currentUser?.tokens?.find(
-    (t: any) => t.type === "kubeconfig"
-  )?.value;
-  if (!kubeconfig) {
-    throw new Error("Kubeconfig not found in user tokens");
+// Helper function to extract namespace from kubeconfig
+function getNamespaceFromKubeconfig(kubeconfigYaml: string): string {
+  try {
+    // 1. Decode URL-encoded kubeconfig (it is usually stored encoded in DB)
+    let decoded = kubeconfigYaml;
+    try {
+      if (kubeconfigYaml.includes("%") || kubeconfigYaml.includes("+")) {
+        decoded = decodeURIComponent(kubeconfigYaml);
+      }
+    } catch (e) {
+      console.warn("kubeconfig decode failed, fallback to raw string", e);
+    }
+
+    const lines = decoded.split("\n");
+
+    // 2. Retrieve current-context value
+    let currentContext = "";
+    for (const l of lines) {
+      const t = l.trim();
+      if (t.startsWith("current-context:")) {
+        currentContext = t.split(":")[1].trim();
+        break;
+      }
+    }
+    if (!currentContext) return "default";
+
+    // 3. Walk through contexts list and find namespace belonging to current context
+    let inContexts = false;
+    let candidateName: string | null = null;
+    let candidateNs: string | null = null;
+    for (const l of lines) {
+      const raw = l;
+      const t = raw.trim();
+
+      // detect entering contexts section
+      if (!inContexts && t === "contexts:") {
+        inContexts = true;
+        continue;
+      }
+      if (!inContexts) continue;
+
+      // contexts section ends when users: appears
+      if (t === "users:") break;
+
+      // Start of a new context block indicated by "- " at beginning (before trim)
+      if (raw.startsWith("- ")) {
+        // evaluate previous block
+        if (candidateName === currentContext && candidateNs) return candidateNs;
+        // reset for new block
+        candidateName = null;
+        candidateNs = null;
+      }
+
+      if (t.startsWith("name:")) {
+        candidateName = t.split(":")[1].trim();
+        // early return if this name matches and we already captured namespace
+        if (candidateName === currentContext && candidateNs) return candidateNs;
+      }
+
+      if (t.startsWith("namespace:")) {
+        candidateNs = t.split(":")[1].trim();
+        // early return if we already know name matches
+        if (candidateName === currentContext) return candidateNs;
+      }
+    }
+
+    // Final check for last block
+    if (candidateName === currentContext && candidateNs) return candidateNs;
+
+    return "default";
+  } catch (err) {
+    console.warn("Failed to parse kubeconfig namespace", err);
+    return "default";
   }
-  return kubeconfig;
 }
 
-/**
- * Get all pods in a namespace
- */
-export function getPodsOptions(
+// Direct Devbox query options
+export function directDevboxListOptions(
   currentUser: any,
-  namespace: string = "default",
-  postprocess: (data: V1Pod[]) => any = (d) => d
-) {
-  return queryOptions({
-    queryKey: ["k8s", "pods", namespace, currentUser?.id],
-    enabled: !!currentUser,
-    queryFn: async (): Promise<V1Pod[]> => {
-      queryDebugLog("getPodsOptions", {
-        namespace,
-        userId: currentUser?.id,
-      });
-
-      const kubeconfigString = getKubeconfigString(currentUser);
-      const kc = createKubeConfig(kubeconfigString);
-      const k8sApi = kc.makeApiClient(CoreV1Api);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const podList = await (k8sApi as any).listNamespacedPod({ namespace });
-      return (podList.items ?? podList.body?.items) as V1Pod[];
-    },
-    select: postprocess,
-  });
-}
-
-/**
- * Get a specific pod by name
- */
-export function getPodByNameOptions(
-  currentUser: any,
-  podName: string,
-  namespace: string = "default",
-  postprocess: (data: V1Pod) => any = (d) => d
-) {
-  return queryOptions({
-    queryKey: ["k8s", "pod", podName, namespace, currentUser?.id],
-    enabled: !!currentUser && !!podName,
-    queryFn: async (): Promise<V1Pod> => {
-      queryDebugLog("getPodByNameOptions", {
-        podName,
-        namespace,
-        userId: currentUser?.id,
-      });
-
-      const kubeconfigString = getKubeconfigString(currentUser);
-      const kc = createKubeConfig(kubeconfigString);
-      const k8sApi = kc.makeApiClient(CoreV1Api);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { body: pod } = await (k8sApi as any).readNamespacedPod(
-        podName,
-        namespace
-      );
-      return pod as V1Pod;
-    },
-    select: postprocess,
-  });
-}
-
-/**
- * Get all services in a namespace
- */
-export function getServicesOptions(
-  currentUser: any,
-  namespace: string = "default",
-  postprocess: (data: V1Service[]) => any = (d) => d
-) {
-  return queryOptions({
-    queryKey: ["k8s", "services", namespace, currentUser?.id],
-    enabled: !!currentUser,
-    queryFn: async (): Promise<V1Service[]> => {
-      queryDebugLog("getServicesOptions", {
-        namespace,
-        userId: currentUser?.id,
-      });
-
-      const kubeconfigString = getKubeconfigString(currentUser);
-      const kc = createKubeConfig(kubeconfigString);
-      const k8sApi = kc.makeApiClient(CoreV1Api);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const serviceList = await (k8sApi as any).listNamespacedService({
-        namespace,
-      });
-      return (serviceList.items ?? serviceList.body?.items) as V1Service[];
-    },
-    select: postprocess,
-  });
-}
-
-/**
- * Get all deployments in a namespace
- */
-export function getDeploymentsOptions(
-  currentUser: any,
-  namespace: string = "default",
-  postprocess: (data: V1Deployment[]) => any = (d) => d
-) {
-  return queryOptions({
-    queryKey: ["k8s", "deployments", namespace, currentUser?.id],
-    enabled: !!currentUser,
-    queryFn: async (): Promise<V1Deployment[]> => {
-      queryDebugLog("getDeploymentsOptions", {
-        namespace,
-        userId: currentUser?.id,
-      });
-
-      const kubeconfigString = getKubeconfigString(currentUser);
-      const kc = createKubeConfig(kubeconfigString);
-      const k8sApi = kc.makeApiClient(AppsV1Api);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const deploymentList = await (k8sApi as any).listNamespacedDeployment({
-        namespace,
-      });
-      return (deploymentList.items ??
-        deploymentList.body?.items) as V1Deployment[];
-    },
-    select: postprocess,
-  });
-}
-
-/**
- * Get all namespaces
- */
-export function getNamespacesOptions(
-  currentUser: any,
-  postprocess: (data: V1Namespace[]) => any = (d) => d
-) {
-  return queryOptions({
-    queryKey: ["k8s", "namespaces", currentUser?.id],
-    enabled: !!currentUser,
-    queryFn: async (): Promise<V1Namespace[]> => {
-      queryDebugLog("getNamespacesOptions", {
-        userId: currentUser?.id,
-      });
-
-      const kubeconfigString = getKubeconfigString(currentUser);
-      const kc = createKubeConfig(kubeconfigString);
-      const k8sApi = kc.makeApiClient(CoreV1Api);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const namespaceList = await (k8sApi as any).listNamespace();
-      return (namespaceList.items ??
-        namespaceList.body?.items) as V1Namespace[];
-    },
-    select: postprocess,
-  });
-}
-
-/**
- * Get all nodes in the cluster
- */
-export function getNodesOptions(
-  currentUser: any,
-  postprocess: (data: V1Node[]) => any = (d) => d
-) {
-  return queryOptions({
-    queryKey: ["k8s", "nodes", currentUser?.id],
-    enabled: !!currentUser,
-    queryFn: async (): Promise<V1Node[]> => {
-      queryDebugLog("getNodesOptions", {
-        userId: currentUser?.id,
-      });
-
-      const kubeconfigString = getKubeconfigString(currentUser);
-      const kc = createKubeConfig(kubeconfigString);
-      const k8sApi = kc.makeApiClient(CoreV1Api);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const nodeList = await (k8sApi as any).listNode();
-      return (nodeList.items ?? nodeList.body?.items) as V1Node[];
-    },
-    select: postprocess,
-  });
-}
-
-/**
- * Get all ConfigMaps in a namespace
- */
-export function getConfigMapsOptions(
-  currentUser: any,
-  namespace: string = "default",
-  postprocess: (data: V1ConfigMap[]) => any = (d) => d
-) {
-  return queryOptions({
-    queryKey: ["k8s", "configmaps", namespace, currentUser?.id],
-    enabled: !!currentUser,
-    queryFn: async (): Promise<V1ConfigMap[]> => {
-      queryDebugLog("getConfigMapsOptions", {
-        namespace,
-        userId: currentUser?.id,
-      });
-
-      const kubeconfigString = getKubeconfigString(currentUser);
-      const kc = createKubeConfig(kubeconfigString);
-      const k8sApi = kc.makeApiClient(CoreV1Api);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const configMapList = await (k8sApi as any).listNamespacedConfigMap({
-        namespace,
-      });
-      return (configMapList.items ??
-        configMapList.body?.items) as V1ConfigMap[];
-    },
-    select: postprocess,
-  });
-}
-
-/**
- * Get all Secrets in a namespace
- */
-export function getSecretsOptions(
-  currentUser: any,
-  namespace: string = "default",
-  postprocess: (data: V1Secret[]) => any = (d) => d
-) {
-  return queryOptions({
-    queryKey: ["k8s", "secrets", namespace, currentUser?.id],
-    enabled: !!currentUser,
-    queryFn: async (): Promise<V1Secret[]> => {
-      queryDebugLog("getSecretsOptions", {
-        namespace,
-        userId: currentUser?.id,
-      });
-
-      const kubeconfigString = getKubeconfigString(currentUser);
-      const kc = createKubeConfig(kubeconfigString);
-      const k8sApi = kc.makeApiClient(CoreV1Api);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const secretList = await (k8sApi as any).listNamespacedSecret({
-        namespace,
-      });
-      return (secretList.items ?? secretList.body?.items) as V1Secret[];
-    },
-    select: postprocess,
-  });
-}
-
-/**
- * Get pod logs
- */
-export function getPodLogsOptions(
-  currentUser: any,
-  podName: string,
-  namespace: string = "default",
-  containerName?: string,
-  tailLines: number = 100,
-  postprocess: (data: string) => any = (d) => d
+  namespaceOverride?: string,
+  postprocess: (data: any) => any = (d) => d
 ) {
   return queryOptions({
     queryKey: [
       "k8s",
-      "pod-logs",
-      podName,
-      namespace,
-      containerName,
-      tailLines,
+      "direct",
+      "devbox",
+      "list",
+      namespaceOverride,
       currentUser?.id,
     ],
-    enabled: !!currentUser && !!podName,
-    queryFn: async (): Promise<string> => {
-      queryDebugLog("getPodLogsOptions", {
-        podName,
+    enabled: !!currentUser,
+    queryFn: async () => {
+      const kubeconfig = getKubeconfig(currentUser);
+      if (!kubeconfig) {
+        throw new Error("No kubeconfig found");
+      }
+
+      const namespace =
+        namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+
+      console.log("directDevboxListOptions: Using namespace:", namespace);
+      console.log(
+        "directDevboxListOptions: namespaceOverride:",
+        namespaceOverride
+      );
+
+      queryDebugLog("directDevboxListOptions", {
         namespace,
-        containerName,
-        tailLines,
         userId: currentUser?.id,
       });
 
-      const kubeconfigString = getKubeconfigString(currentUser);
-      const kc = createKubeConfig(kubeconfigString);
-      const k8sApi = kc.makeApiClient(CoreV1Api);
-
-      // Using `as any` to accommodate the older client-node signature that returns `{ body: string }`.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { body: logs } = await (k8sApi as any).readNamespacedPodLog(
-        podName,
-        namespace,
-        containerName,
-        undefined, // follow
-        undefined, // limitBytes
-        undefined, // pretty
-        undefined, // previous
-        undefined, // sinceSeconds
-        tailLines,
-        undefined // timestamps
-      );
-      return logs as string;
+      return await listDevboxes(kubeconfig, namespace);
     },
     select: postprocess,
   });
 }
 
-/**
- * Get pods by label selector
- */
-export function getPodsByLabelOptions(
+// Direct Cluster query options
+export function directClusterListOptions(
   currentUser: any,
-  labelSelector: string,
-  namespace: string = "default",
-  postprocess: (data: V1Pod[]) => any = (d) => d
+  namespaceOverride?: string,
+  postprocess: (data: any) => any = (d) => d
 ) {
   return queryOptions({
     queryKey: [
       "k8s",
-      "pods-by-label",
-      labelSelector,
-      namespace,
+      "direct",
+      "cluster",
+      "list",
+      namespaceOverride,
       currentUser?.id,
     ],
-    enabled: !!currentUser && !!labelSelector,
-    queryFn: async (): Promise<V1Pod[]> => {
-      queryDebugLog("getPodsByLabelOptions", {
-        labelSelector,
+    enabled: !!currentUser,
+    queryFn: async () => {
+      const kubeconfig = getKubeconfig(currentUser);
+      if (!kubeconfig) {
+        throw new Error("No kubeconfig found");
+      }
+
+      const namespace =
+        namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+
+      queryDebugLog("directClusterListOptions", {
         namespace,
         userId: currentUser?.id,
       });
 
-      const kubeconfigString = getKubeconfigString(currentUser);
-      const kc = createKubeConfig(kubeconfigString);
-      const k8sApi = kc.makeApiClient(CoreV1Api);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const {
-        body: { items: pods },
-      } = await (k8sApi as any).listNamespacedPod(
-        namespace,
-        undefined, // pretty
-        undefined, // allowWatchBookmarks
-        undefined, // _continue
-        undefined, // fieldSelector
-        labelSelector
-      );
-      return pods as V1Pod[];
+      return await listClusters(kubeconfig, namespace);
     },
     select: postprocess,
   });
 }
+
+// Direct Deployment query options
+export function directDeploymentListOptions(
+  currentUser: any,
+  namespaceOverride?: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "k8s",
+      "direct",
+      "deployment",
+      "list",
+      namespaceOverride,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser,
+    queryFn: async () => {
+      const kubeconfig = getKubeconfig(currentUser);
+      if (!kubeconfig) {
+        throw new Error("No kubeconfig found");
+      }
+
+      const namespace =
+        namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+
+      queryDebugLog("directDeploymentListOptions", {
+        namespace,
+        userId: currentUser?.id,
+      });
+
+      return await listDeployments(kubeconfig, namespace);
+    },
+    select: postprocess,
+  });
+}
+
+// Direct CronJob query options
+export function directCronJobListOptions(
+  currentUser: any,
+  namespaceOverride?: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "k8s",
+      "direct",
+      "cronjob",
+      "list",
+      namespaceOverride,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser,
+    queryFn: async () => {
+      const kubeconfig = getKubeconfig(currentUser);
+      if (!kubeconfig) {
+        throw new Error("No kubeconfig found");
+      }
+
+      const namespace =
+        namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+
+      queryDebugLog("directCronJobListOptions", {
+        namespace,
+        userId: currentUser?.id,
+      });
+
+      return await listCronJobs(kubeconfig, namespace);
+    },
+    select: postprocess,
+  });
+}
+
+// Direct ObjectStorageBucket query options
+export function directObjectStorageBucketListOptions(
+  currentUser: any,
+  namespaceOverride?: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "k8s",
+      "direct",
+      "objectstoragebucket",
+      "list",
+      namespaceOverride,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser,
+    queryFn: async () => {
+      const kubeconfig = getKubeconfig(currentUser);
+      if (!kubeconfig) {
+        throw new Error("No kubeconfig found");
+      }
+
+      const namespace =
+        namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+
+      queryDebugLog("directObjectStorageBucketListOptions", {
+        namespace,
+        userId: currentUser?.id,
+      });
+
+      return await listObjectStorageBuckets(kubeconfig, namespace);
+    },
+    select: postprocess,
+  });
+}
+
+// Direct generic resource query options
+export function directResourceListOptions(
+  currentUser: any,
+  resourceType:
+    | "devbox"
+    | "cluster"
+    | "deployment"
+    | "cronjob"
+    | "objectstoragebucket",
+  namespaceOverride?: string,
+  postprocess: (data: any) => any = (d) => d
+) {
+  return queryOptions({
+    queryKey: [
+      "k8s",
+      "direct",
+      resourceType,
+      "list",
+      namespaceOverride,
+      currentUser?.id,
+    ],
+    enabled: !!currentUser,
+    queryFn: async () => {
+      const kubeconfig = getKubeconfig(currentUser);
+      if (!kubeconfig) {
+        throw new Error("No kubeconfig found");
+      }
+
+      const namespace =
+        namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+
+      queryDebugLog("directResourceListOptions", {
+        resourceType,
+        namespace,
+        userId: currentUser?.id,
+      });
+
+      return await listResourcesByType(kubeconfig, resourceType, namespace);
+    },
+    select: postprocess,
+  });
+}
+
+// Usage examples:
+// const { currentUser } = useSealosStore();
+//
+// // Auto-detects namespace from kubeconfig (ns-gapyo0ig in your example)
+// const devboxQuery = useQuery(directDevboxListOptions(currentUser));
+// const clusterQuery = useQuery(directClusterListOptions(currentUser));
+// const deploymentQuery = useQuery(directDeploymentListOptions(currentUser));
+// const cronJobQuery = useQuery(directCronJobListOptions(currentUser));
+// const bucketQuery = useQuery(directObjectStorageBucketListOptions(currentUser));
+//
+// // Override namespace if needed
+// const devboxQueryCustomNs = useQuery(directDevboxListOptions(currentUser, "custom-namespace"));
+//
+// // Generic resource query
+// const genericQuery = useQuery(directResourceListOptions(currentUser, "devbox"));

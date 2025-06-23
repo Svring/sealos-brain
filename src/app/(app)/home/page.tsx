@@ -1,6 +1,6 @@
 "use client";
 
-import { AI_Prompt } from "@/components/ai-chat/home/animated-ai-input";
+import { AI_Prompt } from "@/components/ai-chat/animated-ai-input";
 import { Hero } from "@/components/ui/hero";
 import { motion } from "framer-motion";
 

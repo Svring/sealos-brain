@@ -24,27 +24,27 @@ export default function InventoryPage() {
           <TabsTrigger value="objectstorage">Object Storage</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="devbox" className="mt-6">
+        <TabsContent value="devbox">
           <DevboxTable />
         </TabsContent>
 
-        <TabsContent value="database" className="mt-6">
+        <TabsContent value="database">
           <DatabaseTable />
         </TabsContent>
 
-        <TabsContent value="launchpad" className="mt-6">
+        <TabsContent value="launchpad">
           <AppLaunchpadTable />
         </TabsContent>
 
-        <TabsContent value="ai-proxy" className="mt-6">
+        <TabsContent value="ai-proxy">
           <AIProxyTable />
         </TabsContent>
 
-        <TabsContent value="cronjob" className="mt-6">
+        <TabsContent value="cronjob">
           <CronJobTable />
         </TabsContent>
 
-        <TabsContent value="objectstorage" className="mt-6">
+        <TabsContent value="objectstorage">
           <ObjectStorageTable />
         </TabsContent>
       </Tabs>
