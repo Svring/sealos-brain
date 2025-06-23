@@ -195,3 +195,126 @@ export async function listCustomResources(currentUser: any) {
     currentUser.tokens.find((t: any) => t.type === "kubeconfig")?.value || "";
   return listDevboxes(kubeconfig);
 }
+
+// Patch annotation for Cluster
+export async function patchClusterAnnotation(
+  kubeconfig: string,
+  clusterName: string,
+  annotationKey: string,
+  annotationValue: string,
+  namespace: string
+) {
+  const kc = new KubeConfig();
+  let decodedKubeconfig = kubeconfig;
+  try {
+    if (kubeconfig.includes("%") || kubeconfig.includes("+")) {
+      decodedKubeconfig = decodeURIComponent(kubeconfig);
+    }
+  } catch (error) {
+    console.warn("Failed to decode kubeconfig, using original:", error);
+    decodedKubeconfig = kubeconfig;
+  }
+  kc.loadFromString(decodedKubeconfig);
+  const customApi = kc.makeApiClient(CustomObjectsApi);
+  const patchBody = [
+    {
+      op: "add",
+      path: `/metadata/annotations/${annotationKey}`,
+      value: annotationValue,
+    },
+  ];
+  const result = await customApi.patchNamespacedCustomObject({
+    group: "apps.kubeblocks.io",
+    version: "v1alpha1",
+    namespace,
+    plural: "clusters",
+    name: clusterName,
+    body: patchBody,
+  });
+  return {
+    annotations: result.metadata?.annotations || annotationKey,
+    success: true,
+  };
+}
+
+// Patch annotation for ObjectStorageBucket
+export async function patchObjectStorageBucketAnnotation(
+  kubeconfig: string,
+  bucketName: string,
+  annotationKey: string,
+  annotationValue: string,
+  namespace: string
+) {
+  const kc = new KubeConfig();
+  let decodedKubeconfig = kubeconfig;
+  try {
+    if (kubeconfig.includes("%") || kubeconfig.includes("+")) {
+      decodedKubeconfig = decodeURIComponent(kubeconfig);
+    }
+  } catch (error) {
+    console.warn("Failed to decode kubeconfig, using original:", error);
+    decodedKubeconfig = kubeconfig;
+  }
+  kc.loadFromString(decodedKubeconfig);
+  const customApi = kc.makeApiClient(CustomObjectsApi);
+  const patchBody = [
+    {
+      op: "add",
+      path: `/metadata/annotations/${annotationKey}`,
+      value: annotationValue,
+    },
+  ];
+  const result = await customApi.patchNamespacedCustomObject({
+    group: "objectstorage.sealos.io",
+    version: "v1",
+    namespace,
+    plural: "objectstoragebuckets",
+    name: bucketName,
+    body: patchBody,
+  });
+  return {
+    annotations: result.metadata?.annotations || annotationKey,
+    success: true,
+  };
+}
+
+// Patch annotation for Devbox
+export async function patchDevboxAnnotation(
+  kubeconfig: string,
+  devboxName: string,
+  annotationKey: string,
+  annotationValue: string,
+  namespace: string
+) {
+  const kc = new KubeConfig();
+  let decodedKubeconfig = kubeconfig;
+  try {
+    if (kubeconfig.includes("%") || kubeconfig.includes("+")) {
+      decodedKubeconfig = decodeURIComponent(kubeconfig);
+    }
+  } catch (error) {
+    console.warn("Failed to decode kubeconfig, using original:", error);
+    decodedKubeconfig = kubeconfig;
+  }
+  kc.loadFromString(decodedKubeconfig);
+  const customApi = kc.makeApiClient(CustomObjectsApi);
+  const patchBody = [
+    {
+      op: "add",
+      path: `/metadata/annotations/${annotationKey}`,
+      value: annotationValue,
+    },
+  ];
+  const result = await customApi.patchNamespacedCustomObject({
+    group: "devbox.sealos.io",
+    version: "v1alpha1",
+    namespace,
+    plural: "devboxes",
+    name: devboxName,
+    body: patchBody,
+  });
+  return {
+    annotations: result.metadata?.annotations || annotationKey,
+    success: true,
+  };
+}
