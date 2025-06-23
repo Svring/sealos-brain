@@ -191,6 +191,80 @@ export async function makeAppLaunchpadApiRequest(
   }
 }
 
+// Pure function for making AIProxy API requests
+export async function makeAIProxyApiRequest(
+  regionUrl: string,
+  endpoint: string,
+  headers: Pick<RequestHeaders, "authorization">,
+  queryParams?: Record<string, string>,
+  options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
+): Promise<ApiResponse> {
+  try {
+    const baseUrl = `https://aiproxy-web.${regionUrl}/api/${endpoint}`;
+    const config = createAxiosConfig(headers, options?.method, options?.data);
+
+    if (queryParams) {
+      config.params = queryParams;
+    }
+
+    const response = await axios(baseUrl, config);
+    return handleAxiosResponse(response);
+  } catch (error) {
+    return handleAxiosError(error);
+  }
+}
+
+// Pure function for making ObjectStorage API requests
+export async function makeObjectStorageApiRequest(
+  regionUrl: string,
+  endpoint: string,
+  headers: RequestHeaders,
+  queryParams?: Record<string, string>,
+  options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
+): Promise<ApiResponse> {
+  try {
+    const baseUrl = `https://objectstorage.${regionUrl}/api/${endpoint}`;
+    const config = createAxiosConfig(headers, options?.method, options?.data);
+
+    // Add app-token header if provided
+    if (headers.authorizationBearer) {
+      config.headers!["app-token"] = headers.authorizationBearer;
+    }
+
+    if (queryParams) {
+      config.params = queryParams;
+    }
+
+    const response = await axios(baseUrl, config);
+    return handleAxiosResponse(response);
+  } catch (error) {
+    return handleAxiosError(error);
+  }
+}
+
+// Pure function for making CronJob API requests
+export async function makeCronJobApiRequest(
+  regionUrl: string,
+  endpoint: string,
+  headers: Pick<RequestHeaders, "authorization">,
+  queryParams?: Record<string, string>,
+  options?: { method?: "GET" | "POST" | "DELETE"; data?: any }
+): Promise<ApiResponse> {
+  try {
+    const baseUrl = `https://cronjob.${regionUrl}/api/${endpoint}`;
+    const config = createAxiosConfig(headers, options?.method, options?.data);
+
+    if (queryParams) {
+      config.params = queryParams;
+    }
+
+    const response = await axios(baseUrl, config);
+    return handleAxiosResponse(response);
+  } catch (error) {
+    return handleAxiosError(error);
+  }
+}
+
 // Pure function for validating required headers
 export function validateHeaders(
   authorization: string | null,

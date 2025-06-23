@@ -74,7 +74,7 @@ export default function AppSidebar() {
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader className={cn(isCollapsed && "bg-background")}>
+      <SidebarHeader className={cn("bg-background")}>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={toggleSidebar}>
@@ -84,10 +84,10 @@ export default function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent className={cn(isCollapsed && "bg-background")}>
+      <SidebarContent className={cn("bg-background")}>
         <MainSection navigationItems={NAVIGATION_ITEMS} />
       </SidebarContent>
-      <SidebarFooter className={cn(isCollapsed && "bg-background")}>
+      <SidebarFooter className={cn("bg-background")}>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton>
