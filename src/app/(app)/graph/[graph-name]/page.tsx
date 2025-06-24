@@ -1,33 +1,43 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { ReactFlow, Background, BackgroundVariant } from "@xyflow/react";
-import { usePanel } from "@/context/panel-provider";
+import { Background, BackgroundVariant, ReactFlow } from "@xyflow/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, Plus, Spline } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
+import edgeTypes from "@/components/flow/edge/edge-types";
 import NodeCreateView from "@/components/flow/node/create/node-create-view";
+import nodeTypes from "@/components/flow/node/node-types";
+import { GraphBackMenu } from "@/components/graph/graph-back-menu";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { MenuBar, type MenuBarItem } from "@/components/ui/menu-bar";
+import { MessageSwiper } from "@/components/ui/message-swiper";
+import { CopilotStateProvider } from "@/context/copilot-state-provider";
+import { usePanel } from "@/context/panel-provider";
 import {
-  useGraphCopilotChat,
   MessageRole,
   TextMessage,
+  useGraphCopilotChat,
 } from "@/hooks/use-graph-copilot-chat";
-import { ChevronDown, Plus, Spline } from "lucide-react";
 import { useGraphNode } from "@/hooks/use-graph-node";
-import { CopilotStateProvider } from "@/context/copilot-state-provider";
-import { MenuBar, type MenuBarItem } from "@/components/ui/menu-bar";
-import { GraphBackMenu } from "@/components/graph/graph-back-menu";
-import { AnimatePresence, motion } from "framer-motion";
-import { MessageSwiper } from "@/components/ui/message-swiper";
-import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
-import nodeTypes from "@/components/flow/node/node-types";
-import edgeTypes from "@/components/flow/edge/edge-types";
 
-interface GraphPageContentProps {
-  graphName: string;
-}
+function GraphPageContent({ graphName }: { graphName: string }) {
+  const {
+    onNodesChange,
+    isLoading,
+    error,
+    editMode,
+    setEditMode,
+    selectedNodes,
+    pendingEdges,
+    handleApplyConnections,
+    handleQuitEditMode,
+    enhancedNodes,
+  } = useGraphNode(graphName);
 
-function GraphPageContent({ graphName }: GraphPageContentProps) {
-  const { nodes, onNodesChange, isLoading, error } = useGraphNode(graphName);
   const { closePanel, openPanel, Id: panelId } = usePanel();
-  
+
   const {
     visibleMessages,
     appendMessage,
@@ -35,6 +45,18 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
     isMessageSwiperExpanded,
     setIsMessageSwiperExpanded,
   } = useGraphCopilotChat();
+
+  const handleNodesChange = (changes: any[]) => {
+    if (editMode) {
+      const selectionChanges = changes.filter(
+        (change) => change.type === "select"
+      );
+      if (selectionChanges.length > 0) {
+        return;
+      }
+    }
+    onNodesChange(changes);
+  };
 
   const menuItems: MenuBarItem[] = [
     {
@@ -46,7 +68,19 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
           <NodeCreateView currentGraphName={graphName} />
         ),
     },
-    { icon: Spline, label: "Edge Mode", onClick: () => {} },
+    {
+      icon: Spline,
+      label: "Edit Mode",
+      isToggle: true,
+      pressed: editMode,
+      onPressedChange: (pressed) => {
+        if (pressed) {
+          setEditMode(true);
+        } else {
+          handleQuitEditMode();
+        }
+      },
+    },
   ];
 
   const boxAnimate = useMemo(
@@ -60,28 +94,82 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
 
   return (
     <div className="relative h-screen w-full">
-      <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
+      <AnimatePresence>
+        {editMode && (
+          <motion.div
+            animate={{ y: 0, opacity: 1 }}
+            className="pointer-events-none absolute top-0 left-0 z-[100] flex w-full justify-center"
+            exit={{ y: "-100%", opacity: 0 }}
+            initial={{ y: "-100%", opacity: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 0.2,
+            }}
+          >
+            <div className="pointer-events-auto mx-auto mt-4 w-full max-w-2xl">
+              <Alert variant="default">
+                <AlertDescription>
+                  <div className="flex flex-col gap-3">
+                    <span className="text-foreground text-sm">
+                      Click on different nodes to connect them.{" "}
+                      {selectedNodes.length > 0 &&
+                        `Selected: ${selectedNodes.length}/2`}
+                    </span>
+                    {pendingEdges.length > 0 && (
+                      <div className="text-muted-foreground text-xs">
+                        Pending connections:{" "}
+                        {pendingEdges
+                          .map((edge) => `${edge.source} → ${edge.target}`)
+                          .join(", ")}
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleQuitEditMode}
+                        size="sm"
+                        variant="outline"
+                      >
+                        Quit
+                      </Button>
+                      <Button
+                        disabled={pendingEdges.length === 0}
+                        onClick={handleApplyConnections}
+                        size="sm"
+                      >
+                        Apply ({pendingEdges.length})
+                      </Button>
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="absolute top-4 right-4 left-4 z-50 flex items-center justify-between">
         <GraphBackMenu graphName={graphName} />
         <MenuBar items={menuItems} />
       </div>
 
       <ReactFlow
-        panOnScroll
-        nodes={nodes}
         edges={[]}
-        onNodesChange={onNodesChange}
-        nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        nodes={enhancedNodes}
+        nodeTypes={nodeTypes}
+        onNodesChange={handleNodesChange}
         onPaneClick={closePanel}
+        panOnScroll
       >
-        <Background variant={BackgroundVariant.Dots} gap={60} size={1} />
+        <Background gap={60} size={1} variant={BackgroundVariant.Dots} />
         {isLoading && (
-          <div className="absolute top-20 left-4 bg-blue-100 text-blue-800 px-3 py-2 rounded-md shadow-md z-10">
+          <div className="absolute top-20 left-4 z-10 rounded-md bg-blue-100 px-3 py-2 text-blue-800 shadow-md">
             Loading {graphName}...
           </div>
         )}
         {error && (
-          <div className="absolute top-20 left-4 bg-red-100 text-red-800 px-3 py-2 rounded-md shadow-md z-10">
+          <div className="absolute top-20 left-4 z-10 rounded-md bg-red-100 px-3 py-2 text-red-800 shadow-md">
             Error: {error}
           </div>
         )}
@@ -89,38 +177,54 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
 
       <AnimatePresence>
         <motion.div
-          className="absolute bottom-2 z-40 max-w-xl"
           animate={boxAnimate}
+          className="absolute bottom-2 z-40 max-w-xl"
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-          <motion.div className="translate-y-3">
-            <MessageSwiper
-              messages={visibleMessages}
-              isExpanded={isMessageSwiperExpanded}
-            />
-          </motion.div>
-          <motion.div className="relative w-full">
-            <motion.button
-              onClick={() =>
-                setIsMessageSwiperExpanded(!isMessageSwiperExpanded)
-              }
-              className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full p-2 cursor-pointer"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              animate={{ rotate: isMessageSwiperExpanded ? 0 : 180 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChevronDown className="w-5 h-5" />
-            </motion.button>
-            <PromptInputBox
-              onSend={(content: string) =>
-                appendMessage(
-                  new TextMessage({ content, role: MessageRole.User })
-                )
-              }
-              isLoading={isChatLoading}
-            />
-          </motion.div>
+          <AnimatePresence>
+            {!editMode && (
+              <motion.div
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: "100%", opacity: 0 }}
+                initial={{ y: "100%", opacity: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                  duration: 0.2,
+                }}
+              >
+                <motion.div className="translate-y-3">
+                  <MessageSwiper
+                    isExpanded={isMessageSwiperExpanded}
+                    messages={visibleMessages}
+                  />
+                </motion.div>
+                <motion.div className="relative w-full">
+                  <motion.button
+                    animate={{ rotate: isMessageSwiperExpanded ? 0 : 180 }}
+                    className="-top-4 -translate-x-1/2 absolute left-1/2 cursor-pointer rounded-full p-2"
+                    onClick={() =>
+                      setIsMessageSwiperExpanded(!isMessageSwiperExpanded)
+                    }
+                    transition={{ duration: 0.2 }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <ChevronDown className="h-5 w-5" />
+                  </motion.button>
+                  <PromptInputBox
+                    isLoading={isChatLoading}
+                    onSend={(content: string) =>
+                      appendMessage(
+                        new TextMessage({ content, role: MessageRole.User })
+                      )
+                    }
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </AnimatePresence>
     </div>
@@ -144,7 +248,7 @@ export default function GraphPage({
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4" />
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-gray-900 border-b-2" />
           <p className="text-gray-600">Loading graph...</p>
         </div>
       </div>

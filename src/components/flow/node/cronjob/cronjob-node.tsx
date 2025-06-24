@@ -12,12 +12,24 @@ export interface CronJobNodeData {
   image?: string;
   lastScheduleTime?: string;
   namespace?: string;
+  onClick?: (event: React.MouseEvent) => void;
+  isSelected?: boolean;
 }
 
 export default function CronJobNode({ data }: { data: CronJobNodeData }) {
   const nodeId = useNodeId();
 
-  const { name, schedule, suspend, concurrencyPolicy, timeZone, image, lastScheduleTime } = data;
+  const {
+    name,
+    schedule,
+    suspend,
+    concurrencyPolicy,
+    timeZone,
+    image,
+    lastScheduleTime,
+    onClick,
+    isSelected,
+  } = data;
 
   const statusColorMap = {
     active: "bg-green-100 text-green-800",
@@ -30,53 +42,56 @@ export default function CronJobNode({ data }: { data: CronJobNodeData }) {
 
   return (
     <>
-      <BaseNode id={nodeId} content={<div>CronJobDetails</div>}>
+      <BaseNode
+        content={<div>CronJobDetails</div>}
+        id={nodeId}
+        isSelected={isSelected}
+        onClick={onClick}
+      >
         <div className="space-y-4">
           {/* Name and Type */}
-          <div className="font-medium truncate flex items-center gap-2">
+          <div className="flex items-center gap-2 truncate font-medium">
             <Image
-              src="https://cronjob.cloud.sealos.io/logo.svg"
               alt="CronJob"
-              className="object-contain rounded-lg"
-              width={40}
+              className="rounded-lg object-contain"
               height={40}
               onError={(e) => {
                 // Fallback to a generic cron icon
                 (e.target as HTMLImageElement).src = "/cron-icon.svg";
               }}
+              src="https://cronjob.cloud.sealos.io/logo.svg"
+              width={40}
             />
             <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground truncate">
+              <span className="truncate text-muted-foreground text-sm">
                 CronJob
               </span>
-              <span className="text-md font-bold text-foreground">
-                {name}
-              </span>
+              <span className="font-bold text-foreground text-md">{name}</span>
             </div>
           </div>
 
           {/* CronJob details */}
           <div className="space-y-1">
-            <div className="text-xs text-muted-foreground">
+            <div className="text-muted-foreground text-xs">
               Schedule: {schedule}
             </div>
             {timeZone && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 Timezone: {timeZone}
               </div>
             )}
             {concurrencyPolicy && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 Concurrency: {concurrencyPolicy}
               </div>
             )}
             {image && (
-              <div className="text-xs text-muted-foreground truncate">
+              <div className="truncate text-muted-foreground text-xs">
                 Image: {image}
               </div>
             )}
             {lastScheduleTime && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 Last Run: {new Date(lastScheduleTime).toLocaleString()}
               </div>
             )}
@@ -84,7 +99,7 @@ export default function CronJobNode({ data }: { data: CronJobNodeData }) {
 
           {/* Status badge */}
           <div className="flex justify-start">
-            <span className={`px-2 py-0.5 rounded text-xs ${statusColorClass}`}>
+            <span className={`rounded px-2 py-0.5 text-xs ${statusColorClass}`}>
               {suspend ? "Suspended" : "Active"}
             </span>
           </div>

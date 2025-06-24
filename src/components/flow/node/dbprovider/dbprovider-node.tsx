@@ -1,8 +1,8 @@
 import { useNodeId } from "@xyflow/react";
 import Image from "next/image";
-import BaseNode from "../base-node";
 // import DBProviderDetails from "./detail/dbprovider-detail-view";
 import { getDBTypeIcon } from "@/lib/sealos/dbprovider/dbprovider-transform";
+import BaseNode from "../base-node";
 
 export interface DBProviderNodeData {
   id: string;
@@ -11,12 +11,15 @@ export interface DBProviderNodeData {
   dbName: string;
   dbVersion?: string;
   replicas?: number;
+  onClick?: (event: React.MouseEvent) => void;
+  isSelected?: boolean;
 }
 
 export default function DBProviderNode({ data }: { data: DBProviderNodeData }) {
   const nodeId = useNodeId();
 
-  const { state, dbType, dbName, dbVersion, replicas } = data;
+  const { state, dbType, dbName, dbVersion, replicas, onClick, isSelected } =
+    data;
 
   const stateColorMap: Record<DBProviderNodeData["state"], string> = {
     Running: "bg-green-100 text-green-800",
@@ -33,27 +36,32 @@ export default function DBProviderNode({ data }: { data: DBProviderNodeData }) {
 
   return (
     <>
-      <BaseNode id={nodeId} content={<div>DBProviderDetails</div>}>
+      <BaseNode
+        content={<div>DBProviderDetails</div>}
+        id={nodeId}
+        isSelected={isSelected}
+        onClick={onClick}
+      >
         <div className="space-y-4">
           {/* Name and Type */}
-          <div className="font-medium truncate flex items-center gap-2">
+          <div className="flex items-center gap-2 truncate font-medium">
             <Image
-              src={dbIcon}
               alt={dbType}
-              className="object-contain rounded-lg"
-              width={40}
+              className="rounded-lg object-contain"
               height={40}
               onError={(e) => {
                 // Fallback to DBProvider logo if specific DB icon not found
                 (e.target as HTMLImageElement).src =
                   "https://dbprovider.cloud.sealos.io/logo.svg";
               }}
+              src={dbIcon}
+              width={40}
             />
             <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground truncate">
+              <span className="truncate text-muted-foreground text-sm">
                 DBProvider · {dbType}
               </span>
-              <span className="text-md font-bold text-foreground">
+              <span className="font-bold text-foreground text-md">
                 {dbName}
               </span>
             </div>
@@ -62,12 +70,12 @@ export default function DBProviderNode({ data }: { data: DBProviderNodeData }) {
           {/* Database details */}
           <div className="space-y-1">
             {dbVersion && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 Version: {dbVersion}
               </div>
             )}
             {replicas && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 Replicas: {replicas}
               </div>
             )}
@@ -75,7 +83,7 @@ export default function DBProviderNode({ data }: { data: DBProviderNodeData }) {
 
           {/* State badge */}
           <div className="flex justify-start">
-            <span className={`px-2 py-0.5 rounded text-xs ${stateColorClass}`}>
+            <span className={`rounded px-2 py-0.5 text-xs ${stateColorClass}`}>
               {state}
             </span>
           </div>

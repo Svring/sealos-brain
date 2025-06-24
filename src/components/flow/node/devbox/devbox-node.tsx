@@ -8,12 +8,14 @@ export interface DevboxNodeData {
   state: "Running" | "Stopped" | "Unknown" | "Creating";
   iconId?: string;
   devboxName: string;
+  onClick?: (event: React.MouseEvent) => void;
+  isSelected?: boolean;
 }
 
 export default function DevboxNode({ data }: { data: DevboxNodeData }) {
   const nodeId = useNodeId();
 
-  const { state, iconId, devboxName } = data;
+  const { state, iconId, devboxName, onClick, isSelected } = data;
 
   const stateColorMap: Record<DevboxNodeData["state"], string> = {
     Running: "bg-green-100 text-green-800",
@@ -26,22 +28,27 @@ export default function DevboxNode({ data }: { data: DevboxNodeData }) {
 
   return (
     <>
-      <BaseNode id={nodeId} content={<DevboxDetails devboxName={devboxName} />}>
+      <BaseNode
+        content={<DevboxDetails devboxName={devboxName} />}
+        id={nodeId}
+        isSelected={isSelected}
+        onClick={onClick}
+      >
         <div className="space-y-4">
           {/* Name */}
-          <div className="font-medium truncate flex items-center gap-2">
+          <div className="flex items-center gap-2 truncate font-medium">
             <Image
-              src="https://devbox.bja.sealos.run/logo.svg"
               alt="Devbox"
-              className="object-contain rounded-lg"
-              width={40}
+              className="rounded-lg object-contain"
               height={40}
+              src="https://devbox.bja.sealos.run/logo.svg"
+              width={40}
             />
             <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground truncate">
+              <span className="truncate text-muted-foreground text-sm">
                 Devbox · {iconId}
               </span>
-              <span className="text-md font-bold text-foreground">
+              <span className="font-bold text-foreground text-md">
                 {devboxName}
               </span>
             </div>
@@ -49,7 +56,7 @@ export default function DevboxNode({ data }: { data: DevboxNodeData }) {
 
           {/* State badge */}
           <div className="flex justify-start">
-            <span className={`px-2 py-0.5 rounded text-xs ${stateColorClass}`}>
+            <span className={`rounded px-2 py-0.5 text-xs ${stateColorClass}`}>
               {state}
             </span>
           </div>

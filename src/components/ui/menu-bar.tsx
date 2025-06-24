@@ -1,106 +1,155 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { cn } from "@/lib/utils"
+import { AnimatePresence, motion } from "framer-motion";
+import * as React from "react";
+import { Toggle } from "@/components/ui/toggle";
+import { cn } from "@/lib/utils";
 
 export interface MenuBarItem {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-  label: string
-  onClick?: () => void
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  label: string;
+  onClick?: () => void;
+  isToggle?: boolean;
+  pressed?: boolean;
+  onPressedChange?: (pressed: boolean) => void;
 }
 
 interface MenuBarProps extends React.HTMLAttributes<HTMLDivElement> {
-  items: MenuBarItem[]
+  items: MenuBarItem[];
+  activeIndex?: number | null;
 }
 
 const springConfig = {
   duration: 0.3,
-  ease: "easeInOut"
-}
+  ease: "easeInOut",
+};
 
-export function MenuBar({ items, className, ...props }: MenuBarProps) {
-  const [activeIndex, setActiveIndex] = React.useState<number | null>(null)
-  const menuRef = React.useRef<HTMLDivElement>(null)
-  const [tooltipPosition, setTooltipPosition] = React.useState({ left: 0, width: 0 })
-  const tooltipRef = React.useRef<HTMLDivElement>(null)
+export function MenuBar({
+  items,
+  className,
+  activeIndex: controlledActiveIndex,
+  ...props
+}: MenuBarProps) {
+  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const [tooltipPosition, setTooltipPosition] = React.useState({
+    left: 0,
+    width: 0,
+  });
+  const tooltipRef = React.useRef<HTMLDivElement>(null);
+
+  const effectiveActiveIndex =
+    controlledActiveIndex !== undefined ? controlledActiveIndex : activeIndex;
 
   React.useEffect(() => {
-    if (activeIndex !== null && menuRef.current && tooltipRef.current) {
-      const menuItem = menuRef.current.children[activeIndex] as HTMLElement
-      const menuRect = menuRef.current.getBoundingClientRect()
-      const itemRect = menuItem.getBoundingClientRect()
-      const tooltipRect = tooltipRef.current.getBoundingClientRect()
-    
-      const left = itemRect.left - menuRect.left + (itemRect.width - tooltipRect.width) / 2
-    
+    if (
+      effectiveActiveIndex !== null &&
+      menuRef.current &&
+      tooltipRef.current
+    ) {
+      const menuItem = menuRef.current.children[
+        effectiveActiveIndex
+      ] as HTMLElement;
+      const menuRect = menuRef.current.getBoundingClientRect();
+      const itemRect = menuItem.getBoundingClientRect();
+      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+
+      const left =
+        itemRect.left -
+        menuRect.left +
+        (itemRect.width - tooltipRect.width) / 2;
+
       setTooltipPosition({
         left: Math.max(0, Math.min(left, menuRect.width - tooltipRect.width)),
-        width: tooltipRect.width
-      })
+        width: tooltipRect.width,
+      });
     }
-  }, [activeIndex])
+  }, [effectiveActiveIndex]);
 
   return (
     <div className={cn("relative", className)} {...props}>
       <AnimatePresence>
-        {activeIndex !== null && (
+        {effectiveActiveIndex !== null && (
           <motion.div
-            initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
+            className="-bottom-[31px] pointer-events-none absolute right-0 left-0 z-50"
             exit={{ opacity: 0, y: -5 }}
+            initial={{ opacity: 0, y: -5 }}
             transition={springConfig}
-            className="absolute left-0 right-0 -bottom-[31px] pointer-events-none z-50"
           >
             <motion.div
-              ref={tooltipRef}
+              animate={{ x: tooltipPosition.left }}
               className={cn(
-                "h-7 px-3 rounded-lg inline-flex justify-center items-center overflow-hidden",
+                "inline-flex h-7 items-center justify-center overflow-hidden rounded-lg px-3",
                 "bg-background/95 backdrop-blur",
                 "border border-border/50",
                 "shadow-[0_0_0_1px_rgba(0,0,0,0.08)]",
                 "dark:border-border/50 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
               )}
               initial={{ x: tooltipPosition.left }}
-              animate={{ x: tooltipPosition.left }}
-              transition={springConfig}
+              ref={tooltipRef}
               style={{ width: "auto" }}
+              transition={springConfig}
             >
-              <p className="text-[13px] font-medium leading-tight whitespace-nowrap">
-                {items[activeIndex].label}
+              <p className="whitespace-nowrap font-medium text-[13px] leading-tight">
+                {items[effectiveActiveIndex].label}
               </p>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-      
-      <div 
-        ref={menuRef}
+
+      <div
         className={cn(
-          "h-10 px-1 inline-flex justify-center items-center gap-[3px] overflow-hidden z-10",
+          "z-10 inline-flex h-10 items-center justify-center gap-[3px] overflow-hidden px-1",
           "rounded-lg bg-background/95 backdrop-blur",
           "border border-border/50",
           "shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_8px_16px_-4px_rgba(0,0,0,0.1)]",
           "dark:border-border/50 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_16px_-4px_rgba(0,0,0,0.2)]"
         )}
+        ref={menuRef}
       >
-        {items.map((item, index) => (
-          <button 
-            key={index}
-            className="w-8 h-8 px-3 py-1 rounded-lg flex justify-center items-center gap-2 hover:bg-muted/80 transition-colors"
-            onMouseEnter={() => setActiveIndex(index)}
-            onMouseLeave={() => setActiveIndex(null)}
-            onClick={item.onClick}
-          >
-            <div className="flex justify-center items-center">
-              <div className="w-[18px] h-[18px] flex justify-center items-center overflow-hidden">
-                <item.icon className="w-full h-full" />
+        {items.map((item, index) =>
+          item.isToggle ? (
+            <Toggle
+              className={cn(
+                "flex h-8 w-8 items-center justify-center gap-2 rounded-lg px-3 py-1",
+                effectiveActiveIndex === index && "bg-muted/80"
+              )}
+              key={index}
+              onMouseEnter={() => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(null)}
+              onPressedChange={item.onPressedChange}
+              pressed={item.pressed}
+            >
+              <div className="flex items-center justify-center">
+                <div className="flex h-[18px] w-[18px] items-center justify-center overflow-hidden">
+                  <item.icon className="h-full w-full" />
+                </div>
               </div>
-            </div>
-            <span className="sr-only">{item.label}</span>
-          </button>
-        ))}
+              <span className="sr-only">{item.label}</span>
+            </Toggle>
+          ) : (
+            <button
+              className={cn(
+                "flex h-8 w-8 items-center justify-center gap-2 rounded-lg px-3 py-1 transition-colors hover:bg-muted/80",
+                effectiveActiveIndex === index && "bg-muted/80"
+              )}
+              key={index}
+              onClick={item.onClick}
+              onMouseEnter={() => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(null)}
+            >
+              <div className="flex items-center justify-center">
+                <div className="flex h-[18px] w-[18px] items-center justify-center overflow-hidden">
+                  <item.icon className="h-full w-full" />
+                </div>
+              </div>
+              <span className="sr-only">{item.label}</span>
+            </button>
+          )
+        )}
       </div>
     </div>
-  )
+  );
 }

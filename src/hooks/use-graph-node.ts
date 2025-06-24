@@ -1,11 +1,11 @@
-import { useEffect, useMemo } from "react";
-import { Node, useNodesState, NodeChange } from "@xyflow/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSealosStore } from "@/store/sealos-store";
-import { useResources, type ExistingResource } from "@/hooks/use-resources";
-import { type GraphResourceGroup } from "@/lib/sealos/k8s/k8s-transform";
+import { type Node, type NodeChange, useNodesState } from "@xyflow/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { type ExistingResource, useResources } from "@/hooks/use-resources";
 import { useDeleteGraphMutation } from "@/lib/sealos/k8s/k8s-mutation";
+import type { GraphResourceGroup } from "@/lib/sealos/k8s/k8s-transform";
 import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-utils";
+import { useSealosStore } from "@/store/sealos-store";
 
 interface UseGraphNodeReturn {
   nodes: Node[];
@@ -16,17 +16,107 @@ interface UseGraphNodeReturn {
   mergedGraphs: GraphResourceGroup;
   deleteGraph: (graphName: string) => Promise<void>;
   isDeletingGraph: boolean;
+  editMode: boolean;
+  setEditMode: (mode: boolean) => void;
+  selectedNodes: string[];
+  pendingEdges: { source: string; target: string }[];
+  handleNodeClick: (event: React.MouseEvent, nodeId: string) => void;
+  handleApplyConnections: () => void;
+  handleQuitEditMode: () => void;
+  enhancedNodes: Node[];
 }
 
 export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const { currentUser } = useSealosStore();
 
+  // Edit mode state
+  const [editMode, setEditMode] = useState(false);
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+  const [pendingEdges, setPendingEdges] = useState<
+    { source: string; target: string }[]
+  >([]);
+
   // Use the simplified resources hook
   const { allResources, isLoading } = useResources(currentUser);
 
+  // Handle node clicks in edit mode
+  const handleNodeClick = useCallback(
+    (event: React.MouseEvent, nodeId: string) => {
+      if (!editMode) return;
+
+      event.stopPropagation();
+
+      setSelectedNodes((prev) => {
+        const newSelection = [...prev];
+
+        if (newSelection.includes(nodeId)) {
+          // Remove if already selected
+          return newSelection.filter((id) => id !== nodeId);
+        }
+        newSelection.push(nodeId);
+
+        // If we have 2 nodes selected, create an edge and reset selection
+        if (newSelection.length === 2) {
+          const [source, target] = newSelection;
+          // Check if this edge already exists to prevent duplicates
+          setPendingEdges((prevEdges) => {
+            const edgeExists = prevEdges.some(
+              (edge) =>
+                (edge.source === source && edge.target === target) ||
+                (edge.source === target && edge.target === source)
+            );
+            if (edgeExists) {
+              return prevEdges; // Don't add duplicate
+            }
+            return [...prevEdges, { source, target }];
+          });
+          return []; // Reset selection
+        }
+
+        return newSelection;
+      });
+    },
+    [editMode]
+  );
+
+  // Handle applying connections
+  const handleApplyConnections = useCallback(() => {
+    console.log("Applying connections:", pendingEdges);
+    // Reset edit mode and clear pending state
+    setEditMode(false);
+    setPendingEdges([]);
+    setSelectedNodes([]);
+  }, [pendingEdges]);
+
+  // Handle quitting edit mode
+  const handleQuitEditMode = useCallback(() => {
+    setEditMode(false);
+    setPendingEdges([]);
+    setSelectedNodes([]);
+  }, []);
+
   // Combined error state (simplified since useResources handles individual query errors)
   const error = null; // useResources doesn't expose individual errors, but handles them internally
+
+  // Enhanced nodes with click handlers and selection highlighting
+  const enhancedNodes = useMemo(() => {
+    if (!editMode) return nodes;
+
+    return nodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        onClick: (event: React.MouseEvent) => handleNodeClick(event, node.id),
+        isSelected: selectedNodes.includes(node.id),
+      },
+      style: {
+        ...node.style,
+        border: selectedNodes.includes(node.id) ? "1px solid white" : undefined,
+        borderRadius: selectedNodes.includes(node.id) ? "8px" : undefined,
+      },
+    }));
+  }, [nodes, editMode, selectedNodes, handleNodeClick]);
 
   // Create merged graph list from the resources
   const mergedGraphs = useMemo(() => {
@@ -75,8 +165,8 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
         return;
       }
 
-      let xOffset = 300;
-      let yOffset = 200;
+      const xOffset = 300;
+      const yOffset = 200;
 
       // Create nodes for each resource type in the specific graph
       Object.entries(graphResources).forEach(
@@ -217,6 +307,14 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     mergedGraphs,
     deleteGraph,
     isDeletingGraph,
+    editMode,
+    setEditMode,
+    selectedNodes,
+    pendingEdges,
+    handleNodeClick,
+    handleApplyConnections,
+    handleQuitEditMode,
+    enhancedNodes,
   };
 }
 
