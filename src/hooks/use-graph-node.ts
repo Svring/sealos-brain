@@ -8,15 +8,10 @@ import {
   EdgeChange,
   NodeChange,
 } from "@xyflow/react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSealosStore } from "@/store/sealos-store";
-import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
-import {
-  transformResourcesByGraphName,
-  mergeGraphResourceGroups,
-  type ResourceList,
-  type GraphResourceGroup,
-} from "@/lib/sealos/k8s/k8s-transform";
+import { useResources, type ExistingResource } from "@/hooks/use-resources";
+import { type GraphResourceGroup } from "@/lib/sealos/k8s/k8s-transform";
 import { useDeleteGraphMutation } from "@/lib/sealos/k8s/k8s-mutation";
 
 interface UseGraphNodeReturn {
@@ -37,84 +32,37 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const { currentUser } = useSealosStore();
 
-  // Query all five resource types using the new generic function
-  const devboxQuery = useQuery(
-    directResourceListOptions(currentUser, "devbox")
-  );
-  const clusterQuery = useQuery(
-    directResourceListOptions(currentUser, "cluster")
-  );
-  const deploymentQuery = useQuery(
-    directResourceListOptions(currentUser, "deployment")
-  );
-  const cronJobQuery = useQuery(
-    directResourceListOptions(currentUser, "cronjob")
-  );
-  const bucketQuery = useQuery(
-    directResourceListOptions(currentUser, "objectstoragebucket")
-  );
+  // Use the simplified resources hook
+  const { allResources, isLoading } = useResources(currentUser);
 
-  // Combined loading state
-  const isLoading = [
-    devboxQuery,
-    clusterQuery,
-    deploymentQuery,
-    cronJobQuery,
-    bucketQuery,
-  ].some((query) => query.isLoading);
+  // Combined error state (simplified since useResources handles individual query errors)
+  const error = null; // useResources doesn't expose individual errors, but handles them internally
 
-  // Combined error state
-  const error =
-    [
-      devboxQuery,
-      clusterQuery,
-      deploymentQuery,
-      cronJobQuery,
-      bucketQuery,
-    ].find((query) => query.error)?.error?.message || null;
-
-  // Create merged graph list when all queries are complete
+  // Create merged graph list from the resources
   const mergedGraphs = useMemo(() => {
-    const allQueriesComplete = [
-      devboxQuery,
-      clusterQuery,
-      deploymentQuery,
-      cronJobQuery,
-      bucketQuery,
-    ].every((query) => !query.isLoading && query.data);
+    if (isLoading || !allResources.length) return {};
 
-    if (!allQueriesComplete) return {};
+    const graphGroups: GraphResourceGroup = {};
 
-    const transformedGroups = [
-      transformResourcesByGraphName(devboxQuery.data as ResourceList),
-      transformResourcesByGraphName(clusterQuery.data as ResourceList),
-      transformResourcesByGraphName(deploymentQuery.data as ResourceList),
-      transformResourcesByGraphName(cronJobQuery.data as ResourceList),
-      transformResourcesByGraphName(bucketQuery.data as ResourceList),
-    ];
+    // Group resources by their graphName annotation
+    allResources.forEach((resource) => {
+      const graphName = resource.annotations?.graphName;
+      if (graphName) {
+        if (!graphGroups[graphName]) {
+          graphGroups[graphName] = {};
+        }
+        if (!graphGroups[graphName][resource.type]) {
+          graphGroups[graphName][resource.type] = [];
+        }
+        graphGroups[graphName][resource.type].push(resource.name);
+      }
+    });
 
-    return mergeGraphResourceGroups(transformedGroups);
-  }, [
-    devboxQuery.data,
-    clusterQuery.data,
-    deploymentQuery.data,
-    cronJobQuery.data,
-    bucketQuery.data,
-    devboxQuery.isLoading,
-    clusterQuery.isLoading,
-    deploymentQuery.isLoading,
-    cronJobQuery.isLoading,
-    bucketQuery.isLoading,
-  ]);
+    return graphGroups;
+  }, [allResources, isLoading]);
 
   // Transform graphs into nodes and edges for visualization
   useEffect(() => {
-    if (!mergedGraphs || Object.keys(mergedGraphs).length === 0) {
-      setNodes([]);
-      setEdges([]);
-      return;
-    }
-
     const allNodes: Node[] = [];
     const allEdges: Edge[] = [];
 
@@ -122,9 +70,19 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     if (specificGraphName) {
       const graphResources = mergedGraphs[specificGraphName];
 
-      // If the specific graph doesn't exist (e.g., "new-graph"), return empty arrays
-      if (!graphResources) {
-        setNodes([]);
+      // If the specific graph doesn't exist or is empty (e.g., "new-graph"), show empty state node
+      if (!graphResources || Object.keys(graphResources).length === 0) {
+        const emptyStateNode: Node = {
+          id: "empty-state",
+          type: "empty-state",
+          position: { x: 0, y: 0 }, // Center of the graph
+          data: {
+            graphName: specificGraphName,
+          },
+          draggable: false,
+          selectable: false,
+        };
+        setNodes([emptyStateNode]);
         setEdges([]);
         return;
       }
@@ -142,47 +100,42 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
               y: yOffset + resourceIndex * 150,
             };
 
-            // Create node based on resource type
+            // Create node based on resource type with proper data structure
             const node: Node = {
               id: nodeId,
               type: resourceKind, // Use resource kind as node type
               position,
-              data: {
-                id: nodeId,
-                name: resourceName,
+              data: getNodeDataForResourceType(
                 resourceKind,
-                graphName: specificGraphName,
-                // Add basic display data structure
-                [getResourceDisplayKey(resourceKind)]: resourceName,
-              },
+                resourceName,
+                nodeId,
+                allResources
+              ),
             };
 
             allNodes.push(node);
-
-            // Create connections between resources of the same graph
-            // Connect to the first resource of the previous type (simple chain pattern)
-            if (resourceTypeIndex > 0 && resourceIndex === 0) {
-              const prevResourceKind =
-                Object.keys(graphResources)[resourceTypeIndex - 1];
-              const prevResourceNames = graphResources[prevResourceKind];
-              if (prevResourceNames && prevResourceNames.length > 0) {
-                const sourceNodeId = `${prevResourceKind}-${prevResourceNames[0]}`;
-                const edgeId = `${sourceNodeId}-${nodeId}`;
-
-                allEdges.push({
-                  id: edgeId,
-                  source: sourceNodeId,
-                  target: nodeId,
-                  type: "step-edge",
-                  markerEnd: { type: MarkerType.ArrowClosed },
-                } as Edge);
-              }
-            }
           });
         }
       );
     } else {
       // Show all graphs as a high-level overview
+      if (!mergedGraphs || Object.keys(mergedGraphs).length === 0) {
+        // No graphs exist, show empty state
+        const emptyStateNode: Node = {
+          id: "empty-state",
+          type: "empty-state",
+          position: { x: 0, y: 0 },
+          data: {
+            graphName: "overview",
+          },
+          draggable: false,
+          selectable: false,
+        };
+        setNodes([emptyStateNode]);
+        setEdges([]);
+        return;
+      }
+
       let graphIndex = 0;
 
       Object.entries(mergedGraphs).forEach(([graphName, graphResources]) => {
@@ -309,4 +262,97 @@ function getResourceDisplayKey(resourceKind: string): string {
     default:
       return "name";
   }
+}
+
+// Helper function to create proper node data structure for each resource type
+function getNodeDataForResourceType(
+  resourceKind: string,
+  resourceName: string,
+  nodeId: string,
+  allResources: ExistingResource[]
+) {
+  // Find the actual resource data
+  const resource = allResources.find(
+    (r) => r.name === resourceName && r.type === resourceKind
+  );
+
+  const baseData = {
+    id: nodeId,
+    state: mapResourceStatus(resource?.status || "Unknown"),
+  };
+
+  switch (resourceKind) {
+    case "devbox":
+      return {
+        ...baseData,
+        devboxName: resourceName,
+        iconId: "devbox",
+      };
+
+    case "cluster":
+      // Use DBProvider node data structure for clusters
+      return {
+        ...baseData,
+        dbName: resourceName,
+        dbType: "cluster",
+        dbVersion: "Unknown", // Would need full resource data to extract this
+        replicas: 1, // Would need full resource data to extract this
+      };
+
+    case "deployment":
+      // Use AppLaunchpad node data structure for deployments
+      return {
+        ...baseData,
+        deploymentName: resourceName,
+        replicas: 1, // Would need full resource data to extract this
+        availableReplicas: 0, // Would need full resource data to extract this
+        image: "Unknown", // Would need full resource data to extract this
+      };
+
+    case "cronjob":
+      return {
+        ...baseData,
+        cronJobName: resourceName,
+        schedule: "Unknown", // Would need full resource data to extract this
+        suspend: false, // Would need full resource data to extract this
+      };
+
+    case "objectstoragebucket":
+      return {
+        ...baseData,
+        bucketName: resourceName,
+        storageClassName: "Unknown", // Would need full resource data to extract this
+      };
+
+    default:
+      return {
+        ...baseData,
+        name: resourceName,
+        resourceKind,
+      };
+  }
+}
+
+// Helper function to map resource status to node state
+function mapResourceStatus(status: string): string {
+  const statusLower = status.toLowerCase();
+
+  if (
+    statusLower.includes("running") ||
+    statusLower.includes("ready") ||
+    statusLower.includes("available")
+  ) {
+    return "Running";
+  }
+  if (statusLower.includes("stopped") || statusLower.includes("terminated")) {
+    return "Stopped";
+  }
+  if (statusLower.includes("creating") || statusLower.includes("pending")) {
+    return "Creating";
+  }
+  if (statusLower.includes("failed") || statusLower.includes("error")) {
+    return "Failed";
+  }
+
+  return "Unknown";
 }

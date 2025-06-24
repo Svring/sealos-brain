@@ -1,3 +1,5 @@
+"use client";
+
 import { Node, Edge, Position, MarkerType } from "@xyflow/react";
 
 /**

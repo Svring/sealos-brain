@@ -66,7 +66,7 @@ export default async function RootLayout({
           <QueryProvider>
             <SealosStoreHydrator user={user} />
             <PanelProvider>
-              <SidebarProvider>
+              <SidebarProvider defaultOpen={false}>
                 <AppSidebar />
                 <main className="w-full h-screen">{children}</main>
                 <Toaster />

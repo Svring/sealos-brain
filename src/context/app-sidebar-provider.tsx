@@ -70,7 +70,6 @@ export default function AppSidebar() {
   );
 
   const { toggleSidebar, state } = useSidebar();
-  const isCollapsed = state === "collapsed";
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
