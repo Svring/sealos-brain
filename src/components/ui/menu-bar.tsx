@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import * as React from "react";
+import React from "react";
 import { Toggle } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
 
@@ -116,7 +116,7 @@ export function MenuBar({
                 "flex h-8 w-8 items-center justify-center gap-2 rounded-lg px-3 py-1",
                 effectiveActiveIndex === index && "bg-muted/80"
               )}
-              key={index}
+              key={item.label}
               onMouseEnter={() => setActiveIndex(index)}
               onMouseLeave={() => setActiveIndex(null)}
               onPressedChange={item.onPressedChange}
@@ -135,10 +135,11 @@ export function MenuBar({
                 "flex h-8 w-8 items-center justify-center gap-2 rounded-lg px-3 py-1 transition-colors hover:bg-muted/80",
                 effectiveActiveIndex === index && "bg-muted/80"
               )}
-              key={index}
+              key={item.label}
               onClick={item.onClick}
               onMouseEnter={() => setActiveIndex(index)}
               onMouseLeave={() => setActiveIndex(null)}
+              type="button"
             >
               <div className="flex items-center justify-center">
                 <div className="flex h-[18px] w-[18px] items-center justify-center overflow-hidden">

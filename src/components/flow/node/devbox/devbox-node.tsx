@@ -1,4 +1,4 @@
-import { Handle, Position, useNodeId } from "@xyflow/react";
+import { useNodeId } from "@xyflow/react";
 import Image from "next/image";
 import BaseNode from "../base-node";
 import DevboxDetails from "./detail/devbox-detail-view";

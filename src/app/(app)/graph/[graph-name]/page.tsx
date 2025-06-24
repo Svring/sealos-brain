@@ -1,6 +1,11 @@
 "use client";
 
-import { Background, BackgroundVariant, ReactFlow } from "@xyflow/react";
+import {
+  Background,
+  BackgroundVariant,
+  type NodeChange,
+  ReactFlow,
+} from "@xyflow/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Plus, Spline } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -46,7 +51,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     setIsMessageSwiperExpanded,
   } = useGraphCopilotChat();
 
-  const handleNodesChange = (changes: any[]) => {
+  const handleNodesChange = (changes: NodeChange[]) => {
     if (editMode) {
       const selectionChanges = changes.filter(
         (change) => change.type === "select"
@@ -111,36 +116,36 @@ function GraphPageContent({ graphName }: { graphName: string }) {
             <div className="pointer-events-auto mx-auto mt-4 w-full max-w-2xl">
               <Alert variant="default">
                 <AlertDescription>
-                  <div className="flex flex-col gap-3">
-                    <span className="text-foreground text-sm">
-                      Click on different nodes to connect them.{" "}
+                  <div className="flex items-center gap-2 text-foreground text-sm">
+                    <span>
+                      Click on different nodes to connect them.
                       {selectedNodes.length > 0 &&
-                        `Selected: ${selectedNodes.length}/2`}
+                        ` Selected: ${selectedNodes.length}/2.`}
+                      {pendingEdges.length > 0 && (
+                        <span className="ml-2 text-muted-foreground text-xs">
+                          Pending:{" "}
+                          {pendingEdges
+                            .map((edge) => `${edge.source} → ${edge.target}`)
+                            .join(", ")}
+                        </span>
+                      )}
                     </span>
-                    {pendingEdges.length > 0 && (
-                      <div className="text-muted-foreground text-xs">
-                        Pending connections:{" "}
-                        {pendingEdges
-                          .map((edge) => `${edge.source} → ${edge.target}`)
-                          .join(", ")}
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleQuitEditMode}
-                        size="sm"
-                        variant="outline"
-                      >
-                        Quit
-                      </Button>
-                      <Button
-                        disabled={pendingEdges.length === 0}
-                        onClick={handleApplyConnections}
-                        size="sm"
-                      >
-                        Apply ({pendingEdges.length})
-                      </Button>
-                    </div>
+                    <Button
+                      className="ml-2 h-6 px-2 py-0 text-xs"
+                      onClick={handleQuitEditMode}
+                      size="sm"
+                      variant="outline"
+                    >
+                      Quit
+                    </Button>
+                    <Button
+                      className="h-6 px-2 py-0 text-xs"
+                      disabled={pendingEdges.length === 0}
+                      onClick={handleApplyConnections}
+                      size="sm"
+                    >
+                      Apply ({pendingEdges.length})
+                    </Button>
                   </div>
                 </AlertDescription>
               </Alert>
