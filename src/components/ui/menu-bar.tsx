@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 export interface MenuBarItem {
-  icon: (props: React.SVGProps<SVGSVGElement>) => React.JSX.Element
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
   label: string
   onClick?: () => void
 }
@@ -46,11 +46,11 @@ export function MenuBar({ items, className, ...props }: MenuBarProps) {
       <AnimatePresence>
         {activeIndex !== null && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            exit={{ opacity: 0, y: -5 }}
             transition={springConfig}
-            className="absolute left-0 right-0 top-[41px] pointer-events-none z-50"
+            className="absolute left-0 right-0 -bottom-[31px] pointer-events-none z-50"
           >
             <motion.div
               ref={tooltipRef}
@@ -77,8 +77,8 @@ export function MenuBar({ items, className, ...props }: MenuBarProps) {
       <div 
         ref={menuRef}
         className={cn(
-          "h-10 px-1.5 inline-flex justify-center items-center gap-[3px] overflow-hidden z-10",
-          "rounded-full bg-background/95 backdrop-blur",
+          "h-10 px-1 inline-flex justify-center items-center gap-[3px] overflow-hidden z-10",
+          "rounded-lg bg-background/95 backdrop-blur",
           "border border-border/50",
           "shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_8px_16px_-4px_rgba(0,0,0,0.1)]",
           "dark:border-border/50 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_16px_-4px_rgba(0,0,0,0.2)]"
@@ -87,7 +87,7 @@ export function MenuBar({ items, className, ...props }: MenuBarProps) {
         {items.map((item, index) => (
           <button 
             key={index}
-            className="w-8 h-8 px-3 py-1 rounded-full flex justify-center items-center gap-2 hover:bg-muted/80 transition-colors"
+            className="w-8 h-8 px-3 py-1 rounded-lg flex justify-center items-center gap-2 hover:bg-muted/80 transition-colors"
             onMouseEnter={() => setActiveIndex(index)}
             onMouseLeave={() => setActiveIndex(null)}
             onClick={item.onClick}

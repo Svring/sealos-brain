@@ -30,6 +30,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
+import { MenuBar, type MenuBarItem } from "@/components/ui/menu-bar";
+import { GraphBackMenu } from "@/components/graph/graph-back-menu";
 
 interface GraphPageContentProps {
   graphName: string;
@@ -61,6 +63,15 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
   
   // Check if graph exists in merged graphs (for delete functionality)
   const graphExists = graphName !== "new-graph" && mergedGraphs[graphName];
+
+  // Define menu items for the MenuBar
+  const menuItems: MenuBarItem[] = [
+    {
+      icon: Plus,
+      label: "Add Node",
+      onClick: () => openPanel("node-create", <NodeCreateView onCreateNode={() => {}} />)
+    }
+  ];
 
   const handleDeleteGraph = async () => {
     if (!graphExists) return;
@@ -104,32 +115,20 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
   const boxAnimate = useMemo(() => {
     const panelOpen = Boolean(panelId);
 
-    // When panel is open → center inside the left 60%
+    // When panel is open → center inside the left portion (accounting for panel)
     if (panelOpen) {
-      return { left: "30vw", x: "-50%", width: "60vw" };
+      return { left: "30%", x: "-50%", width: "60%" };
     }
 
     // Default → simple centered
-    return { left: "50%", x: "-50%", width: 640 };
+    return { left: "50%", x: "-50%", width: "640px" };
   }, [panelId]);
 
   return (
-    <div className="h-screen w-screen">
+    <div className="h-screen w-full relative">
       {/* Top navigation bar */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/graph">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Graphs
-            </Button>
-          </Link>
-          <div className="bg-background/80 backdrop-blur-sm rounded-lg px-3 py-2 border">
-            <h1 className="font-semibold text-lg">
-              {graphName === "new-graph" ? "New Graph" : graphName}
-            </h1>
-          </div>
-        </div>
+        <GraphBackMenu graphName={graphName} />
         <div className="flex items-center gap-2">
           {graphExists && (
             <AlertDialog>
@@ -164,16 +163,7 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
               </AlertDialogContent>
             </AlertDialog>
           )}
-          <Button
-            variant="default"
-            className="rounded-xl"
-            onClick={() =>
-              openPanel("node-create", <NodeCreateView onCreateNode={() => {}} />)
-            }
-          >
-            <Plus className="w-4 h-4" />
-            Add Node
-          </Button>
+          <MenuBar items={menuItems} />
         </div>
       </div>
 
@@ -221,7 +211,7 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
 
       <AnimatePresence>
         <motion.div
-          className="fixed bottom-2 z-40 max-w-xl"
+          className="absolute bottom-2 z-40 max-w-xl"
           initial={false}
           animate={boxAnimate}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}

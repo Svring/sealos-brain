@@ -14,25 +14,21 @@ export default function GraphPage() {
   const graphNames = Object.keys(mergedGraphs);
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="container mx-auto p-6 flex flex-col h-full">
+      <div className="mb-6 flex items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">Graph</h1>
-          <p className="text-muted-foreground">
-            Visualize your Sealos infrastructure
-          </p>
         </div>
         <Link href="/graph/new-graph">
-          <Button className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Create New Graph
+          <Button variant="outline" className="size-8">
+            <Plus />
           </Button>
         </Link>
       </div>
 
       {isLoading ? (
         <div className="rounded-lg border p-6">
-          <div className="flex items-center justify-center h-96">
+          <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <h2 className="text-xl font-semibold mb-2">Loading...</h2>
               <p className="text-muted-foreground">
@@ -54,8 +50,8 @@ export default function GraphPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border p-6">
-          <div className="flex items-center justify-center h-96">
+        <div className="rounded-lg p-6 flex-1">
+          <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <h2 className="text-xl font-semibold mb-2">No Graphs Found</h2>
               <p className="text-muted-foreground mb-4">
