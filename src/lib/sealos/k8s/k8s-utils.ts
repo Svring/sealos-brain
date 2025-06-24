@@ -101,3 +101,5 @@ export const RESOURCES = {
     plural: "objectstoragebuckets",
   },
 };
+
+export type ResourceType = keyof typeof RESOURCES;

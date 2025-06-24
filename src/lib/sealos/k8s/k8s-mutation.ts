@@ -1,18 +1,24 @@
 "use client";
 
-import { getNamespaceFromKubeconfig, getKubeconfig } from "./k8s-utils";
 import {
-  patchClusterAnnotation,
-  patchObjectStorageBucketAnnotation,
-  patchDevboxAnnotation,
+  getNamespaceFromKubeconfig,
+  getKubeconfig,
+  type ResourceType,
+} from "./k8s-utils";
+import {
+  patchResourceAnnotation,
+  removeResourceAnnotation,
+  deleteGraphByRemovingAnnotations,
 } from "./k8s-actions";
 import { useMutation } from "@tanstack/react-query";
 
-export function usePatchClusterAnnotationMutation() {
+// Generic patch resource annotation mutation
+export function usePatchResourceAnnotationMutation() {
   return useMutation({
     mutationFn: async (params: {
       currentUser: any;
-      clusterName: string;
+      resourceType: ResourceType;
+      resourceName: string;
       annotationKey: string;
       annotationValue: string;
       namespaceOverride?: string;
@@ -25,9 +31,10 @@ export function usePatchClusterAnnotationMutation() {
       const namespace =
         params.namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
 
-      return patchClusterAnnotation(
+      return patchResourceAnnotation(
         kubeconfig,
-        params.clusterName,
+        params.resourceType,
+        params.resourceName,
         params.annotationKey,
         params.annotationValue,
         namespace
@@ -36,13 +43,14 @@ export function usePatchClusterAnnotationMutation() {
   });
 }
 
-export function usePatchObjectStorageBucketAnnotationMutation() {
+// Generic remove resource annotation mutation
+export function useRemoveResourceAnnotationMutation() {
   return useMutation({
     mutationFn: async (params: {
       currentUser: any;
-      bucketName: string;
+      resourceType: ResourceType;
+      resourceName: string;
       annotationKey: string;
-      annotationValue: string;
       namespaceOverride?: string;
     }) => {
       const kubeconfig = getKubeconfig(params.currentUser);
@@ -53,24 +61,24 @@ export function usePatchObjectStorageBucketAnnotationMutation() {
       const namespace =
         params.namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
 
-      return patchObjectStorageBucketAnnotation(
+      return removeResourceAnnotation(
         kubeconfig,
-        params.bucketName,
+        params.resourceType,
+        params.resourceName,
         params.annotationKey,
-        params.annotationValue,
         namespace
       );
     },
   });
 }
 
-export function usePatchDevboxAnnotationMutation() {
+// Delete graph mutation (moved from k8s-transform)
+export function useDeleteGraphMutation() {
   return useMutation({
     mutationFn: async (params: {
       currentUser: any;
-      devboxName: string;
-      annotationKey: string;
-      annotationValue: string;
+      graphName: string;
+      graphResources: { [resourceKind: string]: string[] };
       namespaceOverride?: string;
     }) => {
       const kubeconfig = getKubeconfig(params.currentUser);
@@ -81,11 +89,10 @@ export function usePatchDevboxAnnotationMutation() {
       const namespace =
         params.namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
 
-      return patchDevboxAnnotation(
+      return deleteGraphByRemovingAnnotations(
         kubeconfig,
-        params.devboxName,
-        params.annotationKey,
-        params.annotationValue,
+        params.graphName,
+        params.graphResources,
         namespace
       );
     },

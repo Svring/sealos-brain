@@ -13,9 +13,23 @@ import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
 
 import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
-import { ChevronDown, Plus, ArrowLeft } from "lucide-react";
+import { ChevronDown, Plus, ArrowLeft, Trash2 } from "lucide-react";
 import { useGraphNode } from "@/hooks/use-graph-node";
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
+import Link from "next/link";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useRouter } from "next/navigation";
 
 interface GraphPageContentProps {
   graphName: string;
@@ -23,8 +37,10 @@ interface GraphPageContentProps {
 
 function GraphPageContent({ graphName }: GraphPageContentProps) {
   // Use the unified hook with specificGraphName parameter
-  const { nodes, edges, onNodesChange, onEdgesChange, isLoading, error } =
+  const { nodes, edges, onNodesChange, onEdgesChange, isLoading, error, deleteGraph, isDeletingGraph, mergedGraphs } =
     useGraphNode(graphName);
+
+  const router = useRouter();
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
 
@@ -39,6 +55,27 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
 
   // Track previous message count to detect new messages
   const [previousMessageCount, setPreviousMessageCount] = useState(0);
+
+  // Check if this is a new/empty graph
+  const isNewGraph = graphName === "new-graph" || nodes.length === 0;
+  
+  // Check if graph exists in merged graphs (for delete functionality)
+  const graphExists = graphName !== "new-graph" && mergedGraphs[graphName];
+
+  const handleDeleteGraph = async () => {
+    if (!graphExists) return;
+    
+    const toastId = `delete-graph-${graphName}`;
+    try {
+      toast.loading(`Deleting graph "${graphName}"...`, { id: toastId });
+      await deleteGraph(graphName);
+      toast.success(`Graph "${graphName}" deleted successfully!`, { id: toastId });
+      router.push("/graph"); // Navigate back to graph list
+    } catch (error: any) {
+      console.error("Failed to delete graph:", error);
+      toast.error(error?.message || `Failed to delete graph "${graphName}"`, { id: toastId });
+    }
+  };
 
   // Auto-expand MessageSwiper when new messages arrive
   useEffect(() => {
@@ -78,18 +115,68 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
 
   return (
     <div className="h-screen w-screen">
-      {/* Top-right button to open node-create view */}
-      <div className="absolute top-4 right-4 z-50">
-        <Button
-          variant="default"
-          className="rounded-xl"
-          onClick={() =>
-            openPanel("node-create", <NodeCreateView onCreateNode={() => {}} />)
-          }
-        >
-          <Plus className="w-4 h-4" />
-        </Button>
+      {/* Top navigation bar */}
+      <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/graph">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Graphs
+            </Button>
+          </Link>
+          <div className="bg-background/80 backdrop-blur-sm rounded-lg px-3 py-2 border">
+            <h1 className="font-semibold text-lg">
+              {graphName === "new-graph" ? "New Graph" : graphName}
+            </h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {graphExists && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  disabled={isDeletingGraph}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Graph
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Graph</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete the graph "{graphName}"? This will remove the graphName annotation from all resources in this graph. The resources themselves will not be deleted, but they will no longer be grouped in this graph.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteGraph}
+                    disabled={isDeletingGraph}
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    {isDeletingGraph ? "Deleting..." : "Delete Graph"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <Button
+            variant="default"
+            className="rounded-xl"
+            onClick={() =>
+              openPanel("node-create", <NodeCreateView onCreateNode={() => {}} />)
+            }
+          >
+            <Plus className="w-4 h-4" />
+            Add Node
+          </Button>
+        </div>
       </div>
+
       <ReactFlow
         panOnScroll
         nodes={nodes}
@@ -103,7 +190,7 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
         <Background variant={BackgroundVariant.Dots} gap={60} size={1} />
 
         {/* Loading indicator */}
-        {isLoading && (
+        {isLoading && !isNewGraph && (
           <div className="absolute top-20 left-4 bg-blue-100 text-blue-800 px-3 py-2 rounded-md shadow-md z-10">
             Loading {graphName} resources...
           </div>
@@ -113,6 +200,21 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
         {error && (
           <div className="absolute top-20 left-4 bg-red-100 text-red-800 px-3 py-2 rounded-md shadow-md z-10">
             Error loading: {error}
+          </div>
+        )}
+
+        {/* Empty state for new graphs */}
+        {isNewGraph && !isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="text-center bg-background/80 backdrop-blur-sm rounded-lg p-8 border shadow-lg">
+              <h2 className="text-2xl font-semibold mb-2">Welcome to Your New Graph!</h2>
+              <p className="text-muted-foreground mb-4 max-w-md">
+                This is an empty graph waiting for your creativity. Click the "Add Node" button above to start building your infrastructure visualization.
+              </p>
+              <div className="text-sm text-muted-foreground">
+                💡 Tip: You can drag nodes around and connect them to create relationships
+              </div>
+            </div>
           </div>
         )}
       </ReactFlow>

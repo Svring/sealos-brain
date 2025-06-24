@@ -5,34 +5,31 @@ import {
   useNodesState,
   useEdgesState,
   MarkerType,
-  Position,
+  EdgeChange,
+  NodeChange,
 } from "@xyflow/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSealosStore } from "@/store/sealos-store";
-import {
-  directDevboxListOptions,
-  directClusterListOptions,
-  directDeploymentListOptions,
-  directCronJobListOptions,
-  directObjectStorageBucketListOptions,
-} from "@/lib/sealos/k8s/k8s-query";
+import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
 import {
   transformResourcesByGraphName,
   mergeGraphResourceGroups,
   type ResourceList,
   type GraphResourceGroup,
 } from "@/lib/sealos/k8s/k8s-transform";
-import { NodeChange } from "@xyflow/react";
+import { useDeleteGraphMutation } from "@/lib/sealos/k8s/k8s-mutation";
 
 interface UseGraphNodeReturn {
   nodes: Node[];
   edges: Edge[];
   setNodes: (nodes: Node[]) => void;
   onNodesChange: (changes: NodeChange[]) => void;
-  onEdgesChange: (changes: import("@xyflow/react").EdgeChange[]) => void;
+  onEdgesChange: (changes: EdgeChange[]) => void;
   isLoading: boolean;
   error: string | null;
   mergedGraphs: GraphResourceGroup;
+  deleteGraph: (graphName: string) => Promise<void>;
+  isDeletingGraph: boolean;
 }
 
 export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
@@ -40,13 +37,21 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const { currentUser } = useSealosStore();
 
-  // Query all five resource types
-  const devboxQuery = useQuery(directDevboxListOptions(currentUser));
-  const clusterQuery = useQuery(directClusterListOptions(currentUser));
-  const deploymentQuery = useQuery(directDeploymentListOptions(currentUser));
-  const cronJobQuery = useQuery(directCronJobListOptions(currentUser));
+  // Query all five resource types using the new generic function
+  const devboxQuery = useQuery(
+    directResourceListOptions(currentUser, "devbox")
+  );
+  const clusterQuery = useQuery(
+    directResourceListOptions(currentUser, "cluster")
+  );
+  const deploymentQuery = useQuery(
+    directResourceListOptions(currentUser, "deployment")
+  );
+  const cronJobQuery = useQuery(
+    directResourceListOptions(currentUser, "cronjob")
+  );
   const bucketQuery = useQuery(
-    directObjectStorageBucketListOptions(currentUser)
+    directResourceListOptions(currentUser, "objectstoragebucket")
   );
 
   // Combined loading state
@@ -116,6 +121,8 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     // If specificGraphName is provided, show only that graph's resources
     if (specificGraphName) {
       const graphResources = mergedGraphs[specificGraphName];
+
+      // If the specific graph doesn't exist (e.g., "new-graph"), return empty arrays
       if (!graphResources) {
         setNodes([]);
         setEdges([]);
@@ -248,6 +255,30 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     setEdges(allEdges);
   }, [mergedGraphs, specificGraphName, setNodes, setEdges]);
 
+  const queryClient = useQueryClient();
+
+  // Delete graph mutation using the new mutation hook
+  const deleteGraphMutation = useDeleteGraphMutation();
+
+  const deleteGraph = async (graphName: string) => {
+    const graphResources = mergedGraphs[graphName];
+
+    if (!graphResources) {
+      throw new Error(`Graph "${graphName}" not found`);
+    }
+
+    await deleteGraphMutation.mutateAsync({
+      currentUser,
+      graphName,
+      graphResources,
+    });
+
+    // Invalidate and refetch all resource queries to update the UI
+    queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
+  };
+
+  const isDeletingGraph = deleteGraphMutation.isPending;
+
   return {
     nodes,
     edges,
@@ -257,6 +288,8 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     isLoading,
     error,
     mergedGraphs,
+    deleteGraph,
+    isDeletingGraph,
   };
 }
 

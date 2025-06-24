@@ -2,14 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  directDevboxListOptions,
-  directClusterListOptions,
-  directDeploymentListOptions,
-  directCronJobListOptions,
-  directObjectStorageBucketListOptions,
-} from "@/lib/sealos/k8s/k8s-query";
-import { usePatchDevboxAnnotationMutation } from "@/lib/sealos/k8s/k8s-mutation";
+import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
+import { usePatchResourceAnnotationMutation } from "@/lib/sealos/k8s/k8s-mutation";
 import { useSealosStore } from "@/store/sealos-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,17 +33,15 @@ export default function K8sTestPage() {
   const [annotationKey, setAnnotationKey] = useState("");
   const [annotationValue, setAnnotationValue] = useState("");
 
-  // Run all queries - must be called before any early returns to maintain hook order
-  const devboxQuery = useQuery(directDevboxListOptions(currentUser));
-  const clusterQuery = useQuery(directClusterListOptions(currentUser));
-  const deploymentQuery = useQuery(directDeploymentListOptions(currentUser));
-  const cronJobQuery = useQuery(directCronJobListOptions(currentUser));
-  const bucketQuery = useQuery(
-    directObjectStorageBucketListOptions(currentUser)
-  );
+  // Run all queries using the new generic function
+  const devboxQuery = useQuery(directResourceListOptions(currentUser, "devbox"));
+  const clusterQuery = useQuery(directResourceListOptions(currentUser, "cluster"));
+  const deploymentQuery = useQuery(directResourceListOptions(currentUser, "deployment"));
+  const cronJobQuery = useQuery(directResourceListOptions(currentUser, "cronjob"));
+  const bucketQuery = useQuery(directResourceListOptions(currentUser, "objectstoragebucket"));
 
-  // Add annotation mutation for devbox using the new hook
-  const addAnnotationMutation = usePatchDevboxAnnotationMutation();
+  // Add annotation mutation using the new generic hook
+  const addAnnotationMutation = usePatchResourceAnnotationMutation();
 
   if (!currentUser) {
     return (
@@ -68,7 +60,8 @@ export default function K8sTestPage() {
     if (annotationKey && annotationValue && selectedDevboxName) {
       addAnnotationMutation.mutate({
         currentUser,
-        devboxName: selectedDevboxName,
+        resourceType: "devbox",
+        resourceName: selectedDevboxName,
         annotationKey,
         annotationValue,
       }, {
