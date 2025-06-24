@@ -50,7 +50,7 @@ export const PanelProvider = ({ children }: { children: ReactNode }) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}
             transition={{ duration: 0.2 }}
-            className="fixed top-2 right-2 bottom-2 w-[40%] bg-card border border-border rounded-lg shadow-lg p-4 z-50 overflow-auto"
+            className="fixed top-2 right-2 bottom-2 w-[40%] bg-background border border-border rounded-lg shadow-lg p-4 z-50 overflow-auto"
           >
             {Content}
           </motion.div>

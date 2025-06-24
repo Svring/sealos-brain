@@ -55,13 +55,6 @@ export default function DevboxNode({ data }: { data: DevboxNodeData }) {
           </div>
         </div>
       </BaseNode>
-      {/* Source handle for outgoing connections */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="source-bottom"
-        className="w-3 h-3 bg-blue-500"
-      />
     </>
   );
 }

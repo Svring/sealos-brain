@@ -19,7 +19,7 @@ export function GraphBackMenu({
 }: GraphBackMenuProps) {
   const [isBackHovered, setIsBackHovered] = React.useState(false)
 
-  const displayName = graphName === "new-graph" ? "New Graph" : graphName
+  const displayName = graphName?.startsWith("graph-") ? graphName : graphName
 
   return (
     <div className={cn("relative", className)} {...props}>

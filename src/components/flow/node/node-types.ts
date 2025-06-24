@@ -11,8 +11,6 @@ const nodeTypes = {
   devbox: DevboxNode,
   cluster: DBProviderNode, // cluster resources use dbprovider node
   deployment: AppLaunchpadNode, // deployment resources use applaunchpad node
-  dbprovider: DBProviderNode,
-  applaunchpad: AppLaunchpadNode,
   network: NetworkNode,
   aiproxy: AIProxyNode,
   cronjob: CronJobNode,

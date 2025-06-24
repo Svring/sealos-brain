@@ -5,6 +5,7 @@ import { GraphCard } from "@/components/graph/graph-card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { generateGraphName } from "@/lib/utils";
 
 export default function GraphPage() {
   // Use the unified hook without specificGraphName to get all graphs
@@ -19,7 +20,7 @@ export default function GraphPage() {
         <div>
           <h1 className="text-3xl font-bold">Graph</h1>
         </div>
-        <Link href="/graph/new-graph">
+        <Link href={`/graph/${generateGraphName()}`}>
           <Button variant="outline" className="size-8">
             <Plus />
           </Button>

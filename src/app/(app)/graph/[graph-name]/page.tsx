@@ -6,7 +6,6 @@ import nodeTypes from "@/components/flow/node/node-types";
 import { usePanel } from "@/context/panel-provider";
 import NodeCreateView from "@/components/flow/node/create/node-create-view";
 import edgeTypes from "@/components/flow/edge/edge-types";
-import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageSwiper } from "@/components/ui/message-swiper";
 import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
@@ -25,8 +24,7 @@ interface GraphPageContentProps {
 
 function GraphPageContent({ graphName }: GraphPageContentProps) {
   // Use the unified hook with specificGraphName parameter
-  const { nodes, edges, onNodesChange, onEdgesChange, isLoading, error } =
-    useGraphNode(graphName);
+  const { nodes, onNodesChange, isLoading, error } = useGraphNode(graphName);
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
 
@@ -43,7 +41,7 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
   const [previousMessageCount, setPreviousMessageCount] = useState(0);
 
   // Check if this is a new/empty graph (for loading state only)
-  const isNewGraph = graphName === "new-graph";
+  const isNewGraph = graphName?.startsWith("graph-") && !nodes.some(node => node.type !== "empty-state");
 
   // Define menu items for the MenuBar
   const menuItems: MenuBarItem[] = [
@@ -92,9 +90,8 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
       <ReactFlow
         panOnScroll
         nodes={nodes}
-        edges={edges}
+        edges={[]}
         onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onPaneClick={closePanel}

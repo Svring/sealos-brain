@@ -1,13 +1,5 @@
 import { useEffect, useMemo } from "react";
-import {
-  Node,
-  Edge,
-  useNodesState,
-  useEdgesState,
-  MarkerType,
-  EdgeChange,
-  NodeChange,
-} from "@xyflow/react";
+import { Node, useNodesState, NodeChange } from "@xyflow/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSealosStore } from "@/store/sealos-store";
 import { useResources, type ExistingResource } from "@/hooks/use-resources";
@@ -16,10 +8,8 @@ import { useDeleteGraphMutation } from "@/lib/sealos/k8s/k8s-mutation";
 
 interface UseGraphNodeReturn {
   nodes: Node[];
-  edges: Edge[];
   setNodes: (nodes: Node[]) => void;
   onNodesChange: (changes: NodeChange[]) => void;
-  onEdgesChange: (changes: EdgeChange[]) => void;
   isLoading: boolean;
   error: string | null;
   mergedGraphs: GraphResourceGroup;
@@ -29,7 +19,6 @@ interface UseGraphNodeReturn {
 
 export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const { currentUser } = useSealosStore();
 
   // Use the simplified resources hook
@@ -61,16 +50,15 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     return graphGroups;
   }, [allResources, isLoading]);
 
-  // Transform graphs into nodes and edges for visualization
+  // Transform graphs into nodes for visualization
   useEffect(() => {
     const allNodes: Node[] = [];
-    const allEdges: Edge[] = [];
 
     // If specificGraphName is provided, show only that graph's resources
     if (specificGraphName) {
       const graphResources = mergedGraphs[specificGraphName];
 
-      // If the specific graph doesn't exist or is empty (e.g., "new-graph"), show empty state node
+      // If the specific graph doesn't exist or is empty (new graphs start empty), show empty state node
       if (!graphResources || Object.keys(graphResources).length === 0) {
         const emptyStateNode: Node = {
           id: "empty-state",
@@ -83,7 +71,6 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
           selectable: false,
         };
         setNodes([emptyStateNode]);
-        setEdges([]);
         return;
       }
 
@@ -132,7 +119,6 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
           selectable: false,
         };
         setNodes([emptyStateNode]);
-        setEdges([]);
         return;
       }
 
@@ -186,16 +172,6 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
 
             allNodes.push(resourceTypeNode);
 
-            // Create edge from graph to resource type
-            const edgeId = `${graphNode.id}-${resourceTypeNodeId}`;
-            allEdges.push({
-              id: edgeId,
-              source: graphNode.id,
-              target: resourceTypeNodeId,
-              type: "step-edge",
-              markerEnd: { type: MarkerType.ArrowClosed },
-            } as Edge);
-
             resourceTypeIndex++;
           }
         );
@@ -205,8 +181,7 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     }
 
     setNodes(allNodes);
-    setEdges(allEdges);
-  }, [mergedGraphs, specificGraphName, setNodes, setEdges]);
+  }, [mergedGraphs, specificGraphName, setNodes]);
 
   const queryClient = useQueryClient();
 
@@ -234,10 +209,8 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
 
   return {
     nodes,
-    edges,
     setNodes,
     onNodesChange,
-    onEdgesChange,
     isLoading,
     error,
     mergedGraphs,
