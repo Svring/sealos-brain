@@ -103,3 +103,6 @@ export const RESOURCES = {
 };
 
 export type ResourceType = keyof typeof RESOURCES;
+
+// Shared annotation key for graph membership
+export const GRAPH_ANNOTATION_KEY = "sealosBrain/graphName";

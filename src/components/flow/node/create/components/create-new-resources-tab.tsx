@@ -9,11 +9,7 @@ import {
   resourceDescriptions,
 } from "./constants";
 
-interface CreateNewResourcesTabProps {
-  onCreateNode: (nodeType: string) => void;
-}
-
-export function CreateNewResourcesTab({ onCreateNode }: CreateNewResourcesTabProps) {
+export function CreateNewResourcesTab() {
   const { openPanel } = usePanel();
 
   return (
@@ -31,7 +27,7 @@ export function CreateNewResourcesTab({ onCreateNode }: CreateNewResourcesTabPro
                   <DevboxCreateView onComplete={() => {}} />
                 );
               } else {
-                onCreateNode(resourceType);
+                // No-op or add logic if needed in the future
               }
             }}
           >

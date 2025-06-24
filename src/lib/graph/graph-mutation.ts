@@ -3,6 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { usePatchResourceAnnotationMutation } from "@/lib/sealos/k8s/k8s-mutation";
 import type { ResourceType } from "@/lib/sealos/k8s/k8s-utils";
+import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-utils";
 
 // Add resource to graph by adding graphName annotation
 export function useAddResourceToGraphMutation() {
@@ -20,7 +21,7 @@ export function useAddResourceToGraphMutation() {
         currentUser: params.currentUser,
         resourceType: params.resourceType,
         resourceName: params.resourceName,
-        annotationKey: "graphName",
+        annotationKey: GRAPH_ANNOTATION_KEY,
         annotationValue: params.graphName,
         namespaceOverride: params.namespaceOverride,
       });

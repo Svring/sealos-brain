@@ -2,89 +2,67 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { ReactFlow, Background, BackgroundVariant } from "@xyflow/react";
-import nodeTypes from "@/components/flow/node/node-types";
 import { usePanel } from "@/context/panel-provider";
 import NodeCreateView from "@/components/flow/node/create/node-create-view";
-import edgeTypes from "@/components/flow/edge/edge-types";
-import { AnimatePresence, motion } from "framer-motion";
-import { MessageSwiper } from "@/components/ui/message-swiper";
-import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
-
-import { useCopilotChat } from "@copilotkit/react-core";
-import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
-import { ChevronDown, Plus } from "lucide-react";
+import {
+  useGraphCopilotChat,
+  MessageRole,
+  TextMessage,
+} from "@/hooks/use-graph-copilot-chat";
+import { ChevronDown, Plus, Spline } from "lucide-react";
 import { useGraphNode } from "@/hooks/use-graph-node";
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
 import { MenuBar, type MenuBarItem } from "@/components/ui/menu-bar";
 import { GraphBackMenu } from "@/components/graph/graph-back-menu";
+import { AnimatePresence, motion } from "framer-motion";
+import { MessageSwiper } from "@/components/ui/message-swiper";
+import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
+import nodeTypes from "@/components/flow/node/node-types";
+import edgeTypes from "@/components/flow/edge/edge-types";
 
 interface GraphPageContentProps {
   graphName: string;
 }
 
 function GraphPageContent({ graphName }: GraphPageContentProps) {
-  // Use the unified hook with specificGraphName parameter
   const { nodes, onNodesChange, isLoading, error } = useGraphNode(graphName);
-
   const { closePanel, openPanel, Id: panelId } = usePanel();
-
+  
   const {
     visibleMessages,
     appendMessage,
     isLoading: isChatLoading,
-  } = useCopilotChat();
+    isMessageSwiperExpanded,
+    setIsMessageSwiperExpanded,
+  } = useGraphCopilotChat();
 
-  // Add expand state for MessageSwiper
-  const [isMessageSwiperExpanded, setIsMessageSwiperExpanded] = useState(false);
-
-  // Track previous message count to detect new messages
-  const [previousMessageCount, setPreviousMessageCount] = useState(0);
-
-  // Check if this is a new/empty graph (for loading state only)
-  const isNewGraph = graphName?.startsWith("graph-") && !nodes.some(node => node.type !== "empty-state");
-
-  // Define menu items for the MenuBar
   const menuItems: MenuBarItem[] = [
     {
       icon: Plus,
       label: "Add Node",
-      onClick: () => openPanel("node-create", <NodeCreateView onCreateNode={() => {}} currentGraphName={graphName} />)
-    }
+      onClick: () =>
+        openPanel(
+          "node-create",
+          <NodeCreateView currentGraphName={graphName} />
+        ),
+    },
+    { icon: Spline, label: "Edge Mode", onClick: () => {} },
   ];
 
-  // Auto-expand MessageSwiper when new messages arrive
-  useEffect(() => {
-    const currentMessageCount = visibleMessages.length;
-    if (
-      currentMessageCount > previousMessageCount &&
-      previousMessageCount > 0
-    ) {
-      setIsMessageSwiperExpanded(true);
-    }
-    setPreviousMessageCount(currentMessageCount);
-  }, [visibleMessages.length, previousMessageCount]);
-
-  // Simplified layout for the message / prompt box
-  const boxAnimate = useMemo(() => {
-    const panelOpen = Boolean(panelId);
-
-    // When panel is open → center inside the left portion (accounting for panel)
-    if (panelOpen) {
-      return { left: "30%", x: "-50%", width: "60%" };
-    }
-
-    // Default → simple centered
-    return { left: "50%", x: "-50%", width: "640px" };
-  }, [panelId]);
+  const boxAnimate = useMemo(
+    () => ({
+      left: panelId ? "30%" : "50%",
+      x: "-50%",
+      width: panelId ? "60%" : "640px",
+    }),
+    [panelId]
+  );
 
   return (
-    <div className="h-screen w-full relative">
-      {/* Top navigation bar */}
+    <div className="relative h-screen w-full">
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
         <GraphBackMenu graphName={graphName} />
-        <div className="flex items-center gap-2">
-          <MenuBar items={menuItems} />
-        </div>
+        <MenuBar items={menuItems} />
       </div>
 
       <ReactFlow
@@ -97,42 +75,36 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
         onPaneClick={closePanel}
       >
         <Background variant={BackgroundVariant.Dots} gap={60} size={1} />
-
-        {/* Loading indicator */}
-        {isLoading && !isNewGraph && (
+        {isLoading && (
           <div className="absolute top-20 left-4 bg-blue-100 text-blue-800 px-3 py-2 rounded-md shadow-md z-10">
-            Loading {graphName} resources...
+            Loading {graphName}...
           </div>
         )}
-
-        {/* Error indicator */}
         {error && (
           <div className="absolute top-20 left-4 bg-red-100 text-red-800 px-3 py-2 rounded-md shadow-md z-10">
-            Error loading: {error}
+            Error: {error}
           </div>
         )}
-
-
       </ReactFlow>
 
       <AnimatePresence>
         <motion.div
           className="absolute bottom-2 z-40 max-w-xl"
-          initial={false}
           animate={boxAnimate}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-          <motion.div className="translate-y-3 relative z-0">
+          <motion.div className="translate-y-3">
             <MessageSwiper
               messages={visibleMessages}
               isExpanded={isMessageSwiperExpanded}
             />
           </motion.div>
-
-          <motion.div className="w-full relative z-10">
+          <motion.div className="relative w-full">
             <motion.button
-              onClick={() => setIsMessageSwiperExpanded((prev) => !prev)}
-              className="absolute left-1/2 -translate-x-1/2 -top-4 z-20 rounded-full p-2 cursor-pointer"
+              onClick={() =>
+                setIsMessageSwiperExpanded(!isMessageSwiperExpanded)
+              }
+              className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full p-2 cursor-pointer"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               animate={{ rotate: isMessageSwiperExpanded ? 0 : 180 }}
@@ -141,12 +113,12 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
               <ChevronDown className="w-5 h-5" />
             </motion.button>
             <PromptInputBox
-              onSend={(content: string) => {
+              onSend={(content: string) =>
                 appendMessage(
                   new TextMessage({ content, role: MessageRole.User })
-                );
-                console.log("🔍 Appended message:", content);
-              }}
+                )
+              }
+              isLoading={isChatLoading}
             />
           </motion.div>
         </motion.div>
@@ -155,24 +127,24 @@ function GraphPageContent({ graphName }: GraphPageContentProps) {
   );
 }
 
-interface GraphPageProps {
+export default function GraphPage({
+  params,
+}: {
   params: Promise<{ "graph-name": string }>;
-}
-
-export default function GraphPage({ params }: GraphPageProps) {
+}) {
   const [graphName, setGraphName] = useState<string>("");
 
   useEffect(() => {
-    params.then((resolvedParams) => {
-      setGraphName(decodeURIComponent(resolvedParams["graph-name"]));
-    });
+    params.then(({ "graph-name": name }) =>
+      setGraphName(decodeURIComponent(name))
+    );
   }, [params]);
 
   if (!graphName) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center">
+      <div className="flex h-screen w-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4" />
           <p className="text-gray-600">Loading graph...</p>
         </div>
       </div>
@@ -181,10 +153,7 @@ export default function GraphPage({ params }: GraphPageProps) {
 
   return (
     <CopilotStateProvider
-      initialConfig={{
-        runtimeUrl: "/api/agent/copilot",
-        agent: "copilot",
-      }}
+      initialConfig={{ runtimeUrl: "/api/agent/copilot", agent: "copilot" }}
     >
       <GraphPageContent graphName={graphName} />
     </CopilotStateProvider>

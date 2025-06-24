@@ -7,6 +7,7 @@ import {
   BatchV1Api,
   CoreV1Api,
 } from "@kubernetes/client-node";
+import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-utils";
 
 // Resource definitions
 const RESOURCES = {
@@ -124,18 +125,66 @@ export async function patchResourceAnnotation(
   }
   kc.loadFromString(decodedKubeconfig);
 
-  const patchBody = [
-    {
-      op: "add",
-      path: `/metadata/annotations/${annotationKey}`,
-      value: annotationValue,
-    },
-  ];
-
   try {
     let result;
     const resource = RESOURCES[resourceType];
 
+    // First, get the current resource to check if annotations exist
+    let currentResource;
+    if ("group" in resource && "version" in resource && "plural" in resource) {
+      // Custom resource
+      const customApi = kc.makeApiClient(CustomObjectsApi);
+      currentResource = await customApi.getNamespacedCustomObject({
+        group: resource.group,
+        version: resource.version,
+        namespace,
+        plural: resource.plural,
+        name: resourceName,
+      });
+    } else {
+      // Standard Kubernetes resource
+      if (resourceType === "deployment") {
+        const appsApi = kc.makeApiClient(AppsV1Api);
+        currentResource = await appsApi.readNamespacedDeployment({
+          name: resourceName,
+          namespace,
+        });
+      } else if (resourceType === "cronjob") {
+        const batchApi = kc.makeApiClient(BatchV1Api);
+        currentResource = await batchApi.readNamespacedCronJob({
+          name: resourceName,
+          namespace,
+        });
+      } else {
+        throw new Error(`Unsupported standard resource type: ${resourceType}`);
+      }
+    }
+
+    // Check if annotations exist, if not create them first
+    const hasAnnotations = currentResource.metadata?.annotations;
+    let patchBody;
+
+    if (!hasAnnotations) {
+      // Create annotations object first, then add the specific annotation
+      patchBody = [
+        {
+          op: "add",
+          path: "/metadata/annotations",
+          value: { [annotationKey]: annotationValue },
+        },
+      ];
+    } else {
+      // Annotations exist, just add/update the specific annotation
+      patchBody = [
+        {
+          op: "add",
+          path: `/metadata/annotations/${annotationKey}`,
+          value: annotationValue,
+        },
+      ];
+    }
+
+    // Apply the patch
     if ("group" in resource && "version" in resource && "plural" in resource) {
       // Custom resource
       const customApi = kc.makeApiClient(CustomObjectsApi);
@@ -306,7 +355,7 @@ export async function deleteGraphByRemovingAnnotations(
           kubeconfig,
           resourceType,
           resourceName,
-          "graphName",
+          GRAPH_ANNOTATION_KEY,
           namespace
         );
         results.push(result);

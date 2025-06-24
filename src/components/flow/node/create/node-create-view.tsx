@@ -7,14 +7,10 @@ import { CreateNewResourcesTab } from "./components/create-new-resources-tab";
 import { ExistingResourcesTab } from "./components/existing-resources-tab";
 
 interface NodeCreateViewProps {
-  onCreateNode: (nodeType: string) => void;
   currentGraphName?: string;
 }
 
-export default function NodeCreateView({
-  onCreateNode,
-  currentGraphName,
-}: NodeCreateViewProps) {
+export default function NodeCreateView({ currentGraphName }: NodeCreateViewProps) {
   const { currentUser } = useSealosStore();
   const { allResources, isLoading, refetchAll } = useResources(currentUser);
 
@@ -38,7 +34,7 @@ export default function NodeCreateView({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="create">
-          <CreateNewResourcesTab onCreateNode={onCreateNode} />
+          <CreateNewResourcesTab />
         </TabsContent>
         <TabsContent value="existing">
           <ExistingResourcesTab

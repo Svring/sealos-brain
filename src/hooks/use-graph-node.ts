@@ -5,6 +5,7 @@ import { useSealosStore } from "@/store/sealos-store";
 import { useResources, type ExistingResource } from "@/hooks/use-resources";
 import { type GraphResourceGroup } from "@/lib/sealos/k8s/k8s-transform";
 import { useDeleteGraphMutation } from "@/lib/sealos/k8s/k8s-mutation";
+import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-utils";
 
 interface UseGraphNodeReturn {
   nodes: Node[];
@@ -35,7 +36,7 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
 
     // Group resources by their graphName annotation
     allResources.forEach((resource) => {
-      const graphName = resource.annotations?.graphName;
+      const graphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
       if (graphName) {
         if (!graphGroups[graphName]) {
           graphGroups[graphName] = {};

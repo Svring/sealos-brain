@@ -3,6 +3,8 @@
  * and group them by resource type
  */
 
+import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-utils";
+
 export interface ResourceItem {
   apiVersion: string;
   kind: string;
@@ -54,7 +56,7 @@ export function transformResourcesByGraphName(
 
   resourceList.items.forEach((item: ResourceItem) => {
     // Check if the resource has a graphName annotation
-    const graphName = item.metadata?.annotations?.["graphName"];
+    const graphName = item.metadata?.annotations?.[GRAPH_ANNOTATION_KEY];
 
     if (graphName && item.metadata?.name) {
       // Initialize the graph entry if it doesn't exist
