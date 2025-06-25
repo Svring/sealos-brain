@@ -1,13 +1,18 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useGraphEdge } from "@/hooks/use-graph-edge";
 import { useGraphLayout } from "@/hooks/use-graph-layout";
 import { useGraphNode } from "@/hooks/use-graph-node";
-import type { ResourceType } from "@/lib/sealos/k8s/k8s-utils";
+import { useAddResourceToGraphMutation } from "@/lib/graph/graph-mutation";
+import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
 import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
 
 export function useGraph(specificGraphName?: string) {
   const { currentUser } = useSealosStore();
+
+  // React Query client for cache operations
+  const queryClient = useQueryClient();
 
   // Core node-related logic
   const nodeLogic = useGraphNode(specificGraphName);
@@ -17,6 +22,9 @@ export function useGraph(specificGraphName?: string) {
 
   // Layout logic
   const { applyLayout } = useGraphLayout();
+
+  // Mutation to rename graph (patch annotations)
+  const addToGraphMutation = useAddResourceToGraphMutation();
 
   // Combine node data and edge-handling to create enhanced nodes
   const enhancedNodes = useMemo(() => {
@@ -105,6 +113,41 @@ export function useGraph(specificGraphName?: string) {
     [applyLayout, enhancedNodes, enhancedEdges, nodeLogic.setNodes]
   );
 
+  // Mutation to rename graph (patch annotations)
+  const renameGraph = useCallback(
+    async (newName: string) => {
+      const resources = nodeLogic.mergedGraphs[specificGraphName ?? ""];
+      if (!resources || !currentUser) return;
+
+      const mutations: Promise<unknown>[] = [];
+      for (const [kind, names] of Object.entries(resources)) {
+        for (const name of names) {
+          mutations.push(
+            addToGraphMutation.mutateAsync({
+              currentUser,
+              resourceType: kind as any,
+              resourceName: name,
+              graphName: newName,
+            })
+          );
+        }
+      }
+
+      // Wait for all rename mutations to finish
+      await Promise.all(mutations);
+
+      // Invalidate cached k8s data so UI reflects the renamed graph
+      queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
+    },
+    [
+      nodeLogic.mergedGraphs,
+      specificGraphName,
+      currentUser,
+      addToGraphMutation,
+      queryClient,
+    ]
+  );
+
   return {
     // Node data
     ...nodeLogic,
@@ -129,5 +172,8 @@ export function useGraph(specificGraphName?: string) {
 
     // Enhanced nodes for rendering
     enhancedNodes,
+
+    // Mutation to rename graph (patch annotations)
+    renameGraph,
   };
 }

@@ -1,12 +1,12 @@
+import DevboxCreateView from "@/components/flow/node/devbox/create/view/devbox-create-view";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePanel } from "@/context/panel-provider";
-import { RESOURCES, type ResourceType } from "@/lib/sealos/k8s/k8s-utils";
-import DevboxCreateView from "@/components/flow/node/devbox/create/view/devbox-create-view";
+import { RESOURCES, type ResourceType } from "@/lib/sealos/k8s/k8s-constant";
 import {
-  resourceIcons,
   resourceColors,
-  resourceDisplayNames,
   resourceDescriptions,
+  resourceDisplayNames,
+  resourceIcons,
 } from "./constants";
 
 export function CreateNewResourcesTab() {
@@ -32,12 +32,18 @@ export function CreateNewResourcesTab() {
             }}
           >
             <CardContent className="p-4 flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-lg ${resourceColors[resourceType]} flex items-center justify-center text-white`}>
+              <div
+                className={`w-12 h-12 rounded-lg ${resourceColors[resourceType]} flex items-center justify-center text-white`}
+              >
                 <Icon className="w-6 h-6" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-base mb-1">{resourceDisplayNames[resourceType]}</h3>
-                <p className="text-xs text-muted-foreground">{resourceDescriptions[resourceType]}</p>
+                <h3 className="font-semibold text-base mb-1">
+                  {resourceDisplayNames[resourceType]}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {resourceDescriptions[resourceType]}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -45,4 +51,4 @@ export function CreateNewResourcesTab() {
       })}
     </div>
   );
-} 
+}

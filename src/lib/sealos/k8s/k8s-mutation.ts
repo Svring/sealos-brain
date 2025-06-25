@@ -7,11 +7,8 @@ import {
   patchResourceAnnotation,
   removeResourceAnnotation,
 } from "./k8s-actions";
-import {
-  getKubeconfig,
-  getNamespaceFromKubeconfig,
-  type ResourceType,
-} from "./k8s-utils";
+import type { ResourceType } from "./k8s-constant";
+import { getKubeconfig, getNamespaceFromKubeconfig } from "./k8s-utils";
 
 // Generic patch resource annotation mutation
 export function usePatchResourceAnnotationMutation() {
@@ -27,7 +24,8 @@ export function usePatchResourceAnnotationMutation() {
       const kubeconfig = getKubeconfig(params.currentUser);
 
       const namespace =
-        params.namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+        params.namespaceOverride ||
+        (await getNamespaceFromKubeconfig(kubeconfig));
 
       return await patchResourceAnnotation(
         kubeconfig,
@@ -54,7 +52,8 @@ export function useRemoveResourceAnnotationMutation() {
       const kubeconfig = getKubeconfig(params.currentUser);
 
       const namespace =
-        params.namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+        params.namespaceOverride ||
+        (await getNamespaceFromKubeconfig(kubeconfig));
 
       return await removeResourceAnnotation(
         kubeconfig,
@@ -79,7 +78,8 @@ export function useDeleteGraphMutation() {
       const kubeconfig = getKubeconfig(params.currentUser);
 
       const namespace =
-        params.namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+        params.namespaceOverride ||
+        (await getNamespaceFromKubeconfig(kubeconfig));
 
       return await deleteGraphByRemovingAnnotations(
         kubeconfig,

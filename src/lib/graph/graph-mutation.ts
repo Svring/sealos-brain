@@ -2,14 +2,14 @@
 
 import { useMutation } from "@tanstack/react-query";
 import {
+  GRAPH_ANNOTATION_KEY,
+  GRAPH_EDGES_ANNOTATION_KEY,
+  type ResourceType,
+} from "@/lib/sealos/k8s/k8s-constant";
+import {
   useDeleteGraphMutation as useDeleteGraphMutationBase,
   usePatchResourceAnnotationMutation,
 } from "@/lib/sealos/k8s/k8s-mutation";
-import type { ResourceType } from "@/lib/sealos/k8s/k8s-utils";
-import {
-  GRAPH_ANNOTATION_KEY,
-  GRAPH_EDGES_ANNOTATION_KEY,
-} from "@/lib/sealos/k8s/k8s-utils";
 import type { User } from "@/payload-types";
 
 // Add resource to graph by adding graphName annotation

@@ -1,7 +1,7 @@
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
 import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
-import { type ResourceType } from "@/lib/sealos/k8s/k8s-utils";
 
 interface ExistingResource {
   name: string;

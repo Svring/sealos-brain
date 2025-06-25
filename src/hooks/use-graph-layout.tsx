@@ -17,7 +17,7 @@ const getLayoutedElements = (
   options: LayoutOptions
 ): LayoutedElements => {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: options.direction, ranksep: 150 });
+  g.setGraph({ rankdir: options.direction, ranksep: 150, nodesep: 150 });
 
   edges.forEach((edge) => g.setEdge(edge.source, edge.target));
   nodes.forEach((node) =>

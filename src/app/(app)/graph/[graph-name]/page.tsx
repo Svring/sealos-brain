@@ -44,6 +44,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     enhancedNodes,
     isApplyingConnections,
     handleApplyLayout,
+    renameGraph,
   } = useGraph(graphName);
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
@@ -216,7 +217,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
         )}
       </AnimatePresence>
       <div className="absolute top-4 right-4 left-4 z-50 flex items-center justify-between">
-        <GraphBackMenu graphName={graphName} />
+        <GraphBackMenu graphName={graphName} onRename={renameGraph} />
         <MenuBar items={menuItems} />
       </div>
 
@@ -224,6 +225,12 @@ function GraphPageContent({ graphName }: { graphName: string }) {
         edges={parsedEdges}
         edgeTypes={edgeTypes}
         fitView
+        fitViewOptions={{
+          padding: 0.1,
+          includeHiddenNodes: false,
+          minZoom: 0.1,
+          maxZoom: 1.0,
+        }}
         key={refreshKey}
         nodes={enhancedNodes}
         nodeTypes={nodeTypes}

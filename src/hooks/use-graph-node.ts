@@ -3,8 +3,8 @@ import { type Node, type NodeChange, useNodesState } from "@xyflow/react";
 import { useEffect, useMemo } from "react";
 import { type ExistingResource, useResources } from "@/hooks/use-resources";
 import { useDeleteGraphMutation } from "@/lib/graph/graph-mutation";
+import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-constant";
 import type { GraphResourceGroup } from "@/lib/sealos/k8s/k8s-transform";
-import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-utils";
 import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
 

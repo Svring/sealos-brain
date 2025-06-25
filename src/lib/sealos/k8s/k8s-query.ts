@@ -3,11 +3,8 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryDebugLog } from "@/lib/query-debug-log";
 import { listResourcesByType, readDevboxSecret } from "./k8s-actions";
-import {
-  getKubeconfig,
-  getNamespaceFromKubeconfig,
-  type ResourceType,
-} from "./k8s-utils";
+import type { ResourceType } from "./k8s-constant";
+import { getKubeconfig, getNamespaceFromKubeconfig } from "./k8s-utils";
 
 // Generic resource list query options
 export function directResourceListOptions(
@@ -33,7 +30,7 @@ export function directResourceListOptions(
       }
 
       const namespace =
-        namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+        namespaceOverride || (await getNamespaceFromKubeconfig(kubeconfig));
 
       queryDebugLog("directResourceListOptions", {
         resourceType,
@@ -72,7 +69,7 @@ export function directDevboxSecretOptions(
       }
 
       const namespace =
-        namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
+        namespaceOverride || (await getNamespaceFromKubeconfig(kubeconfig));
 
       queryDebugLog("directDevboxSecretOptions", {
         devboxName,

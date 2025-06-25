@@ -4,7 +4,7 @@ import { useAddResourceToGraphMutation } from "@/lib/graph/graph-mutation";
 import {
   GRAPH_ANNOTATION_KEY,
   type ResourceType,
-} from "@/lib/sealos/k8s/k8s-utils";
+} from "@/lib/sealos/k8s/k8s-constant";
 import { useSealosStore } from "@/store/sealos-store";
 import { resourceIcons } from "./constants";
 

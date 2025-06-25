@@ -3,23 +3,49 @@
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import { useRouter } from "next/navigation";
+import React, { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 interface GraphBackMenuProps extends React.HTMLAttributes<HTMLDivElement> {
   graphName: string;
   backHref?: string;
+  onRename?: (newName: string) => void;
 }
 
 export function GraphBackMenu({
   graphName,
   backHref = "/graph",
   className,
+  onRename,
   ...props
 }: GraphBackMenuProps) {
   const [isBackHovered, setIsBackHovered] = React.useState(false);
+  const [editing, setEditing] = React.useState(false);
+  const [tempName, setTempName] = React.useState(graphName);
+  const router = useRouter();
 
-  const displayName = graphName?.startsWith("graph-") ? graphName : graphName;
+  // Keep tempName in sync when graphName prop updates (e.g., after redirect)
+  useEffect(() => {
+    setTempName(graphName);
+  }, [graphName]);
+
+  const submitRename = async () => {
+    setEditing(false);
+
+    if (tempName && tempName !== graphName) {
+      // Await potential async rename operation
+      await onRename?.(tempName);
+
+      // Pause for 2 seconds before navigation
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Redirect to the newly named graph route
+      router.push(`/graph/${encodeURIComponent(tempName)}`);
+    }
+  };
+
+  const displayName = graphName;
 
   return (
     <div className={cn("relative", className)} {...props}>
@@ -48,9 +74,27 @@ export function GraphBackMenu({
         <div className="h-6 w-px bg-border/50" />
 
         <div className="px-2 py-1">
-          <p className="max-w-[200px] truncate whitespace-nowrap font-medium text-sm leading-tight">
-            {displayName}
-          </p>
+          {editing ? (
+            <input
+              autoFocus
+              className="max-w-[200px] truncate rounded bg-transparent px-1 text-sm outline-none"
+              onBlur={submitRename}
+              onChange={(e) => setTempName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  submitRename();
+                }
+              }}
+              value={tempName}
+            />
+          ) : (
+            <p
+              className="max-w-[200px] truncate whitespace-nowrap font-medium text-sm leading-tight cursor-pointer"
+              onClick={() => setEditing(true)}
+            >
+              {displayName}
+            </p>
+          )}
         </div>
       </div>
 

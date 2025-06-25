@@ -3,11 +3,11 @@ import type { Edge } from "@xyflow/react";
 import { useCallback, useMemo, useState } from "react";
 import { type ExistingResource, useResources } from "@/hooks/use-resources";
 import { useAddGraphEdgesAnnotationMutation } from "@/lib/graph/graph-mutation";
-import type { ResourceType } from "@/lib/sealos/k8s/k8s-utils";
 import {
   GRAPH_ANNOTATION_KEY,
   GRAPH_EDGES_ANNOTATION_KEY,
-} from "@/lib/sealos/k8s/k8s-utils";
+  type ResourceType,
+} from "@/lib/sealos/k8s/k8s-constant";
 import type { User } from "@/payload-types";
 
 interface PendingEdge {

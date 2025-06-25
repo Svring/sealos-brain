@@ -9,7 +9,7 @@ import {
 } from "@kubernetes/client-node";
 
 // Import the correct annotation keys from k8s-utils
-import { GRAPH_ANNOTATION_KEY } from "./k8s-utils";
+import { GRAPH_ANNOTATION_KEY } from "./k8s-constant";
 
 interface ResourceDefinition {
   group?: string;
@@ -50,16 +50,7 @@ export type ResourceType = keyof typeof RESOURCES;
 
 function createKubeConfig(kubeconfig: string): KubeConfig {
   const kc = new KubeConfig();
-  try {
-    const decodedKubeconfig =
-      kubeconfig.includes("%") || kubeconfig.includes("+")
-        ? decodeURIComponent(kubeconfig)
-        : kubeconfig;
-    kc.loadFromString(decodedKubeconfig);
-  } catch (error) {
-    console.warn("Failed to decode kubeconfig, using original:", error);
-    kc.loadFromString(kubeconfig);
-  }
+  kc.loadFromString(kubeconfig);
   return kc;
 }
 
@@ -355,4 +346,23 @@ export async function readDevboxSecret(
 // Utility to encode annotation key for JSON patch (convert '/' to '~1')
 function escapeSlash(key: string): string {
   return key.replaceAll("/", "~1");
+}
+
+/**
+ * Returns the current context object (with namespace) from the kubeconfig.
+ * @param kubeconfig The kubeconfig string (may be URL-encoded)
+ * @returns The current context object, e.g. { name, namespace, user, cluster }
+ */
+export async function getCurrentContextWithNamespace(
+  kubeconfig: string
+): Promise<{
+  name: string;
+  namespace?: string;
+  user?: string;
+  cluster?: string;
+}> {
+  const kc = createKubeConfig(kubeconfig);
+  const currentContext = kc.getCurrentContext();
+  const ctx = kc.getContextObject(currentContext);
+  return ctx ?? { name: currentContext };
 }
