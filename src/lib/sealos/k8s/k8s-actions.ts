@@ -8,8 +8,8 @@ import {
   KubeConfig,
 } from "@kubernetes/client-node";
 
-const GRAPH_ANNOTATION_KEY = escapeSlash("sealosBrain/graphName");
-const GRAPH_EDGES_ANNOTATION_KEY = escapeSlash("sealosBrain/graphEdges");
+// Import the correct annotation keys from k8s-utils
+import { GRAPH_ANNOTATION_KEY } from "./k8s-utils";
 
 interface ResourceDefinition {
   group?: string;
@@ -108,7 +108,7 @@ async function patchResource(
   resourceType: ResourceType,
   resourceName: string,
   namespace: string,
-  patchBody: any[]
+  patchBody: unknown[]
 ) {
   const resource = RESOURCES[resourceType];
   if ("group" in resource && resource.group) {
@@ -148,19 +148,24 @@ export async function listResourcesByType(
     const clients = createApiClients(kc);
     const resource = RESOURCES[resourceType];
 
-    const res =
-      "group" in resource && resource.group
-        ? await clients.customApi.listNamespacedCustomObject({
-            group: resource.group,
-            version: resource.version!,
-            namespace,
-            plural: resource.plural!,
-          })
-        : resourceType === "deployment"
-          ? await clients.appsApi.listNamespacedDeployment({ namespace })
-          : resourceType === "cronjob"
-            ? await clients.batchApi.listNamespacedCronJob({ namespace })
-            : null;
+    let res: unknown = null;
+    if (
+      "group" in resource &&
+      resource.group &&
+      resource.version &&
+      resource.plural
+    ) {
+      res = await clients.customApi.listNamespacedCustomObject({
+        group: resource.group,
+        version: resource.version,
+        namespace,
+        plural: resource.plural,
+      });
+    } else if (resourceType === "deployment") {
+      res = await clients.appsApi.listNamespacedDeployment({ namespace });
+    } else if (resourceType === "cronjob") {
+      res = await clients.batchApi.listNamespacedCronJob({ namespace });
+    }
 
     if (!res) throw new Error(`Unsupported resource type: ${resourceType}`);
     return JSON.parse(JSON.stringify(res));
@@ -181,6 +186,7 @@ export async function patchResourceAnnotation(
   const kc = createKubeConfig(kubeconfig);
   const clients = createApiClients(kc);
 
+  // Only escape the key for JSON Patch path, not for the actual annotation key
   const encodedAnnotationKey = escapeSlash(annotationKey);
 
   try {
@@ -202,7 +208,7 @@ export async function patchResourceAnnotation(
           {
             op: "add",
             path: "/metadata/annotations",
-            value: { [encodedAnnotationKey]: annotationValue },
+            value: { [annotationKey]: annotationValue },
           },
         ];
 
@@ -247,8 +253,10 @@ export async function removeResourceAnnotation(
   const clients = createApiClients(kc);
 
   try {
+    // Escape the key for JSON Patch path
+    const encodedAnnotationKey = escapeSlash(annotationKey);
     const patchBody = [
-      { op: "remove", path: `/metadata/annotations/${annotationKey}` },
+      { op: "remove", path: `/metadata/annotations/${encodedAnnotationKey}` },
     ];
     const result = await patchResource(
       clients,

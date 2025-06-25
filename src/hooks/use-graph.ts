@@ -6,11 +6,13 @@ import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
 
 export function useGraph(specificGraphName?: string) {
+  const { currentUser } = useSealosStore();
+
   // Core node-related logic
   const nodeLogic = useGraphNode(specificGraphName);
 
   // Edge-related logic
-  const edgeLogic = useGraphEdge();
+  const edgeLogic = useGraphEdge(currentUser, specificGraphName);
 
   // Combine node data and edge-handling to create enhanced nodes
   const enhancedNodes = useMemo(() => {
@@ -54,8 +56,6 @@ export function useGraph(specificGraphName?: string) {
     return { type: resourceType, name: resourceName };
   }, []);
 
-  const { currentUser } = useSealosStore();
-
   // Wrap handleApplyConnections to supply current user and resource parser
   const handleApplyConnections = useCallback(async () => {
     if (!currentUser) {
@@ -76,10 +76,12 @@ export function useGraph(specificGraphName?: string) {
     setEditMode: edgeLogic.setEditMode,
     selectedNodes: edgeLogic.selectedNodes,
     pendingEdges: edgeLogic.pendingEdges,
+    parsedEdges: edgeLogic.parsedEdges,
     handleNodeClick: edgeLogic.handleNodeClick,
     handleApplyConnections,
     handleQuitEditMode: edgeLogic.handleQuitEditMode,
     isApplyingConnections: edgeLogic.isApplyingConnections,
+    isLoadingEdges: edgeLogic.isLoadingEdges,
 
     // Enhanced nodes for rendering
     enhancedNodes,

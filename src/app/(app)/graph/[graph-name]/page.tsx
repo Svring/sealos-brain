@@ -36,6 +36,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     setEditMode,
     selectedNodes,
     pendingEdges,
+    parsedEdges,
     handleApplyConnections,
     handleQuitEditMode,
     enhancedNodes,
@@ -164,7 +165,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
       </div>
 
       <ReactFlow
-        edges={[]}
+        edges={parsedEdges}
         edgeTypes={edgeTypes}
         nodes={enhancedNodes}
         nodeTypes={nodeTypes}

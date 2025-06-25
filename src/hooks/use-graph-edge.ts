@@ -1,6 +1,13 @@
-import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Edge } from "@xyflow/react";
+import { useCallback, useMemo, useState } from "react";
+import { type ExistingResource, useResources } from "@/hooks/use-resources";
 import { useAddGraphEdgesAnnotationMutation } from "@/lib/graph/graph-mutation";
 import type { ResourceType } from "@/lib/sealos/k8s/k8s-utils";
+import {
+  GRAPH_ANNOTATION_KEY,
+  GRAPH_EDGES_ANNOTATION_KEY,
+} from "@/lib/sealos/k8s/k8s-utils";
 import type { User } from "@/payload-types";
 
 interface PendingEdge {
@@ -8,11 +15,32 @@ interface PendingEdge {
   target: string;
 }
 
+// ReactFlow-compatible edge interface with additional metadata
+interface ParsedEdge extends Edge {
+  sourceResourceType: ResourceType;
+  sourceResourceName: string;
+  targetResourceType: ResourceType;
+  targetResourceName: string;
+  createdAt: string;
+}
+
+// New edge storage format
+interface EdgeConnection {
+  name: string;
+  type: ResourceType;
+}
+
+interface EdgeInfo {
+  in: EdgeConnection[];
+  out: EdgeConnection[];
+}
+
 interface UseGraphEdgeReturn {
   editMode: boolean;
   setEditMode: (mode: boolean) => void;
   selectedNodes: string[];
   pendingEdges: PendingEdge[];
+  parsedEdges: ParsedEdge[];
   handleNodeClick: (event: React.MouseEvent, nodeId: string) => void;
   handleApplyConnections: (
     currentUser: User,
@@ -22,9 +50,248 @@ interface UseGraphEdgeReturn {
   ) => Promise<void>;
   handleQuitEditMode: () => void;
   isApplyingConnections: boolean;
+  isLoadingEdges: boolean;
 }
 
-export function useGraphEdge(): UseGraphEdgeReturn {
+// Helper function to create edge from connection info
+function createEdgeFromConnection(
+  sourceType: ResourceType,
+  sourceName: string,
+  targetType: ResourceType,
+  targetName: string
+): ParsedEdge {
+  return {
+    // ReactFlow Edge properties
+    id: `${sourceType}-${sourceName}-to-${targetType}-${targetName}`,
+    source: `${sourceType}-${sourceName}`,
+    target: `${targetType}-${targetName}`,
+    type: "step-edge",
+    animated: true,
+
+    // Additional metadata
+    sourceResourceType: sourceType,
+    sourceResourceName: sourceName,
+    targetResourceType: targetType,
+    targetResourceName: targetName,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+// Helper function to process connections array
+function processConnections(
+  connections: EdgeConnection[],
+  resourceType: ResourceType,
+  resourceName: string,
+  isOutgoing: boolean
+): ParsedEdge[] {
+  const edges: ParsedEdge[] = [];
+
+  for (const connection of connections) {
+    if (connection.name && connection.type) {
+      if (isOutgoing) {
+        edges.push(
+          createEdgeFromConnection(
+            resourceType,
+            resourceName,
+            connection.type,
+            connection.name
+          )
+        );
+      } else {
+        edges.push(
+          createEdgeFromConnection(
+            connection.type,
+            connection.name,
+            resourceType,
+            resourceName
+          )
+        );
+      }
+    }
+  }
+
+  return edges;
+}
+
+// Helper function to parse a single edge annotation with new format
+function parseEdgeAnnotation(
+  edgesAnnotation: string,
+  resourceName: string,
+  resourceType: ResourceType
+): ParsedEdge[] {
+  try {
+    const edgeInfo: EdgeInfo = JSON.parse(edgesAnnotation);
+    if (!edgeInfo || typeof edgeInfo !== "object") {
+      return [];
+    }
+
+    const edges: ParsedEdge[] = [];
+
+    // Process "out" connections (this resource connects to others)
+    if (Array.isArray(edgeInfo.out)) {
+      edges.push(
+        ...processConnections(edgeInfo.out, resourceType, resourceName, true)
+      );
+    }
+
+    // Process "in" connections (other resources connect to this one)
+    // This enables bidirectional relationships - a resource can have both incoming and outgoing connections
+    if (Array.isArray(edgeInfo.in)) {
+      edges.push(
+        ...processConnections(edgeInfo.in, resourceType, resourceName, false)
+      );
+    }
+
+    return edges;
+  } catch {
+    // Silently ignore parsing errors
+    return [];
+  }
+}
+
+// Helper function to check if resource belongs to specific graph
+function isResourceInGraph(
+  resource: ExistingResource,
+  specificGraphName?: string
+): boolean {
+  if (!specificGraphName) {
+    return true;
+  }
+  const resourceGraphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
+  return resourceGraphName === specificGraphName;
+}
+
+// Helper function to process edges for a single resource
+function processResourceEdges(resource: ExistingResource): ParsedEdge[] {
+  const edgesAnnotation = resource.annotations?.[GRAPH_EDGES_ANNOTATION_KEY];
+  if (!edgesAnnotation) {
+    return [];
+  }
+
+  return parseEdgeAnnotation(
+    edgesAnnotation,
+    resource.name,
+    resource.type as ResourceType
+  );
+}
+
+// Helper function to create edge info for resource
+function createEdgeInfoForResource(
+  resourceKey: string,
+  connections: EdgeConnection[],
+  isOutgoing: boolean
+): { resourceType: ResourceType; resourceName: string; edgeInfo: EdgeInfo } {
+  const [resourceType, ...nameParts] = resourceKey.split("-");
+  const resourceName = nameParts.join("-");
+
+  const edgeInfo: EdgeInfo = {
+    in: isOutgoing ? [] : connections,
+    out: isOutgoing ? connections : [],
+  };
+
+  return {
+    resourceType: resourceType as ResourceType,
+    resourceName,
+    edgeInfo,
+  };
+}
+
+// Helper function to get existing edge info for a resource
+function getExistingEdgeInfo(
+  resourceKey: string,
+  allResources: ExistingResource[]
+): EdgeInfo {
+  const [resourceType, ...nameParts] = resourceKey.split("-");
+  const resourceName = nameParts.join("-");
+
+  const resource = allResources.find(
+    (r) => r.type === resourceType && r.name === resourceName
+  );
+
+  if (resource?.annotations?.[GRAPH_EDGES_ANNOTATION_KEY]) {
+    try {
+      const existing = JSON.parse(
+        resource.annotations[GRAPH_EDGES_ANNOTATION_KEY]
+      );
+      return {
+        in: Array.isArray(existing.in) ? existing.in : [],
+        out: Array.isArray(existing.out) ? existing.out : [],
+      };
+    } catch {
+      return { in: [], out: [] };
+    }
+  }
+
+  return { in: [], out: [] };
+}
+
+// Helper function to add connection if not exists
+function addConnectionIfNotExists(
+  connections: EdgeConnection[],
+  newConnection: EdgeConnection
+): void {
+  const exists = connections.some(
+    (conn) =>
+      conn.name === newConnection.name && conn.type === newConnection.type
+  );
+  if (!exists) {
+    connections.push(newConnection);
+  }
+}
+
+// Helper function to process a single pending edge
+function processPendingEdge(
+  pendingEdge: PendingEdge,
+  getResourceInfo: (
+    nodeId: string
+  ) => { type: ResourceType; name: string } | null,
+  resourceUpdates: Map<string, EdgeInfo>,
+  allResources: ExistingResource[]
+): void {
+  const sourceInfo = getResourceInfo(pendingEdge.source);
+  const targetInfo = getResourceInfo(pendingEdge.target);
+
+  if (!(sourceInfo && targetInfo)) {
+    return;
+  }
+
+  const sourceKey = `${sourceInfo.type}-${sourceInfo.name}`;
+  const targetKey = `${targetInfo.type}-${targetInfo.name}`;
+
+  // Get or initialize edge info for source resource
+  if (!resourceUpdates.has(sourceKey)) {
+    resourceUpdates.set(
+      sourceKey,
+      getExistingEdgeInfo(sourceKey, allResources)
+    );
+  }
+
+  // Get or initialize edge info for target resource
+  if (!resourceUpdates.has(targetKey)) {
+    resourceUpdates.set(
+      targetKey,
+      getExistingEdgeInfo(targetKey, allResources)
+    );
+  }
+
+  const sourceEdgeInfo = resourceUpdates.get(sourceKey);
+  const targetEdgeInfo = resourceUpdates.get(targetKey);
+
+  if (sourceEdgeInfo && targetEdgeInfo) {
+    // Add new connection to source's "out" list (if not already present)
+    const outConnection = { name: targetInfo.name, type: targetInfo.type };
+    addConnectionIfNotExists(sourceEdgeInfo.out, outConnection);
+
+    // Add new connection to target's "in" list (if not already present)
+    const inConnection = { name: sourceInfo.name, type: sourceInfo.type };
+    addConnectionIfNotExists(targetEdgeInfo.in, inConnection);
+  }
+}
+
+export function useGraphEdge(
+  currentUser: User | null = null,
+  specificGraphName?: string
+): UseGraphEdgeReturn {
   // Edit mode state
   const [editMode, setEditMode] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
@@ -32,6 +299,33 @@ export function useGraphEdge(): UseGraphEdgeReturn {
 
   // Mutation for adding graph edges annotation
   const addGraphEdgesMutation = useAddGraphEdgesAnnotationMutation();
+
+  // Get resources to parse edges from
+  const { allResources, isLoading: isLoadingResources } =
+    useResources(currentUser);
+
+  const queryClient = useQueryClient();
+
+  // Parse edges from resource annotations
+  const parsedEdges = useMemo(() => {
+    if (isLoadingResources || !allResources.length) {
+      return [];
+    }
+
+    const allEdges: ParsedEdge[] = [];
+
+    for (const resource of allResources) {
+      // Skip resources not in the specific graph if specified
+      if (!isResourceInGraph(resource, specificGraphName)) {
+        continue;
+      }
+
+      const resourceEdges = processResourceEdges(resource);
+      allEdges.push(...resourceEdges);
+    }
+
+    return allEdges;
+  }, [allResources, isLoadingResources, specificGraphName]);
 
   // Handle node clicks in edit mode
   const handleNodeClick = useCallback(
@@ -58,9 +352,11 @@ export function useGraphEdge(): UseGraphEdgeReturn {
           // Check if this edge already exists to prevent duplicates
           setPendingEdges((prevEdges) => {
             const edgeExists = prevEdges.some(
-              (edge) =>
-                (edge.source === source && edge.target === target) ||
-                (edge.source === target && edge.target === source)
+              (existingEdge) =>
+                (existingEdge.source === source &&
+                  existingEdge.target === target) ||
+                (existingEdge.source === target &&
+                  existingEdge.target === source)
             );
             if (edgeExists) {
               return prevEdges; // Don't add duplicate
@@ -76,10 +372,10 @@ export function useGraphEdge(): UseGraphEdgeReturn {
     [editMode]
   );
 
-  // Handle applying connections
+  // Handle applying connections with new format that supports bidirectional relationships
   const handleApplyConnections = useCallback(
     async (
-      currentUser: User,
+      user: User,
       getResourceInfo: (
         nodeId: string
       ) => { type: ResourceType; name: string } | null
@@ -88,72 +384,50 @@ export function useGraphEdge(): UseGraphEdgeReturn {
         return;
       }
 
-      // Process all pending edges in parallel
-      const edgePromises = pendingEdges.map((edge) => {
-        const sourceInfo = getResourceInfo(edge.source);
-        const targetInfo = getResourceInfo(edge.target);
+      // Group new connections by resource
+      const resourceUpdates = new Map<string, EdgeInfo>();
 
-        if (!(sourceInfo && targetInfo)) {
-          // Skip invalid edges
-          return Promise.resolve();
-        }
+      for (const pendingEdge of pendingEdges) {
+        processPendingEdge(
+          pendingEdge,
+          getResourceInfo,
+          resourceUpdates,
+          allResources
+        );
+      }
 
-        // Create edge annotation value (JSON string with edge information)
-        const edgeData = {
-          source: {
-            nodeId: edge.source,
-            resourceType: sourceInfo.type,
-            resourceName: sourceInfo.name,
-          },
-          target: {
-            nodeId: edge.target,
-            resourceType: targetInfo.type,
-            resourceName: targetInfo.name,
-          },
-          createdAt: new Date().toISOString(),
-        };
+      // Create mutations for all resources that need updates
+      const mutations: Promise<unknown>[] = [];
 
-        // Create reverse edge annotation
-        const reverseEdgeData = {
-          source: {
-            nodeId: edge.target,
-            resourceType: targetInfo.type,
-            resourceName: targetInfo.name,
-          },
-          target: {
-            nodeId: edge.source,
-            resourceType: sourceInfo.type,
-            resourceName: sourceInfo.name,
-          },
-          createdAt: new Date().toISOString(),
-        };
+      for (const [resourceKey, edgeInfo] of resourceUpdates.entries()) {
+        const { resourceType, resourceName } = createEdgeInfoForResource(
+          resourceKey,
+          [], // connections not used in this context
+          true // isOutgoing not used in this context
+        );
 
-        // Add both edge annotations in parallel
-        return Promise.all([
+        mutations.push(
           addGraphEdgesMutation.mutateAsync({
-            currentUser,
-            resourceType: sourceInfo.type,
-            resourceName: sourceInfo.name,
-            graphEdges: JSON.stringify([edgeData]),
-          }),
-          addGraphEdgesMutation.mutateAsync({
-            currentUser,
-            resourceType: targetInfo.type,
-            resourceName: targetInfo.name,
-            graphEdges: JSON.stringify([reverseEdgeData]),
-          }),
-        ]);
-      });
+            currentUser: user,
+            resourceType,
+            resourceName,
+            graphEdges: JSON.stringify(edgeInfo),
+          })
+        );
+      }
 
-      // Wait for all edge operations to complete
-      await Promise.all(edgePromises);
+      // Wait for all mutations to complete
+      await Promise.all(mutations);
+
+      // Invalidate and refetch all resource queries to update the UI
+      queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
 
       // Reset edit mode and clear pending state
       setEditMode(false);
       setPendingEdges([]);
       setSelectedNodes([]);
     },
-    [pendingEdges, addGraphEdgesMutation]
+    [pendingEdges, addGraphEdgesMutation, allResources, queryClient]
   );
 
   // Handle quitting edit mode
@@ -168,9 +442,11 @@ export function useGraphEdge(): UseGraphEdgeReturn {
     setEditMode,
     selectedNodes,
     pendingEdges,
+    parsedEdges,
     handleNodeClick,
     handleApplyConnections,
     handleQuitEditMode,
     isApplyingConnections: addGraphEdgesMutation.isPending,
+    isLoadingEdges: isLoadingResources,
   };
 }
