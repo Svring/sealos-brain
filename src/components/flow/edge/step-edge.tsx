@@ -1,6 +1,7 @@
-import { Position, getSmoothStepPath, BaseEdge, type EdgeProps } from '@xyflow/react';
+import { BaseEdge, type EdgeProps, getSmoothStepPath } from "@xyflow/react";
 
-export default function StepEdge({ id, sourceX, sourceY, targetX, targetY }: EdgeProps) {
+export default function StepEdge(props: EdgeProps) {
+  const { id, sourceX, sourceY, targetX, targetY, data, ...rest } = props;
 
   const [path] = getSmoothStepPath({
     sourceX,
@@ -11,9 +12,16 @@ export default function StepEdge({ id, sourceX, sourceY, targetX, targetY }: Edg
     // targetPosition: Position.Left,
   });
 
+  const handleClick = (event: React.MouseEvent) => {
+    // Call the onClick handler from data if it exists
+    if (data?.onClick && typeof data.onClick === "function") {
+      data.onClick(event);
+    }
+  };
+
   return (
     <>
-      <BaseEdge id={id} path={path} />
+      <BaseEdge id={id} onClick={handleClick} path={path} {...rest} />
     </>
-  )
+  );
 }

@@ -45,6 +45,22 @@ export function useGraph(specificGraphName?: string) {
     edgeLogic.handleNodeClick,
   ]);
 
+  // Create enhanced edges with click handlers in edit mode
+  const enhancedEdges = useMemo(() => {
+    if (!edgeLogic.editMode) {
+      return edgeLogic.parsedEdges;
+    }
+
+    return edgeLogic.parsedEdges.map((edge) => ({
+      ...edge,
+      data: {
+        ...edge.data,
+        onClick: (event: React.MouseEvent) =>
+          edgeLogic.handleEdgeClick(event, edge),
+      },
+    }));
+  }, [edgeLogic.editMode, edgeLogic.parsedEdges, edgeLogic.handleEdgeClick]);
+
   // Helper to parse resource info from nodeId for edge annotations
   const getResourceInfo = useCallback((nodeId: string) => {
     const parts = nodeId.split("-");
@@ -75,9 +91,12 @@ export function useGraph(specificGraphName?: string) {
     editMode: edgeLogic.editMode,
     setEditMode: edgeLogic.setEditMode,
     selectedNodes: edgeLogic.selectedNodes,
+    selectedEdges: edgeLogic.selectedEdges,
     pendingEdges: edgeLogic.pendingEdges,
-    parsedEdges: edgeLogic.parsedEdges,
+    pendingEdgeDeletions: edgeLogic.pendingEdgeDeletions,
+    parsedEdges: enhancedEdges, // Use enhanced edges instead of raw ones
     handleNodeClick: edgeLogic.handleNodeClick,
+    handleEdgeClick: edgeLogic.handleEdgeClick,
     handleApplyConnections,
     handleQuitEditMode: edgeLogic.handleQuitEditMode,
     isApplyingConnections: edgeLogic.isApplyingConnections,

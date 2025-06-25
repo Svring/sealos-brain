@@ -15,6 +15,15 @@ interface PendingEdge {
   target: string;
 }
 
+// Add interface for pending edge deletions
+interface PendingEdgeDeletion {
+  edgeId: string;
+  sourceResourceType: ResourceType;
+  sourceResourceName: string;
+  targetResourceType: ResourceType;
+  targetResourceName: string;
+}
+
 // ReactFlow-compatible edge interface with additional metadata
 interface ParsedEdge extends Edge {
   sourceResourceType: ResourceType;
@@ -39,9 +48,12 @@ interface UseGraphEdgeReturn {
   editMode: boolean;
   setEditMode: (mode: boolean) => void;
   selectedNodes: string[];
+  selectedEdges: string[];
   pendingEdges: PendingEdge[];
+  pendingEdgeDeletions: PendingEdgeDeletion[];
   parsedEdges: ParsedEdge[];
   handleNodeClick: (event: React.MouseEvent, nodeId: string) => void;
+  handleEdgeClick: (event: React.MouseEvent, edge: ParsedEdge) => void;
   handleApplyConnections: (
     currentUser: User,
     getResourceInfo: (
@@ -239,6 +251,21 @@ function addConnectionIfNotExists(
   }
 }
 
+// Helper function to remove connection if exists
+function removeConnectionIfExists(
+  connections: EdgeConnection[],
+  connectionToRemove: EdgeConnection
+): void {
+  const index = connections.findIndex(
+    (conn) =>
+      conn.name === connectionToRemove.name &&
+      conn.type === connectionToRemove.type
+  );
+  if (index !== -1) {
+    connections.splice(index, 1);
+  }
+}
+
 // Helper function to process a single pending edge
 function processPendingEdge(
   pendingEdge: PendingEdge,
@@ -288,6 +315,51 @@ function processPendingEdge(
   }
 }
 
+// Helper function to process a pending edge deletion
+function processPendingEdgeDeletion(
+  pendingDeletion: PendingEdgeDeletion,
+  resourceUpdates: Map<string, EdgeInfo>,
+  allResources: ExistingResource[]
+): void {
+  const sourceKey = `${pendingDeletion.sourceResourceType}-${pendingDeletion.sourceResourceName}`;
+  const targetKey = `${pendingDeletion.targetResourceType}-${pendingDeletion.targetResourceName}`;
+
+  // Get or initialize edge info for source resource
+  if (!resourceUpdates.has(sourceKey)) {
+    resourceUpdates.set(
+      sourceKey,
+      getExistingEdgeInfo(sourceKey, allResources)
+    );
+  }
+
+  // Get or initialize edge info for target resource
+  if (!resourceUpdates.has(targetKey)) {
+    resourceUpdates.set(
+      targetKey,
+      getExistingEdgeInfo(targetKey, allResources)
+    );
+  }
+
+  const sourceEdgeInfo = resourceUpdates.get(sourceKey);
+  const targetEdgeInfo = resourceUpdates.get(targetKey);
+
+  if (sourceEdgeInfo && targetEdgeInfo) {
+    // Remove connection from source's "out" list
+    const outConnection = {
+      name: pendingDeletion.targetResourceName,
+      type: pendingDeletion.targetResourceType,
+    };
+    removeConnectionIfExists(sourceEdgeInfo.out, outConnection);
+
+    // Remove connection from target's "in" list
+    const inConnection = {
+      name: pendingDeletion.sourceResourceName,
+      type: pendingDeletion.sourceResourceType,
+    };
+    removeConnectionIfExists(targetEdgeInfo.in, inConnection);
+  }
+}
+
 export function useGraphEdge(
   currentUser: User | null = null,
   specificGraphName?: string
@@ -295,7 +367,11 @@ export function useGraphEdge(
   // Edit mode state
   const [editMode, setEditMode] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+  const [selectedEdges, setSelectedEdges] = useState<string[]>([]);
   const [pendingEdges, setPendingEdges] = useState<PendingEdge[]>([]);
+  const [pendingEdgeDeletions, setPendingEdgeDeletions] = useState<
+    PendingEdgeDeletion[]
+  >([]);
 
   // Mutation for adding graph edges annotation
   const addGraphEdgesMutation = useAddGraphEdgesAnnotationMutation();
@@ -324,8 +400,27 @@ export function useGraphEdge(
       allEdges.push(...resourceEdges);
     }
 
+    // In edit mode, enhance edges with selection styling
+    if (editMode) {
+      return allEdges.map((edge) => ({
+        ...edge,
+        style: {
+          ...edge.style,
+          stroke: selectedEdges.includes(edge.id) ? "#ff6b6b" : undefined,
+          strokeWidth: selectedEdges.includes(edge.id) ? 3 : undefined,
+        },
+        animated: selectedEdges.includes(edge.id) ? false : edge.animated,
+      }));
+    }
+
     return allEdges;
-  }, [allResources, isLoadingResources, specificGraphName]);
+  }, [
+    allResources,
+    isLoadingResources,
+    specificGraphName,
+    editMode,
+    selectedEdges,
+  ]);
 
   // Handle node clicks in edit mode
   const handleNodeClick = useCallback(
@@ -372,6 +467,48 @@ export function useGraphEdge(
     [editMode]
   );
 
+  // Handle edge clicks in edit mode
+  const handleEdgeClick = useCallback(
+    (event: React.MouseEvent, edge: ParsedEdge) => {
+      if (!editMode) {
+        return;
+      }
+
+      event.stopPropagation();
+      event.preventDefault();
+
+      setSelectedEdges((prev) => {
+        if (prev.includes(edge.id)) {
+          // Remove if already selected (deselect)
+          return prev.filter((id) => id !== edge.id);
+        }
+        // Add to selection
+        return [...prev, edge.id];
+      });
+
+      // When an edge is selected, add it to pending deletions
+      setPendingEdgeDeletions((prev) => {
+        const edgeExists = prev.some((deletion) => deletion.edgeId === edge.id);
+        if (edgeExists) {
+          // Remove from pending deletions if already there (user deselected)
+          return prev.filter((deletion) => deletion.edgeId !== edge.id);
+        }
+        // Add to pending deletions
+        return [
+          ...prev,
+          {
+            edgeId: edge.id,
+            sourceResourceType: edge.sourceResourceType,
+            sourceResourceName: edge.sourceResourceName,
+            targetResourceType: edge.targetResourceType,
+            targetResourceName: edge.targetResourceName,
+          },
+        ];
+      });
+    },
+    [editMode]
+  );
+
   // Handle applying connections with new format that supports bidirectional relationships
   const handleApplyConnections = useCallback(
     async (
@@ -380,17 +517,27 @@ export function useGraphEdge(
         nodeId: string
       ) => { type: ResourceType; name: string } | null
     ) => {
-      if (pendingEdges.length === 0) {
+      if (pendingEdges.length === 0 && pendingEdgeDeletions.length === 0) {
         return;
       }
 
-      // Group new connections by resource
+      // Group changes by resource
       const resourceUpdates = new Map<string, EdgeInfo>();
 
+      // Process pending edge additions
       for (const pendingEdge of pendingEdges) {
         processPendingEdge(
           pendingEdge,
           getResourceInfo,
+          resourceUpdates,
+          allResources
+        );
+      }
+
+      // Process pending edge deletions
+      for (const pendingDeletion of pendingEdgeDeletions) {
+        processPendingEdgeDeletion(
+          pendingDeletion,
           resourceUpdates,
           allResources
         );
@@ -425,25 +572,38 @@ export function useGraphEdge(
       // Reset edit mode and clear pending state
       setEditMode(false);
       setPendingEdges([]);
+      setPendingEdgeDeletions([]);
       setSelectedNodes([]);
+      setSelectedEdges([]);
     },
-    [pendingEdges, addGraphEdgesMutation, allResources, queryClient]
+    [
+      pendingEdges,
+      pendingEdgeDeletions,
+      addGraphEdgesMutation,
+      allResources,
+      queryClient,
+    ]
   );
 
   // Handle quitting edit mode
   const handleQuitEditMode = useCallback(() => {
     setEditMode(false);
     setPendingEdges([]);
+    setPendingEdgeDeletions([]);
     setSelectedNodes([]);
+    setSelectedEdges([]);
   }, []);
 
   return {
     editMode,
     setEditMode,
     selectedNodes,
+    selectedEdges,
     pendingEdges,
+    pendingEdgeDeletions,
     parsedEdges,
     handleNodeClick,
+    handleEdgeClick,
     handleApplyConnections,
     handleQuitEditMode,
     isApplyingConnections: addGraphEdgesMutation.isPending,

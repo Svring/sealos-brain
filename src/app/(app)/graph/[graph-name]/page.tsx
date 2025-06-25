@@ -8,7 +8,7 @@ import {
 } from "@xyflow/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Plus, Spline } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
 import edgeTypes from "@/components/flow/edge/edge-types";
 import NodeCreateView from "@/components/flow/node/create/node-create-view";
@@ -35,7 +35,9 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     editMode,
     setEditMode,
     selectedNodes,
+    selectedEdges,
     pendingEdges,
+    pendingEdgeDeletions,
     parsedEdges,
     handleApplyConnections,
     handleQuitEditMode,
@@ -64,6 +66,19 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     }
     onNodesChange(changes);
   };
+
+  // Handle edge clicks in edit mode
+  const handleEdgeClickEvent = useCallback(
+    (
+      clickEvent: React.MouseEvent,
+      edge: { data?: { onClick?: (event: React.MouseEvent) => void } }
+    ) => {
+      if (editMode && edge.data?.onClick) {
+        edge.data.onClick(clickEvent);
+      }
+    },
+    [editMode]
+  );
 
   const menuItems: MenuBarItem[] = [
     {
@@ -115,23 +130,38 @@ function GraphPageContent({ graphName }: { graphName: string }) {
               duration: 0.2,
             }}
           >
-            <div className="pointer-events-auto mx-auto mt-4 w-full max-w-2xl">
+            <div className="pointer-events-auto mx-auto mt-4 w-full max-w-4xl">
               <Alert variant="default">
                 <AlertDescription>
                   <div className="flex items-center gap-2 text-foreground text-sm">
                     <span>
-                      Click on different nodes to connect them.
+                      Click nodes to connect them • Click edges to delete them
                       {selectedNodes.length > 0 &&
-                        ` Selected: ${selectedNodes.length}/2.`}
+                        ` • Nodes: ${selectedNodes.length}/2`}
+                      {selectedEdges.length > 0 &&
+                        ` • Edges: ${selectedEdges.length}`}
+                    </span>
+                    <div className="flex flex-col gap-1 text-muted-foreground text-xs">
                       {pendingEdges.length > 0 && (
-                        <span className="ml-2 text-muted-foreground text-xs">
-                          Pending:{" "}
+                        <span>
+                          New:{" "}
                           {pendingEdges
                             .map((edge) => `${edge.source} → ${edge.target}`)
                             .join(", ")}
                         </span>
                       )}
-                    </span>
+                      {pendingEdgeDeletions.length > 0 && (
+                        <span>
+                          Deleting:{" "}
+                          {pendingEdgeDeletions
+                            .map(
+                              (edge) =>
+                                `${edge.sourceResourceType}-${edge.sourceResourceName} → ${edge.targetResourceType}-${edge.targetResourceName}`
+                            )
+                            .join(", ")}
+                        </span>
+                      )}
+                    </div>
                     <Button
                       className="ml-2 h-6 px-2 py-0 text-xs"
                       onClick={handleQuitEditMode}
@@ -143,14 +173,16 @@ function GraphPageContent({ graphName }: { graphName: string }) {
                     <Button
                       className="h-6 px-2 py-0 text-xs"
                       disabled={
-                        pendingEdges.length === 0 || isApplyingConnections
+                        (pendingEdges.length === 0 &&
+                          pendingEdgeDeletions.length === 0) ||
+                        isApplyingConnections
                       }
                       onClick={handleApplyConnections}
                       size="sm"
                     >
                       {isApplyingConnections
                         ? "Applying..."
-                        : `Apply (${pendingEdges.length})`}
+                        : `Apply (${pendingEdges.length + pendingEdgeDeletions.length})`}
                     </Button>
                   </div>
                 </AlertDescription>
@@ -169,6 +201,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
         edgeTypes={edgeTypes}
         nodes={enhancedNodes}
         nodeTypes={nodeTypes}
+        onEdgeClick={handleEdgeClickEvent}
         onNodesChange={handleNodesChange}
         onPaneClick={closePanel}
         panOnScroll
