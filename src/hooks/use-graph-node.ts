@@ -1,10 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { type Node, type NodeChange, useNodesState } from "@xyflow/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { type ExistingResource, useResources } from "@/hooks/use-resources";
-import { useDeleteGraphMutation } from "@/lib/sealos/k8s/k8s-mutation";
+import { useDeleteGraphMutation } from "@/lib/graph/graph-mutation";
 import type { GraphResourceGroup } from "@/lib/sealos/k8s/k8s-transform";
 import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-utils";
+import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
 
 interface UseGraphNodeReturn {
@@ -16,263 +17,145 @@ interface UseGraphNodeReturn {
   mergedGraphs: GraphResourceGroup;
   deleteGraph: (graphName: string) => Promise<void>;
   isDeletingGraph: boolean;
-  editMode: boolean;
-  setEditMode: (mode: boolean) => void;
-  selectedNodes: string[];
-  pendingEdges: { source: string; target: string }[];
-  handleNodeClick: (event: React.MouseEvent, nodeId: string) => void;
-  handleApplyConnections: () => void;
-  handleQuitEditMode: () => void;
-  enhancedNodes: Node[];
 }
 
 export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const { currentUser } = useSealosStore();
 
-  // Edit mode state
-  const [editMode, setEditMode] = useState(false);
-  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-  const [pendingEdges, setPendingEdges] = useState<
-    { source: string; target: string }[]
-  >([]);
-
   // Use the simplified resources hook
   const { allResources, isLoading } = useResources(currentUser);
 
-  // Handle node clicks in edit mode
-  const handleNodeClick = useCallback(
-    (event: React.MouseEvent, nodeId: string) => {
-      if (!editMode) return;
-
-      event.stopPropagation();
-
-      setSelectedNodes((prev) => {
-        const newSelection = [...prev];
-
-        if (newSelection.includes(nodeId)) {
-          // Remove if already selected
-          return newSelection.filter((id) => id !== nodeId);
-        }
-        newSelection.push(nodeId);
-
-        // If we have 2 nodes selected, create an edge and reset selection
-        if (newSelection.length === 2) {
-          const [source, target] = newSelection;
-          // Check if this edge already exists to prevent duplicates
-          setPendingEdges((prevEdges) => {
-            const edgeExists = prevEdges.some(
-              (edge) =>
-                (edge.source === source && edge.target === target) ||
-                (edge.source === target && edge.target === source)
-            );
-            if (edgeExists) {
-              return prevEdges; // Don't add duplicate
-            }
-            return [...prevEdges, { source, target }];
-          });
-          return []; // Reset selection
-        }
-
-        return newSelection;
-      });
-    },
-    [editMode]
-  );
-
-  // Handle applying connections
-  const handleApplyConnections = useCallback(() => {
-    console.log("Applying connections:", pendingEdges);
-    // Reset edit mode and clear pending state
-    setEditMode(false);
-    setPendingEdges([]);
-    setSelectedNodes([]);
-  }, [pendingEdges]);
-
-  // Handle quitting edit mode
-  const handleQuitEditMode = useCallback(() => {
-    setEditMode(false);
-    setPendingEdges([]);
-    setSelectedNodes([]);
-  }, []);
-
   // Combined error state (simplified since useResources handles individual query errors)
-  const error = null; // useResources doesn't expose individual errors, but handles them internally
-
-  // Enhanced nodes with click handlers and selection highlighting
-  const enhancedNodes = useMemo(() => {
-    if (!editMode) return nodes;
-
-    return nodes.map((node) => ({
-      ...node,
-      data: {
-        ...node.data,
-        onClick: (event: React.MouseEvent) => handleNodeClick(event, node.id),
-        isSelected: selectedNodes.includes(node.id),
-      },
-      style: {
-        ...node.style,
-        border: selectedNodes.includes(node.id) ? "1px solid white" : undefined,
-        borderRadius: selectedNodes.includes(node.id) ? "8px" : undefined,
-      },
-    }));
-  }, [nodes, editMode, selectedNodes, handleNodeClick]);
+  const error: string | null = null;
 
   // Create merged graph list from the resources
   const mergedGraphs = useMemo(() => {
-    if (isLoading || !allResources.length) return {};
-
-    const graphGroups: GraphResourceGroup = {};
-
-    // Group resources by their graphName annotation
-    allResources.forEach((resource) => {
-      const graphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
-      if (graphName) {
-        if (!graphGroups[graphName]) {
-          graphGroups[graphName] = {};
-        }
-        if (!graphGroups[graphName][resource.type]) {
-          graphGroups[graphName][resource.type] = [];
-        }
-        graphGroups[graphName][resource.type].push(resource.name);
-      }
-    });
-
-    return graphGroups;
+    if (isLoading || !allResources.length) {
+      return {};
+    }
+    return groupResourcesByGraph(allResources);
   }, [allResources, isLoading]);
 
   // Transform graphs into nodes for visualization
   useEffect(() => {
-    const allNodes: Node[] = [];
+    const createEmptyStateNode = (graphName: string) => ({
+      id: "empty-state",
+      type: "empty-state",
+      position: { x: 0, y: 0 },
+      data: { graphName },
+      draggable: false,
+      selectable: false,
+    });
 
-    // If specificGraphName is provided, show only that graph's resources
+    const createResourceNode = (
+      resourceKind: string,
+      resourceName: string,
+      x: number,
+      y: number
+    ) => ({
+      id: `${resourceKind}-${resourceName}`,
+      type: resourceKind,
+      position: { x, y },
+      data: getNodeDataForResourceType(
+        resourceKind,
+        resourceName,
+        `${resourceKind}-${resourceName}`,
+        allResources
+      ),
+    });
+
+    const createGraphNode = (
+      graphName: string,
+      graphResources: Record<string, string[]>,
+      graphIndex: number
+    ) => ({
+      id: `graph-${graphName}`,
+      type: "graph",
+      position: {
+        x: 300 + (graphIndex % 3) * 400,
+        y: 200 + Math.floor(graphIndex / 3) * 300,
+      },
+      data: {
+        id: `graph-${graphName}`,
+        graphName,
+        totalResources: Object.values(graphResources).reduce(
+          (acc, resourceList) => acc + resourceList.length,
+          0
+        ),
+        resourceTypes: Object.keys(graphResources),
+        resources: graphResources,
+      },
+    });
+
+    const createResourceTypeNode = (
+      graphName: string,
+      resourceKind: string,
+      resourceNames: string[],
+      graphIndex: number,
+      resourceTypeIndex: number
+    ) => ({
+      id: `${graphName}-${resourceKind}`,
+      type: resourceKind,
+      position: {
+        x: 100 + (graphIndex % 3) * 400 + resourceTypeIndex * 100,
+        y: 350 + Math.floor(graphIndex / 3) * 300,
+      },
+      data: {
+        id: `${graphName}-${resourceKind}`,
+        resourceKind,
+        resourceNames,
+        graphName,
+        count: resourceNames.length,
+      },
+    });
+
     if (specificGraphName) {
       const graphResources = mergedGraphs[specificGraphName];
 
-      // If the specific graph doesn't exist or is empty (new graphs start empty), show empty state node
       if (!graphResources || Object.keys(graphResources).length === 0) {
-        const emptyStateNode: Node = {
-          id: "empty-state",
-          type: "empty-state",
-          position: { x: 0, y: 0 }, // Center of the graph
-          data: {
-            graphName: specificGraphName,
-          },
-          draggable: false,
-          selectable: false,
-        };
-        setNodes([emptyStateNode]);
+        setNodes([createEmptyStateNode(specificGraphName)]);
         return;
       }
 
-      const xOffset = 300;
-      const yOffset = 200;
-
-      // Create nodes for each resource type in the specific graph
-      Object.entries(graphResources).forEach(
-        ([resourceKind, resourceNames], resourceTypeIndex) => {
-          resourceNames.forEach((resourceName, resourceIndex) => {
-            const nodeId = `${resourceKind}-${resourceName}`;
-            const position = {
-              x: xOffset + resourceTypeIndex * 400,
-              y: yOffset + resourceIndex * 150,
-            };
-
-            // Create node based on resource type with proper data structure
-            const node: Node = {
-              id: nodeId,
-              type: resourceKind, // Use resource kind as node type
-              position,
-              data: getNodeDataForResourceType(
-                resourceKind,
-                resourceName,
-                nodeId,
-                allResources
-              ),
-            };
-
-            allNodes.push(node);
-          });
-        }
+      const resourceNodes = Object.entries(graphResources).flatMap(
+        ([resourceKind, resourceNames], resourceTypeIndex) =>
+          resourceNames.map((resourceName, resourceIndex) =>
+            createResourceNode(
+              resourceKind,
+              resourceName,
+              300 + resourceTypeIndex * 400,
+              200 + resourceIndex * 150
+            )
+          )
       );
+
+      setNodes(resourceNodes);
     } else {
-      // Show all graphs as a high-level overview
       if (!mergedGraphs || Object.keys(mergedGraphs).length === 0) {
-        // No graphs exist, show empty state
-        const emptyStateNode: Node = {
-          id: "empty-state",
-          type: "empty-state",
-          position: { x: 0, y: 0 },
-          data: {
-            graphName: "overview",
-          },
-          draggable: false,
-          selectable: false,
-        };
-        setNodes([emptyStateNode]);
+        setNodes([createEmptyStateNode("overview")]);
         return;
       }
 
-      let graphIndex = 0;
-
-      Object.entries(mergedGraphs).forEach(([graphName, graphResources]) => {
-        const totalResources = Object.values(graphResources).reduce(
-          (acc, resourceList) => acc + resourceList.length,
-          0
-        );
-
-        // Create a graph summary node
-        const graphNode: Node = {
-          id: `graph-${graphName}`,
-          type: "graph", // You'll need to create this node type
-          position: {
-            x: 300 + (graphIndex % 3) * 400,
-            y: 200 + Math.floor(graphIndex / 3) * 300,
-          },
-          data: {
-            id: `graph-${graphName}`,
-            graphName,
-            totalResources,
-            resourceTypes: Object.keys(graphResources),
-            resources: graphResources,
-          },
-        };
-
-        allNodes.push(graphNode);
-
-        // Create resource type nodes for each graph
-        let resourceTypeIndex = 0;
-        Object.entries(graphResources).forEach(
-          ([resourceKind, resourceNames]) => {
-            const resourceTypeNodeId = `${graphName}-${resourceKind}`;
-            const resourceTypeNode: Node = {
-              id: resourceTypeNodeId,
-              type: resourceKind,
-              position: {
-                x: 100 + (graphIndex % 3) * 400 + resourceTypeIndex * 100,
-                y: 350 + Math.floor(graphIndex / 3) * 300,
-              },
-              data: {
-                id: resourceTypeNodeId,
+      const graphNodes = Object.entries(mergedGraphs).flatMap(
+        ([graphName, graphResources], graphIndex) => [
+          createGraphNode(graphName, graphResources, graphIndex),
+          ...Object.entries(graphResources).map(
+            ([resourceKind, resourceNames], resourceTypeIndex) =>
+              createResourceTypeNode(
+                graphName,
                 resourceKind,
                 resourceNames,
-                graphName,
-                count: resourceNames.length,
-              },
-            };
+                graphIndex,
+                resourceTypeIndex
+              )
+          ),
+        ]
+      );
 
-            allNodes.push(resourceTypeNode);
-
-            resourceTypeIndex++;
-          }
-        );
-
-        graphIndex++;
-      });
+      setNodes(graphNodes);
     }
-
-    setNodes(allNodes);
-  }, [mergedGraphs, specificGraphName, setNodes]);
+  }, [mergedGraphs, specificGraphName, setNodes, allResources]);
 
   const queryClient = useQueryClient();
 
@@ -287,7 +170,7 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     }
 
     await deleteGraphMutation.mutateAsync({
-      currentUser,
+      currentUser: currentUser as User,
       graphName,
       graphResources,
     });
@@ -307,33 +190,7 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     mergedGraphs,
     deleteGraph,
     isDeletingGraph,
-    editMode,
-    setEditMode,
-    selectedNodes,
-    pendingEdges,
-    handleNodeClick,
-    handleApplyConnections,
-    handleQuitEditMode,
-    enhancedNodes,
   };
-}
-
-// Helper function to get the appropriate display key for each resource type
-function getResourceDisplayKey(resourceKind: string): string {
-  switch (resourceKind) {
-    case "devbox":
-      return "devboxName";
-    case "cluster":
-      return "clusterName";
-    case "deployment":
-      return "deploymentName";
-    case "cronjob":
-      return "cronJobName";
-    case "objectstoragebucket":
-      return "bucketName";
-    default:
-      return "name";
-  }
 }
 
 // Helper function to create proper node data structure for each resource type
@@ -427,4 +284,23 @@ function mapResourceStatus(status: string): string {
   }
 
   return "Unknown";
+}
+
+function groupResourcesByGraph(
+  allResources: ExistingResource[]
+): GraphResourceGroup {
+  const graphGroups: GraphResourceGroup = {};
+  for (const resource of allResources) {
+    const graphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
+    if (graphName) {
+      if (!graphGroups[graphName]) {
+        graphGroups[graphName] = {};
+      }
+      if (!graphGroups[graphName][resource.type]) {
+        graphGroups[graphName][resource.type] = [];
+      }
+      graphGroups[graphName][resource.type].push(resource.name);
+    }
+  }
+  return graphGroups;
 }

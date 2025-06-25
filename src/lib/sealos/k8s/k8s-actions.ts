@@ -1,16 +1,32 @@
 "use server";
 
 import {
-  KubeConfig,
-  CustomObjectsApi,
   AppsV1Api,
   BatchV1Api,
   CoreV1Api,
+  CustomObjectsApi,
+  KubeConfig,
 } from "@kubernetes/client-node";
-import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-utils";
 
-// Resource definitions
-const RESOURCES = {
+const GRAPH_ANNOTATION_KEY = escapeSlash("sealosBrain/graphName");
+const GRAPH_EDGES_ANNOTATION_KEY = escapeSlash("sealosBrain/graphEdges");
+
+interface ResourceDefinition {
+  group?: string;
+  version?: string;
+  plural?: string;
+  apiVersion?: string;
+  kind?: string;
+}
+
+interface ApiClients {
+  customApi: CustomObjectsApi;
+  appsApi: AppsV1Api;
+  batchApi: BatchV1Api;
+  coreApi: CoreV1Api;
+}
+
+const RESOURCES: Record<string, ResourceDefinition> = {
   devbox: {
     group: "devbox.sealos.io",
     version: "v1alpha1",
@@ -21,16 +37,8 @@ const RESOURCES = {
     version: "v1alpha1",
     plural: "clusters",
   },
-  deployment: {
-    // Standard Kubernetes resource
-    apiVersion: "apps/v1",
-    kind: "Deployment",
-  },
-  cronjob: {
-    // Standard Kubernetes resource
-    apiVersion: "batch/v1",
-    kind: "CronJob",
-  },
+  deployment: { apiVersion: "apps/v1", kind: "Deployment" },
+  cronjob: { apiVersion: "batch/v1", kind: "CronJob" },
   objectstoragebucket: {
     group: "objectstorage.sealos.io",
     version: "v1",
@@ -40,24 +48,22 @@ const RESOURCES = {
 
 export type ResourceType = keyof typeof RESOURCES;
 
-// Helper function to create Kubernetes API clients
-function createApiClients(kubeconfig: string) {
+function createKubeConfig(kubeconfig: string): KubeConfig {
   const kc = new KubeConfig();
-
-  // Decode URL-encoded kubeconfig string
-  let decodedKubeconfig = kubeconfig;
   try {
-    // Check if the string is URL-encoded by looking for encoded characters
-    if (kubeconfig.includes("%") || kubeconfig.includes("+")) {
-      decodedKubeconfig = decodeURIComponent(kubeconfig);
-    }
+    const decodedKubeconfig =
+      kubeconfig.includes("%") || kubeconfig.includes("+")
+        ? decodeURIComponent(kubeconfig)
+        : kubeconfig;
+    kc.loadFromString(decodedKubeconfig);
   } catch (error) {
     console.warn("Failed to decode kubeconfig, using original:", error);
-    decodedKubeconfig = kubeconfig;
+    kc.loadFromString(kubeconfig);
   }
+  return kc;
+}
 
-  kc.loadFromString(decodedKubeconfig);
-
+function createApiClients(kc: KubeConfig): ApiClients {
   return {
     customApi: kc.makeApiClient(CustomObjectsApi),
     appsApi: kc.makeApiClient(AppsV1Api),
@@ -66,37 +72,97 @@ function createApiClients(kubeconfig: string) {
   };
 }
 
-// Generic function to list resources by type
+async function getResource(
+  clients: ApiClients,
+  resourceType: ResourceType,
+  resourceName: string,
+  namespace: string
+) {
+  const resource = RESOURCES[resourceType];
+  if ("group" in resource && resource.group) {
+    return clients.customApi.getNamespacedCustomObject({
+      group: resource.group,
+      version: resource.version!,
+      namespace,
+      plural: resource.plural!,
+      name: resourceName,
+    });
+  }
+  if (resourceType === "deployment") {
+    return clients.appsApi.readNamespacedDeployment({
+      name: resourceName,
+      namespace,
+    });
+  }
+  if (resourceType === "cronjob") {
+    return clients.batchApi.readNamespacedCronJob({
+      name: resourceName,
+      namespace,
+    });
+  }
+  throw new Error(`Unsupported resource type: ${resourceType}`);
+}
+
+async function patchResource(
+  clients: ApiClients,
+  resourceType: ResourceType,
+  resourceName: string,
+  namespace: string,
+  patchBody: any[]
+) {
+  const resource = RESOURCES[resourceType];
+  if ("group" in resource && resource.group) {
+    return clients.customApi.patchNamespacedCustomObject({
+      group: resource.group,
+      version: resource.version!,
+      namespace,
+      plural: resource.plural!,
+      name: resourceName,
+      body: patchBody,
+    });
+  }
+  if (resourceType === "deployment") {
+    return clients.appsApi.patchNamespacedDeployment({
+      name: resourceName,
+      namespace,
+      body: patchBody,
+    });
+  }
+  if (resourceType === "cronjob") {
+    return clients.batchApi.patchNamespacedCronJob({
+      name: resourceName,
+      namespace,
+      body: patchBody,
+    });
+  }
+  throw new Error(`Unsupported resource type: ${resourceType}`);
+}
+
 export async function listResourcesByType(
   kubeconfig: string,
   resourceType: ResourceType,
-  namespace: string = "default"
+  namespace = "default"
 ) {
   try {
+    const kc = createKubeConfig(kubeconfig);
+    const clients = createApiClients(kc);
     const resource = RESOURCES[resourceType];
-    const clients = createApiClients(kubeconfig);
 
-    let res;
-    if ("group" in resource && "version" in resource && "plural" in resource) {
-      // Custom resource
-      res = await clients.customApi.listNamespacedCustomObject({
-        group: resource.group,
-        version: resource.version,
-        namespace: namespace,
-        plural: resource.plural,
-      });
-    } else {
-      // Standard Kubernetes resource
-      if (resourceType === "deployment") {
-        res = await clients.appsApi.listNamespacedDeployment({ namespace });
-      } else if (resourceType === "cronjob") {
-        res = await clients.batchApi.listNamespacedCronJob({ namespace });
-      } else {
-        throw new Error(`Unsupported standard resource type: ${resourceType}`);
-      }
-    }
+    const res =
+      "group" in resource && resource.group
+        ? await clients.customApi.listNamespacedCustomObject({
+            group: resource.group,
+            version: resource.version!,
+            namespace,
+            plural: resource.plural!,
+          })
+        : resourceType === "deployment"
+          ? await clients.appsApi.listNamespacedDeployment({ namespace })
+          : resourceType === "cronjob"
+            ? await clients.batchApi.listNamespacedCronJob({ namespace })
+            : null;
 
-    // Convert to plain object to avoid serialization issues
+    if (!res) throw new Error(`Unsupported resource type: ${resourceType}`);
     return JSON.parse(JSON.stringify(res));
   } catch (error) {
     console.error(`Error listing ${resourceType}:`, error);
@@ -104,7 +170,6 @@ export async function listResourcesByType(
   }
 }
 
-// Generic function to patch resource annotation
 export async function patchResourceAnnotation(
   kubeconfig: string,
   resourceType: ResourceType,
@@ -113,109 +178,41 @@ export async function patchResourceAnnotation(
   annotationValue: string,
   namespace: string
 ) {
-  const kc = new KubeConfig();
-  let decodedKubeconfig = kubeconfig;
-  try {
-    if (kubeconfig.includes("%") || kubeconfig.includes("+")) {
-      decodedKubeconfig = decodeURIComponent(kubeconfig);
-    }
-  } catch (error) {
-    console.warn("Failed to decode kubeconfig, using original:", error);
-    decodedKubeconfig = kubeconfig;
-  }
-  kc.loadFromString(decodedKubeconfig);
+  const kc = createKubeConfig(kubeconfig);
+  const clients = createApiClients(kc);
+
+  const encodedAnnotationKey = escapeSlash(annotationKey);
 
   try {
-    let result;
-    const resource = RESOURCES[resourceType];
+    const currentResource = await getResource(
+      clients,
+      resourceType,
+      resourceName,
+      namespace
+    );
+    const patchBody = currentResource.metadata?.annotations
+      ? [
+          {
+            op: "add",
+            path: `/metadata/annotations/${encodedAnnotationKey}`,
+            value: annotationValue,
+          },
+        ]
+      : [
+          {
+            op: "add",
+            path: "/metadata/annotations",
+            value: { [encodedAnnotationKey]: annotationValue },
+          },
+        ];
 
-    // First, get the current resource to check if annotations exist
-    let currentResource;
-    if ("group" in resource && "version" in resource && "plural" in resource) {
-      // Custom resource
-      const customApi = kc.makeApiClient(CustomObjectsApi);
-      currentResource = await customApi.getNamespacedCustomObject({
-        group: resource.group,
-        version: resource.version,
-        namespace,
-        plural: resource.plural,
-        name: resourceName,
-      });
-    } else {
-      // Standard Kubernetes resource
-      if (resourceType === "deployment") {
-        const appsApi = kc.makeApiClient(AppsV1Api);
-        currentResource = await appsApi.readNamespacedDeployment({
-          name: resourceName,
-          namespace,
-        });
-      } else if (resourceType === "cronjob") {
-        const batchApi = kc.makeApiClient(BatchV1Api);
-        currentResource = await batchApi.readNamespacedCronJob({
-          name: resourceName,
-          namespace,
-        });
-      } else {
-        throw new Error(`Unsupported standard resource type: ${resourceType}`);
-      }
-    }
-
-    // Check if annotations exist, if not create them first
-    const hasAnnotations = currentResource.metadata?.annotations;
-    let patchBody;
-
-    if (!hasAnnotations) {
-      // Create annotations object first, then add the specific annotation
-      patchBody = [
-        {
-          op: "add",
-          path: "/metadata/annotations",
-          value: { [annotationKey]: annotationValue },
-        },
-      ];
-    } else {
-      // Annotations exist, just add/update the specific annotation
-      patchBody = [
-        {
-          op: "add",
-          path: `/metadata/annotations/${annotationKey}`,
-          value: annotationValue,
-        },
-      ];
-    }
-
-    // Apply the patch
-    if ("group" in resource && "version" in resource && "plural" in resource) {
-      // Custom resource
-      const customApi = kc.makeApiClient(CustomObjectsApi);
-      result = await customApi.patchNamespacedCustomObject({
-        group: resource.group,
-        version: resource.version,
-        namespace,
-        plural: resource.plural,
-        name: resourceName,
-        body: patchBody,
-      });
-    } else {
-      // Standard Kubernetes resource
-      if (resourceType === "deployment") {
-        const appsApi = kc.makeApiClient(AppsV1Api);
-        result = await appsApi.patchNamespacedDeployment({
-          name: resourceName,
-          namespace,
-          body: patchBody,
-        });
-      } else if (resourceType === "cronjob") {
-        const batchApi = kc.makeApiClient(BatchV1Api);
-        result = await batchApi.patchNamespacedCronJob({
-          name: resourceName,
-          namespace,
-          body: patchBody,
-        });
-      } else {
-        throw new Error(`Unsupported standard resource type: ${resourceType}`);
-      }
-    }
+    const result = await patchResource(
+      clients,
+      resourceType,
+      resourceName,
+      namespace,
+      patchBody
+    );
 
     return {
       annotations: result.metadata?.annotations || {},
@@ -239,7 +236,6 @@ export async function patchResourceAnnotation(
   }
 }
 
-// Generic function to remove annotation from a resource
 export async function removeResourceAnnotation(
   kubeconfig: string,
   resourceType: ResourceType,
@@ -247,60 +243,20 @@ export async function removeResourceAnnotation(
   annotationKey: string,
   namespace: string
 ) {
-  const kc = new KubeConfig();
-  let decodedKubeconfig = kubeconfig;
-  try {
-    if (kubeconfig.includes("%") || kubeconfig.includes("+")) {
-      decodedKubeconfig = decodeURIComponent(kubeconfig);
-    }
-  } catch (error) {
-    console.warn("Failed to decode kubeconfig, using original:", error);
-    decodedKubeconfig = kubeconfig;
-  }
-  kc.loadFromString(decodedKubeconfig);
-
-  const patchBody = [
-    {
-      op: "remove",
-      path: `/metadata/annotations/${annotationKey}`,
-    },
-  ];
+  const kc = createKubeConfig(kubeconfig);
+  const clients = createApiClients(kc);
 
   try {
-    let result;
-    const resource = RESOURCES[resourceType];
-
-    if ("group" in resource && "version" in resource && "plural" in resource) {
-      // Custom resource
-      const customApi = kc.makeApiClient(CustomObjectsApi);
-      result = await customApi.patchNamespacedCustomObject({
-        group: resource.group,
-        version: resource.version,
-        namespace,
-        plural: resource.plural,
-        name: resourceName,
-        body: patchBody,
-      });
-    } else {
-      // Standard Kubernetes resource
-      if (resourceType === "deployment") {
-        const appsApi = kc.makeApiClient(AppsV1Api);
-        result = await appsApi.patchNamespacedDeployment({
-          name: resourceName,
-          namespace,
-          body: patchBody,
-        });
-      } else if (resourceType === "cronjob") {
-        const batchApi = kc.makeApiClient(BatchV1Api);
-        result = await batchApi.patchNamespacedCronJob({
-          name: resourceName,
-          namespace,
-          body: patchBody,
-        });
-      } else {
-        throw new Error(`Unsupported standard resource type: ${resourceType}`);
-      }
-    }
+    const patchBody = [
+      { op: "remove", path: `/metadata/annotations/${annotationKey}` },
+    ];
+    const result = await patchResource(
+      clients,
+      resourceType,
+      resourceName,
+      namespace,
+      patchBody
+    );
 
     return {
       success: true,
@@ -324,7 +280,6 @@ export async function removeResourceAnnotation(
   }
 }
 
-// Function to delete a graph by removing graphName annotation from all resources in it
 export async function deleteGraphByRemovingAnnotations(
   kubeconfig: string,
   graphName: string,
@@ -338,41 +293,27 @@ export async function deleteGraphByRemovingAnnotations(
     error?: string;
   }> = [];
 
-  // Process each resource type in the graph
   for (const [resourceKind, resourceNames] of Object.entries(graphResources)) {
     const resourceType = resourceKind as ResourceType;
-
-    // Skip if resource type is not supported
     if (!RESOURCES[resourceType]) {
       console.warn(`Unsupported resource type: ${resourceType}`);
       continue;
     }
 
-    // Remove graphName annotation from each resource
     for (const resourceName of resourceNames) {
-      try {
-        const result = await removeResourceAnnotation(
-          kubeconfig,
-          resourceType,
-          resourceName,
-          GRAPH_ANNOTATION_KEY,
-          namespace
-        );
-        results.push(result);
-      } catch (error: any) {
-        results.push({
-          success: false,
-          resourceName,
-          resourceType,
-          error:
-            error.message || `Failed to remove annotation from ${resourceName}`,
-        });
-      }
+      const result = await removeResourceAnnotation(
+        kubeconfig,
+        resourceType,
+        resourceName,
+        GRAPH_ANNOTATION_KEY,
+        namespace
+      );
+      results.push(result);
     }
   }
 
   const successCount = results.filter((r) => r.success).length;
-  const failureCount = results.filter((r) => !r.success).length;
+  const failureCount = results.length - successCount;
 
   return {
     success: failureCount === 0,
@@ -384,24 +325,26 @@ export async function deleteGraphByRemovingAnnotations(
   };
 }
 
-// Read devbox secret by name
 export async function readDevboxSecret(
   kubeconfig: string,
   devboxName: string,
-  namespace: string = "default"
+  namespace = "default"
 ) {
   try {
-    const { coreApi } = createApiClients(kubeconfig);
-
+    const kc = createKubeConfig(kubeconfig);
+    const { coreApi } = createApiClients(kc);
     const res = await coreApi.readNamespacedSecret({
-      namespace: namespace,
+      namespace,
       name: devboxName,
     });
-
-    // Convert to plain object to avoid serialization issues
     return JSON.parse(JSON.stringify(res));
   } catch (error) {
     console.error(`Error reading secret for devbox ${devboxName}:`, error);
     return { error: `Failed to read secret for devbox ${devboxName}` };
   }
+}
+
+// Utility to encode annotation key for JSON patch (convert '/' to '~1')
+function escapeSlash(key: string): string {
+  return key.replaceAll("/", "~1");
 }

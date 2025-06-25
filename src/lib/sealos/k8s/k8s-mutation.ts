@@ -1,22 +1,23 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
+import type { User } from "@/payload-types";
 import {
-  getNamespaceFromKubeconfig,
-  getKubeconfig,
-  type ResourceType,
-} from "./k8s-utils";
-import {
+  deleteGraphByRemovingAnnotations,
   patchResourceAnnotation,
   removeResourceAnnotation,
-  deleteGraphByRemovingAnnotations,
 } from "./k8s-actions";
-import { useMutation } from "@tanstack/react-query";
+import {
+  getKubeconfig,
+  getNamespaceFromKubeconfig,
+  type ResourceType,
+} from "./k8s-utils";
 
 // Generic patch resource annotation mutation
 export function usePatchResourceAnnotationMutation() {
   return useMutation({
     mutationFn: async (params: {
-      currentUser: any;
+      currentUser: User;
       resourceType: ResourceType;
       resourceName: string;
       annotationKey: string;
@@ -24,14 +25,11 @@ export function usePatchResourceAnnotationMutation() {
       namespaceOverride?: string;
     }) => {
       const kubeconfig = getKubeconfig(params.currentUser);
-      if (!kubeconfig) {
-        throw new Error("No kubeconfig found");
-      }
 
       const namespace =
         params.namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
 
-      return patchResourceAnnotation(
+      return await patchResourceAnnotation(
         kubeconfig,
         params.resourceType,
         params.resourceName,
@@ -47,21 +45,18 @@ export function usePatchResourceAnnotationMutation() {
 export function useRemoveResourceAnnotationMutation() {
   return useMutation({
     mutationFn: async (params: {
-      currentUser: any;
+      currentUser: User;
       resourceType: ResourceType;
       resourceName: string;
       annotationKey: string;
       namespaceOverride?: string;
     }) => {
       const kubeconfig = getKubeconfig(params.currentUser);
-      if (!kubeconfig) {
-        throw new Error("No kubeconfig found");
-      }
 
       const namespace =
         params.namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
 
-      return removeResourceAnnotation(
+      return await removeResourceAnnotation(
         kubeconfig,
         params.resourceType,
         params.resourceName,
@@ -76,20 +71,17 @@ export function useRemoveResourceAnnotationMutation() {
 export function useDeleteGraphMutation() {
   return useMutation({
     mutationFn: async (params: {
-      currentUser: any;
+      currentUser: User;
       graphName: string;
       graphResources: { [resourceKind: string]: string[] };
       namespaceOverride?: string;
     }) => {
       const kubeconfig = getKubeconfig(params.currentUser);
-      if (!kubeconfig) {
-        throw new Error("No kubeconfig found");
-      }
 
       const namespace =
         params.namespaceOverride || getNamespaceFromKubeconfig(kubeconfig);
 
-      return deleteGraphByRemovingAnnotations(
+      return await deleteGraphByRemovingAnnotations(
         kubeconfig,
         params.graphName,
         params.graphResources,

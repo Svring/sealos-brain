@@ -1,19 +1,23 @@
+import { useQuery } from "@tanstack/react-query";
+import { customAlphabet } from "nanoid";
+import Image from "next/image";
 import React, { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import { DevboxFormValues } from "@/components/flow/node/devbox/create/schema/devbox-create-schema";
+import { z } from "zod";
+import type { DevboxFormValues } from "@/components/flow/node/devbox/create/schema/devbox-create-schema";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Template } from "@/lib/sealos/devbox/schemas/template-list-schema";
-import { customAlphabet } from "nanoid";
-import StepContainer from "../step-container";
-import { useQuery } from "@tanstack/react-query";
-import { useSealosStore } from "@/store/sealos-store";
 import {
   templateRepositoryListOfficialOptions,
   templateRepositoryTemplateListOptions,
 } from "@/lib/sealos/devbox/devbox-query";
-import { transformTemplateRepositoryList, transformTemplateList } from "@/lib/sealos/devbox/devbox-transform";
-import { z } from "zod";
+import {
+  transformTemplateList,
+  transformTemplateRepositoryList,
+} from "@/lib/sealos/devbox/devbox-transform";
+import { Template } from "@/lib/sealos/devbox/schemas/template-list-schema";
+import { useSealosStore } from "@/store/sealos-store";
+import StepContainer from "../step-container";
 
 // Define TemplateRepository type locally based on the schema
 const TemplateRepositorySchema = z.object({
@@ -22,15 +26,17 @@ const TemplateRepositorySchema = z.object({
   name: z.string(),
   uid: z.string().uuid(),
   description: z.string(),
-  templateRepositoryTags: z.array(z.object({
-    tag: z.object({
-      uid: z.string().uuid(),
-      type: z.enum(["OFFICIAL_CONTENT", "PROGRAMMING_LANGUAGE", "USE_CASE"]),
-      name: z.string(),
-      zhName: z.string(),
-      enName: z.string(),
-    }),
-  })),
+  templateRepositoryTags: z.array(
+    z.object({
+      tag: z.object({
+        uid: z.string().uuid(),
+        type: z.enum(["OFFICIAL_CONTENT", "PROGRAMMING_LANGUAGE", "USE_CASE"]),
+        name: z.string(),
+        zhName: z.string(),
+        enName: z.string(),
+      }),
+    })
+  ),
 });
 
 type TemplateRepository = z.infer<typeof TemplateRepositorySchema>;
@@ -64,13 +70,23 @@ export default function StepATemplate() {
     error: templateError,
   } = useQuery(
     selectedRepoUid
-      ? templateRepositoryTemplateListOptions(currentUser, regionUrl, {
-          templateRepositoryUid: selectedRepoUid,
-        }, transformTemplateList)
+      ? templateRepositoryTemplateListOptions(
+          currentUser,
+          regionUrl,
+          {
+            templateRepositoryUid: selectedRepoUid,
+          },
+          transformTemplateList
+        )
       : {
-          ...templateRepositoryTemplateListOptions(currentUser, regionUrl, {
-            templateRepositoryUid: "",
-          }, transformTemplateList),
+          ...templateRepositoryTemplateListOptions(
+            currentUser,
+            regionUrl,
+            {
+              templateRepositoryUid: "",
+            },
+            transformTemplateList
+          ),
           enabled: false,
         }
   );
@@ -92,22 +108,16 @@ export default function StepATemplate() {
         customDomain: "",
         id: crypto.randomUUID(),
       }));
-    } catch (error) {
-      console.error("Failed to parse template config:", error);
+    } catch {
       return [];
     }
   };
 
-  if (repoError || templateError) {
-    return (
-      <div className="text-destructive">
-        {repoError
-          ? String(repoError)
-          : templateError
-            ? String(templateError)
-            : null}
-      </div>
-    );
+  let errorMsg: string | null = null;
+  if (repoError) {
+    errorMsg = String(repoError);
+  } else if (templateError) {
+    errorMsg = String(templateError);
   }
 
   // Group repositories by kind
@@ -132,21 +142,21 @@ export default function StepATemplate() {
   return (
     <StepContainer>
       <div className="text-center">
-        <h2 className="text-2xl font-bold tracking-tight">
+        <h2 className="font-bold text-2xl tracking-tight">
           Choose Your Template
         </h2>
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2 text-muted-foreground">
           Select a repository and a version to get started.
         </p>
       </div>
       {loadingRepos ? (
-        <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(110px,1fr))] justify-center">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] justify-center gap-4">
           {Array.from({ length: 12 }).map((_, index) => (
             <div
-              key={index}
-              className="aspect-square w-[110px] flex flex-col items-center justify-center p-4 border rounded-lg bg-muted"
+              className="flex aspect-square w-[110px] flex-col items-center justify-center rounded-lg border bg-muted p-4"
+              key={`skeleton-${index}`}
             >
-              <Skeleton className="h-12 w-12 rounded mb-2" />
+              <Skeleton className="mb-2 h-12 w-12 rounded" />
               <Skeleton className="h-4 w-16" />
             </div>
           ))}
@@ -155,19 +165,19 @@ export default function StepATemplate() {
         <div className="space-y-8">
           {Object.entries(groupedRepos).map(([kind, repoList]) => (
             <div key={kind}>
-              <h3 className="text-lg font-semibold mb-4 text-foreground">
+              <h3 className="mb-4 font-semibold text-foreground text-lg">
                 {kindLabels[kind as keyof typeof kindLabels] || kind}
               </h3>
-              <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(88px,1fr))] justify-center">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] justify-center gap-2">
                 {(repoList as TemplateRepository[]).map(
                   (repo: TemplateRepository) => (
                     <Card
-                      key={repo.uid}
-                      className={`cursor-pointer w-[88px] aspect-square flex flex-col items-center justify-center p-2 text-center hover:shadow-lg transition-all hover:-translate-y-1 ${
+                      className={`hover:-translate-y-1 flex aspect-square w-[88px] cursor-pointer flex-col items-center justify-center p-2 text-center transition-all hover:shadow-lg ${
                         selectedRepoUid === repo.uid
                           ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
                           : "border hover:border-primary/50"
                       }`}
+                      key={repo.uid}
                       onClick={() => {
                         setValue("templateRepositoryUid", repo.uid, {
                           shouldValidate: true,
@@ -182,10 +192,10 @@ export default function StepATemplate() {
                     >
                       <div className="flex flex-col items-center gap-2 text-center">
                         {repo.iconId && (
-                          <img
-                            src={`https://devbox.bja.sealos.run/images/${repo.iconId}.svg`}
+                          <Image
                             alt={repo.name}
-                            className="w-10 h-10"
+                            className="h-10 w-10"
+                            src={`https://devbox.bja.sealos.run/images/${repo.iconId}.svg`}
                           />
                         )}
                         <h3 className="font-medium text-sm leading-tight">
@@ -202,34 +212,34 @@ export default function StepATemplate() {
       )}
       {selectedRepoUid && (
         <div>
-          <div className="text-center mb-8">
-            <h2 className="text-xl font-bold tracking-tight">
+          <div className="mb-8 text-center">
+            <h2 className="font-bold text-xl tracking-tight">
               Select a Version
             </h2>
-            <p className="text-muted-foreground mt-1">
+            <p className="mt-1 text-muted-foreground">
               Choose a specific version from the selected repository.
             </p>
           </div>
           {loadingTemplates ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className="p-4 border rounded-lg bg-muted">
-                  <Skeleton className="h-5 w-24 mb-2" />
+                <div className="rounded-lg border bg-muted p-4" key={index}>
+                  <Skeleton className="mb-2 h-5 w-24" />
                   <Skeleton className="h-4 w-full" />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(88px,1fr))] justify-center">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] justify-center gap-2">
               {Array.isArray(templates) && templates.length > 0 ? (
                 templates.map((template) => (
                   <Card
-                    key={template.uid}
                     className={`cursor-pointer p-2 transition-all hover:shadow-md ${
                       selectedTemplateUid === template.uid
                         ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
                         : "border hover:border-primary/50"
                     }`}
+                    key={template.uid}
                     onClick={() => {
                       setValue("templateUid", template.uid, {
                         shouldValidate: true,
@@ -253,13 +263,13 @@ export default function StepATemplate() {
                     }}
                   >
                     <div className="font-medium">{template.name}</div>
-                    <div className="text-sm text-muted-foreground mt-1 break-all">
+                    <div className="mt-1 break-all text-muted-foreground text-sm">
                       {template.image}
                     </div>
                   </Card>
                 ))
               ) : (
-                <div className="text-center py-8 text-muted-foreground col-span-full">
+                <div className="col-span-full py-8 text-center text-muted-foreground">
                   No templates found for this repository.
                 </div>
               )}

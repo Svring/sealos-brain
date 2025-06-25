@@ -1,4 +1,3 @@
-import React from "react";
 import { Handle, Position } from "@xyflow/react";
 
 export interface NetworkNodeData {
@@ -15,33 +14,38 @@ export default function NetworkNode({ data }: { data: NetworkNodeData }) {
   const network = data;
   return (
     <>
-    <div className="relative p-4 rounded-lg border bg-background shadow-md w-64">
-      <div className="mb-2 font-bold text-lg truncate">Network: {network.networkName}</div>
-      <div className="text-sm text-muted-foreground mb-1">
-        <span className="font-medium">Port Name:</span> {network.portName}
+      <div className="relative w-64 rounded-lg border bg-background p-4 shadow-md">
+        <div className="mb-2 truncate font-bold text-lg">
+          Network: {network.networkName}
+        </div>
+        <div className="mb-1 text-muted-foreground text-sm">
+          <span className="font-medium">Port Name:</span> {network.portName}
+        </div>
+        <div className="mb-1 text-muted-foreground text-sm">
+          <span className="font-medium">Port:</span> {network.port}
+        </div>
+        <div className="mb-1 text-muted-foreground text-sm">
+          <span className="font-medium">Protocol:</span> {network.protocol}
+        </div>
+        <div className="mb-1 text-muted-foreground text-sm">
+          <span className="font-medium">Open Public Domain:</span>{" "}
+          {network.openPublicDomain ? "Yes" : "No"}
+        </div>
+        <div className="mb-1 text-muted-foreground text-sm">
+          <span className="font-medium">Public Domain:</span>{" "}
+          {network.publicDomain || "-"}
+        </div>
+        <div className="text-muted-foreground text-sm">
+          <span className="font-medium">Custom Domain:</span>{" "}
+          {network.customDomain || "-"}
+        </div>
       </div>
-      <div className="text-sm text-muted-foreground mb-1">
-        <span className="font-medium">Port:</span> {network.port}
-      </div>
-      <div className="text-sm text-muted-foreground mb-1">
-        <span className="font-medium">Protocol:</span> {network.protocol}
-      </div>
-      <div className="text-sm text-muted-foreground mb-1">
-        <span className="font-medium">Open Public Domain:</span> {network.openPublicDomain ? "Yes" : "No"}
-      </div>
-      <div className="text-sm text-muted-foreground mb-1">
-        <span className="font-medium">Public Domain:</span> {network.publicDomain || "-"}
-      </div>
-      <div className="text-sm text-muted-foreground">
-        <span className="font-medium">Custom Domain:</span> {network.customDomain || "-"}
-      </div>
-    </div>
-    <Handle
-      type="target"
-      position={Position.Top}
-      id="target-top"
-      className="w-3 h-3 bg-green-500"
-    />
+      <Handle
+        className="h-3 w-3 bg-green-500"
+        id="target-top"
+        position={Position.Top}
+        type="target"
+      />
     </>
   );
 }

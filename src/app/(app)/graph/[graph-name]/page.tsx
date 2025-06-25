@@ -20,12 +20,12 @@ import { MenuBar, type MenuBarItem } from "@/components/ui/menu-bar";
 import { MessageSwiper } from "@/components/ui/message-swiper";
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
 import { usePanel } from "@/context/panel-provider";
+import { useGraph } from "@/hooks/use-graph";
 import {
   MessageRole,
   TextMessage,
   useGraphCopilotChat,
 } from "@/hooks/use-graph-copilot-chat";
-import { useGraphNode } from "@/hooks/use-graph-node";
 
 function GraphPageContent({ graphName }: { graphName: string }) {
   const {
@@ -39,7 +39,8 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     handleApplyConnections,
     handleQuitEditMode,
     enhancedNodes,
-  } = useGraphNode(graphName);
+    isApplyingConnections,
+  } = useGraph(graphName);
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
 
@@ -140,11 +141,15 @@ function GraphPageContent({ graphName }: { graphName: string }) {
                     </Button>
                     <Button
                       className="h-6 px-2 py-0 text-xs"
-                      disabled={pendingEdges.length === 0}
+                      disabled={
+                        pendingEdges.length === 0 || isApplyingConnections
+                      }
                       onClick={handleApplyConnections}
                       size="sm"
                     >
-                      Apply ({pendingEdges.length})
+                      {isApplyingConnections
+                        ? "Applying..."
+                        : `Apply (${pendingEdges.length})`}
                     </Button>
                   </div>
                 </AlertDescription>

@@ -1,6 +1,7 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,10 +13,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import Link from "next/link";
-import { Trash2 } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface GraphCardProps {
   graphName: string;
@@ -26,9 +32,14 @@ interface GraphCardProps {
   isDeleting?: boolean;
 }
 
-export function GraphCard({ graphName, resources, onDelete, isDeleting }: GraphCardProps) {
+export function GraphCard({
+  graphName,
+  resources,
+  onDelete,
+  isDeleting,
+}: GraphCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  
+
   const totalResources = Object.values(resources).reduce(
     (acc, resourceList) => acc + resourceList.length,
     0
@@ -39,61 +50,74 @@ export function GraphCard({ graphName, resources, onDelete, isDeleting }: GraphC
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation
     e.stopPropagation(); // Prevent event bubbling
-    
+
     if (onDelete) {
       const toastId = `delete-graph-${graphName}`;
       try {
         toast.loading(`Deleting graph "${graphName}"...`, { id: toastId });
         await onDelete(graphName);
         setShowDeleteDialog(false);
-        toast.success(`Graph "${graphName}" deleted successfully!`, { id: toastId });
-      } catch (error: any) {
-        console.error("Failed to delete graph:", error);
-        toast.error(error?.message || `Failed to delete graph "${graphName}"`, { id: toastId });
+        toast.success(`Graph "${graphName}" deleted successfully!`, {
+          id: toastId,
+        });
+      } catch (error: unknown) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : `Failed to delete graph "${graphName}"`,
+          {
+            id: toastId,
+          }
+        );
       }
     }
   };
 
   return (
-    <Card className="w-full cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] relative group">
+    <Card className="group relative w-full cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg">
       <Link href={`/graph/${encodeURIComponent(graphName)}`}>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">{graphName}</CardTitle>
+            <CardTitle className="font-semibold text-lg">{graphName}</CardTitle>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">
-                {totalResources} resources
-              </Badge>
+              <Badge variant="secondary">{totalResources} resources</Badge>
               {onDelete && (
-                <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialog
+                  onOpenChange={setShowDeleteDialog}
+                  open={showDeleteDialog}
+                >
                   <AlertDialogTrigger asChild>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                      className="h-8 w-8 p-0 opacity-0 transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
+                      disabled={isDeleting}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setShowDeleteDialog(true);
                       }}
-                      disabled={isDeleting}
+                      size="sm"
+                      variant="ghost"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Graph</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete the graph "{graphName}"? This will remove the graphName annotation from all {totalResources} resources in this graph. The resources themselves will not be deleted, but they will no longer be grouped in this graph.
+                        Are you sure you want to delete the graph "{graphName}"?
+                        This will remove the graphName annotation from all{" "}
+                        {totalResources} resources in this graph. The resources
+                        themselves will not be deleted, but they will no longer
+                        be grouped in this graph.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={handleDelete}
-                        disabled={isDeleting}
                         className="bg-destructive hover:bg-destructive/90"
+                        disabled={isDeleting}
+                        onClick={handleDelete}
                       >
                         {isDeleting ? "Deleting..." : "Delete Graph"}
                       </AlertDialogAction>
@@ -104,23 +128,24 @@ export function GraphCard({ graphName, resources, onDelete, isDeleting }: GraphC
             </div>
           </div>
           <CardDescription>
-            Graph containing {resourceTypes.length} resource type{resourceTypes.length !== 1 ? 's' : ''}
+            Graph containing {resourceTypes.length} resource type
+            {resourceTypes.length !== 1 ? "s" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-2">
             {Object.entries(resources).map(([resourceKind, resourceList]) => (
               <div
+                className="flex items-center justify-between rounded-md bg-muted/50 p-2"
                 key={resourceKind}
-                className="flex items-center justify-between p-2 rounded-md bg-muted/50"
               >
                 <span className="font-medium capitalize">{resourceKind}</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
+                  <Badge className="text-xs" variant="outline">
                     {resourceList.length}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {resourceList.join(', ')}
+                  <span className="text-muted-foreground text-xs">
+                    {resourceList.join(", ")}
                   </span>
                 </div>
               </div>
