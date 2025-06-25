@@ -121,12 +121,7 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
       const resourceNodes = Object.entries(graphResources).flatMap(
         ([resourceKind, resourceNames], resourceTypeIndex) =>
           resourceNames.map((resourceName, resourceIndex) =>
-            createResourceNode(
-              resourceKind,
-              resourceName,
-              300 + resourceTypeIndex * 400,
-              200 + resourceIndex * 150
-            )
+            createResourceNode(resourceKind, resourceName, 0, 0)
           )
       );
 

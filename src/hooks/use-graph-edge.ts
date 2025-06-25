@@ -391,7 +391,6 @@ export function useGraphEdge(
     const allEdges: ParsedEdge[] = [];
 
     for (const resource of allResources) {
-      // Skip resources not in the specific graph if specified
       if (!isResourceInGraph(resource, specificGraphName)) {
         continue;
       }
@@ -400,9 +399,18 @@ export function useGraphEdge(
       allEdges.push(...resourceEdges);
     }
 
-    // In edit mode, enhance edges with selection styling
+    // Deduplicate edges by ID
+    const uniqueEdgeMap = new Map<string, ParsedEdge>();
+    for (const edge of allEdges) {
+      if (!uniqueEdgeMap.has(edge.id)) {
+        uniqueEdgeMap.set(edge.id, edge);
+      }
+    }
+
+    const dedupedEdges = Array.from(uniqueEdgeMap.values());
+
     if (editMode) {
-      return allEdges.map((edge) => ({
+      return dedupedEdges.map((edge) => ({
         ...edge,
         style: {
           ...edge.style,
@@ -413,7 +421,7 @@ export function useGraphEdge(
       }));
     }
 
-    return allEdges;
+    return dedupedEdges;
   }, [
     allResources,
     isLoadingResources,

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useGraphEdge } from "@/hooks/use-graph-edge";
+import { useGraphLayout } from "@/hooks/use-graph-layout";
 import { useGraphNode } from "@/hooks/use-graph-node";
 import type { ResourceType } from "@/lib/sealos/k8s/k8s-utils";
 import type { User } from "@/payload-types";
@@ -14,14 +15,22 @@ export function useGraph(specificGraphName?: string) {
   // Edge-related logic
   const edgeLogic = useGraphEdge(currentUser, specificGraphName);
 
+  // Layout logic
+  const { applyLayout } = useGraphLayout();
+
   // Combine node data and edge-handling to create enhanced nodes
   const enhancedNodes = useMemo(() => {
     if (!edgeLogic.editMode) {
-      return nodeLogic.nodes;
+      // When not in edit mode, set draggable: false for all nodes
+      return nodeLogic.nodes.map((node) => ({
+        ...node,
+        draggable: false,
+      }));
     }
 
     return nodeLogic.nodes.map((node) => ({
       ...node,
+      draggable: node.id !== "empty-state",
       data: {
         ...node.data,
         onClick: (event: React.MouseEvent) =>
@@ -83,6 +92,19 @@ export function useGraph(specificGraphName?: string) {
     );
   }, [currentUser, edgeLogic, getResourceInfo]);
 
+  // Apply layout to nodes and edges
+  const handleApplyLayout = useCallback(
+    (direction: "TB" | "LR" | "BT" | "RL" = "TB") => {
+      const layouted = applyLayout(enhancedNodes, enhancedEdges, direction);
+
+      console.log("layouted", layouted);
+
+      // Update node positions with the layouted positions
+      nodeLogic.setNodes(layouted.nodes);
+    },
+    [applyLayout, enhancedNodes, enhancedEdges, nodeLogic.setNodes]
+  );
+
   return {
     // Node data
     ...nodeLogic,
@@ -101,6 +123,9 @@ export function useGraph(specificGraphName?: string) {
     handleQuitEditMode: edgeLogic.handleQuitEditMode,
     isApplyingConnections: edgeLogic.isApplyingConnections,
     isLoadingEdges: edgeLogic.isLoadingEdges,
+
+    // Layout functions
+    handleApplyLayout,
 
     // Enhanced nodes for rendering
     enhancedNodes,

@@ -8,7 +8,7 @@ import {
 } from "@xyflow/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Plus, Spline } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
 import edgeTypes from "@/components/flow/edge/edge-types";
 import NodeCreateView from "@/components/flow/node/create/node-create-view";
@@ -43,6 +43,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     handleQuitEditMode,
     enhancedNodes,
     isApplyingConnections,
+    handleApplyLayout,
   } = useGraph(graphName);
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
@@ -55,6 +56,23 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     setIsMessageSwiperExpanded,
   } = useGraphCopilotChat();
 
+  // Add refreshKey state
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Automatically apply BT layout when nodes are unpositioned (e.g., on data refresh)
+  useEffect(() => {
+    if (enhancedNodes.length === 0 || isLoading) return;
+
+    // Detect if any node still needs layout (position remains at origin)
+    const needsLayout = enhancedNodes.some(
+      (n) => n.position.x === 0 && n.position.y === 0
+    );
+
+    if (needsLayout) {
+      handleApplyLayout("BT");
+    }
+  }, [enhancedNodes, isLoading, handleApplyLayout]);
+
   const handleNodesChange = (changes: NodeChange[]) => {
     if (editMode) {
       const selectionChanges = changes.filter(
@@ -65,6 +83,12 @@ function GraphPageContent({ graphName }: { graphName: string }) {
       }
     }
     onNodesChange(changes);
+  };
+
+  // Wrap handleApplyConnections to increment refreshKey after applying
+  const handleApplyConnectionsWithRefresh = async () => {
+    await handleApplyConnections();
+    setRefreshKey((k) => k + 1);
   };
 
   // Handle edge clicks in edit mode
@@ -177,7 +201,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
                           pendingEdgeDeletions.length === 0) ||
                         isApplyingConnections
                       }
-                      onClick={handleApplyConnections}
+                      onClick={handleApplyConnectionsWithRefresh}
                       size="sm"
                     >
                       {isApplyingConnections
@@ -199,6 +223,8 @@ function GraphPageContent({ graphName }: { graphName: string }) {
       <ReactFlow
         edges={parsedEdges}
         edgeTypes={edgeTypes}
+        fitView
+        key={refreshKey}
         nodes={enhancedNodes}
         nodeTypes={nodeTypes}
         onEdgeClick={handleEdgeClickEvent}

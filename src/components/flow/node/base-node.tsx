@@ -38,8 +38,8 @@ const BaseNode = ({
           {children}
         </button>
       </Glass>
-      <Handle position={Position.Left} type="source" />
-      <Handle position={Position.Right} type="target" />
+      <Handle position={Position.Top} type="source" />
+      <Handle position={Position.Bottom} type="target" />
     </>
   );
 };

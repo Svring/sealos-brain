@@ -59,7 +59,7 @@ export default function CronJobNode({ data }: { data: CronJobNodeData }) {
                 // Fallback to a generic cron icon
                 (e.target as HTMLImageElement).src = "/cron-icon.svg";
               }}
-              src="https://cronjob.cloud.sealos.io/logo.svg"
+              src="https://objectstorageapi.hzh.sealos.run/cyhipdvv-logos/cronjob.svg"
               width={40}
             />
             <div className="flex flex-col">

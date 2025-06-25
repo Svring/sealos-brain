@@ -70,7 +70,7 @@ export default function ObjectStorageNode({
                 // Fallback to a generic storage icon
                 (e.target as HTMLImageElement).src = "/storage-icon.svg";
               }}
-              src="https://objectstorage.cloud.sealos.io/logo.svg"
+              src="https://objectstorageapi.hzh.sealos.run/cyhipdvv-logos/objectstorage.svg"
               width={40}
             />
             <div className="flex flex-col">

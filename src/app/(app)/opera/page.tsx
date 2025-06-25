@@ -1,24 +1,24 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { ChatPanel } from "./components/chat-panel";
-import { PreviewPanel } from "./components/preview-panel";
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
-import { useSealosStore } from "@/store/sealos-store";
-import { useQuery, useQueries } from "@tanstack/react-query";
 import {
-  devboxListOptions,
   devboxByNameOptions,
+  devboxListOptions,
 } from "@/lib/sealos/devbox/devbox-query";
 import {
-  transformDevboxListToNames,
   transformDevboxAddresses,
+  transformDevboxListToNames,
 } from "@/lib/sealos/devbox/devbox-transform";
+import { useSealosStore } from "@/store/sealos-store";
+import { ChatPanel } from "./components/chat-panel";
+import { PreviewPanel } from "./components/preview-panel";
 
 interface DevboxOption {
   name: string;
@@ -57,7 +57,10 @@ export default function OperaPage() {
     () =>
       devboxAddressQueries
         .map((q) => q.data)
-        .filter((opt): opt is DevboxOption => !!opt && typeof opt === 'object' && !("error" in opt)),
+        .filter(
+          (opt): opt is DevboxOption =>
+            !!opt && typeof opt === "object" && !("error" in opt)
+        ),
     [devboxAddressQueries]
   );
 
@@ -90,25 +93,25 @@ export default function OperaPage() {
         token: "",
       }}
     >
-      <div className="h-screen w-screen flex flex-col p-2 text-foreground">
-        <ResizablePanelGroup direction="horizontal" className="flex-1 gap-1">
-          <ResizablePanel defaultSize={25} minSize={25} className="rounded-lg">
+      <div className="flex h-screen w-screen flex-col p-2 text-foreground">
+        <ResizablePanelGroup className="flex-1 gap-1" direction="horizontal">
+          <ResizablePanel className="rounded-lg" defaultSize={25} minSize={25}>
             <ChatPanel
               activeTab={activeTab}
-              setActiveTab={setActiveTab}
               devboxOptions={devboxOptions}
+              onSelectDevbox={handleSelectDevbox}
               selectedDevboxName={
                 selectedDevboxName || devboxOptions[0]?.name || ""
               }
-              onSelectDevbox={handleSelectDevbox}
+              setActiveTab={setActiveTab}
             />
           </ResizablePanel>
           <ResizableHandle className="bg-transparent" />
-          <ResizablePanel defaultSize={75} className="rounded-lg">
+          <ResizablePanel className="rounded-lg" defaultSize={75}>
             <PreviewPanel
               isDarkMode={isDarkMode}
-              setIsDarkMode={setIsDarkMode}
               previewUrl={previewUrl}
+              setIsDarkMode={setIsDarkMode}
             />
           </ResizablePanel>
         </ResizablePanelGroup>
