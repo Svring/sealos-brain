@@ -77,3 +77,24 @@ export function delDBByNameMutation(
     },
   });
 }
+
+// Create Database
+export function createDBMutation(
+  currentUser: any,
+  regionUrl: string | undefined
+) {
+  return useMutation({
+    mutationFn: async (dbFormData: any) => {
+      if (!regionUrl) {
+        throw new Error("Region URL is required");
+      }
+      const headers = getDBProviderHeaders(currentUser);
+      const response = await axios.post(
+        `/api/sealos/dbprovider/createDB?regionUrl=${regionUrl}`,
+        dbFormData,
+        { headers }
+      );
+      return response.data;
+    },
+  });
+}

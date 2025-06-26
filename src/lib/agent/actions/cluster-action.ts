@@ -1,13 +1,15 @@
 import { useCopilotAction } from "@copilotkit/react-core";
 import { useSealosStore } from "@/store/sealos-store";
 import { useQuery } from "@tanstack/react-query";
-import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
 import { dbProviderListOptions } from "@/lib/sealos/dbprovider/dbprovider-query";
 import {
   startDBByNameMutation,
   pauseDBByNameMutation,
   delDBByNameMutation,
+  createDBMutation,
 } from "@/lib/sealos/dbprovider/dbprovider-mutation";
+import { generateDBFormFromType } from "@/lib/sealos/dbprovider/dbprovider-utils";
+import { DB_TYPE_VERSION_MAP } from "@/lib/sealos/dbprovider/dbprovider-constant";
 
 export function getClusterListAction() {
   const { currentUser, regionUrl } = useSealosStore();
@@ -99,9 +101,41 @@ export function deleteClusterAction() {
   });
 }
 
+export function createClusterAction() {
+  const { currentUser, regionUrl } = useSealosStore();
+  const { mutateAsync: createDB } = createDBMutation(currentUser, regionUrl);
+
+  // Only allow dbTypes with non-empty versions
+  const allowedDbTypes = Object.entries(DB_TYPE_VERSION_MAP)
+    .filter(([_, versions]) => Array.isArray(versions) && versions.length > 0)
+    .map(([dbType]) => dbType);
+
+  useCopilotAction({
+    name: "createCluster",
+    description:
+      "Create a database cluster by dbType (name will be generated automatically)",
+    available: "remote",
+    parameters: [
+      {
+        name: "dbType",
+        type: "string",
+        description:
+          "The type of the database cluster (e.g., postgresql, kafka, etc.)",
+        required: true,
+        enum: allowedDbTypes,
+      },
+    ],
+    handler: async ({ dbType }) => {
+      const dbFormObj = generateDBFormFromType(dbType);
+      await createDB(dbFormObj);
+    },
+  });
+}
+
 export function activateClusterActions() {
   getClusterListAction();
   startClusterAction();
   pauseClusterAction();
   deleteClusterAction();
+  createClusterAction();
 }

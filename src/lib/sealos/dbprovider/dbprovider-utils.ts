@@ -1,4 +1,6 @@
 import axios from "axios";
+import { DB_TYPE_VERSION_MAP } from "./dbprovider-constant";
+import { customAlphabet } from "nanoid";
 
 // Helper to get headers from currentUser
 function getDBProviderHeaders(currentUser: any) {
@@ -8,6 +10,9 @@ function getDBProviderHeaders(currentUser: any) {
       "",
   };
 }
+
+// Create a custom nanoid with lowercase alphabet and size 12
+const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 12);
 
 /**
  * Get database type by database name
@@ -47,4 +52,52 @@ export async function getDBTypeByName(
       `Failed to get database type for ${dbName}: ${error.message}`
     );
   }
+}
+
+/**
+ * Get the first version id for a given dbType
+ * @param dbType - The database type (e.g., "postgresql", "mongodb")
+ * @returns The first version id as a string, or undefined if not found
+ */
+export function getFirstDBVersion(dbType: string): string | undefined {
+  const versions =
+    DB_TYPE_VERSION_MAP[dbType as keyof typeof DB_TYPE_VERSION_MAP];
+  if (Array.isArray(versions) && versions.length > 0 && versions[0]) {
+    return versions[0].id;
+  }
+  return undefined;
+}
+
+/**
+ * Generate a dbForm object for a given dbType with sensible defaults
+ * @param dbType - The database type (e.g., "kafka", "postgresql")
+ * @returns An object with dbForm and isEdit: false
+ */
+export function generateDBFormFromType(dbType: string) {
+  const dbVersion = getFirstDBVersion(dbType);
+  const dbName = `db-${nanoid()}`;
+
+  return {
+    dbForm: {
+      dbType,
+      dbVersion,
+      dbName,
+      replicas: 1,
+      cpu: 2000,
+      memory: 2048,
+      storage: 4,
+      labels: {},
+      autoBackup: {
+        start: true,
+        type: "day",
+        week: [],
+        hour: "23",
+        minute: "00",
+        saveTime: 7,
+        saveType: "d",
+      },
+      terminationPolicy: "Delete",
+    },
+    isEdit: false,
+  };
 }
