@@ -8,14 +8,14 @@ import {
 export async function POST(req: NextRequest) {
   try {
     const regionUrl = req.nextUrl.searchParams.get("regionUrl");
-    const name = req.nextUrl.searchParams.get("name");
     const authorization = req.headers.get("Authorization");
 
-    // Validate query parameters
-    const paramValidation = validateQueryParams({ regionUrl, name }, [
-      "regionUrl",
-      "name",
-    ]);
+    // Parse request body to get dbName and dbType
+    const body = await req.json();
+    const { dbName, dbType } = body;
+
+    // Validate query parameters (only regionUrl now)
+    const paramValidation = validateQueryParams({ regionUrl }, ["regionUrl"]);
     if (!paramValidation.isValid) {
       return NextResponse.json(
         { message: paramValidation.errorMessage },
@@ -32,6 +32,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate required body parameters
+    if (!dbName || !dbType) {
+      return NextResponse.json(
+        { message: "Missing required parameters: dbName and dbType" },
+        { status: 400 }
+      );
+    }
+
     // Make API request
     const result = await makeDBProviderApiRequest(
       regionUrl!,
@@ -39,11 +47,13 @@ export async function POST(req: NextRequest) {
       {
         authorization: authorization!,
       },
-      {
-        name: name!,
-      },
+      undefined,
       {
         method: "POST",
+        data: {
+          dbName: dbName,
+          dbType: dbType,
+        },
       }
     );
 

@@ -107,15 +107,15 @@ export function ChatBubbleMessage({
         {isLoading ? (
           <div className="flex items-center space-x-2">
             <MessageLoading />
-            <span className="text-sm text-muted-foreground">Thinking...</span>
+            <span className="text-base text-muted-foreground">Thinking...</span>
           </div>
         ) : hasError ? (
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-destructive" />
-            <span className="text-sm">Failed to send message</span>
+            <span className="text-base">Failed to send message</span>
           </div>
         ) : (
-          <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+          <div className="whitespace-pre-wrap break-words text-base leading-relaxed">
             {children}
           </div>
         )}
@@ -123,8 +123,6 @@ export function ChatBubbleMessage({
     </div>
   );
 }
-
-
 
 interface ChatBubbleActionProps {
   icon?: React.ReactNode;

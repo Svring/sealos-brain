@@ -1,5 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { DevboxFormValues } from "@/components/flow/node/devbox/create/schema/devbox-create-schema";
+import { generateDevboxFormFromTemplate } from "./devbox-utils";
 
 // Helper to get headers from currentUser
 function getDevboxHeaders(currentUser: any) {
@@ -147,6 +149,37 @@ export function deleteDevboxVersionMutation(
         `/api/sealos/devbox/delDevboxVersionByName?regionUrl=${regionUrl}&versionName=${versionName}`,
         { headers }
       );
+      return response.data;
+    },
+  });
+}
+
+// Create Devbox from Template Name
+export function createDevboxFromTemplateMutation(
+  currentUser: any,
+  regionUrl: string | undefined
+) {
+  return useMutation({
+    mutationFn: async (templateName: string) => {
+      if (!regionUrl) {
+        throw new Error("Region URL is required");
+      }
+
+      // First, generate the devboxForm from template name
+      const devboxForm = await generateDevboxFormFromTemplate(
+        templateName,
+        currentUser,
+        regionUrl
+      );
+
+      // Then, create the devbox using the generated form
+      const headers = getDevboxHeaders(currentUser);
+      const response = await axios.post(
+        `/api/sealos/devbox/createDevbox?regionUrl=${regionUrl}`,
+        { devboxForm: devboxForm },
+        { headers }
+      );
+
       return response.data;
     },
   });

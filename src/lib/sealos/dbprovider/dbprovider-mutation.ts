@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { getDBTypeByName } from "./dbprovider-utils";
 
 // Helper to get headers from currentUser
 function getDBProviderHeaders(currentUser: any) {
@@ -17,10 +18,17 @@ export function startDBByNameMutation(
 ) {
   return useMutation({
     mutationFn: async (dbName: string) => {
+      if (!regionUrl) {
+        throw new Error("Region URL is required");
+      }
+
+      // Automatically determine the database type
+      const dbType = await getDBTypeByName(dbName, currentUser, regionUrl);
+
       const headers = getDBProviderHeaders(currentUser);
       const response = await axios.post(
-        `/api/sealos/dbprovider/startDBByName?regionUrl=${regionUrl}&name=${dbName}`,
-        {},
+        `/api/sealos/dbprovider/startDBByName?regionUrl=${regionUrl}`,
+        { dbName, dbType },
         { headers }
       );
       return response.data;
@@ -35,10 +43,17 @@ export function pauseDBByNameMutation(
 ) {
   return useMutation({
     mutationFn: async (dbName: string) => {
+      if (!regionUrl) {
+        throw new Error("Region URL is required");
+      }
+
+      // Automatically determine the database type
+      const dbType = await getDBTypeByName(dbName, currentUser, regionUrl);
+
       const headers = getDBProviderHeaders(currentUser);
       const response = await axios.post(
-        `/api/sealos/dbprovider/pauseDBByName?regionUrl=${regionUrl}&name=${dbName}`,
-        {},
+        `/api/sealos/dbprovider/pauseDBByName?regionUrl=${regionUrl}`,
+        { dbName, dbType },
         { headers }
       );
       return response.data;

@@ -13,6 +13,9 @@ import { Hero } from "@/components/ui/hero";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
+import { activateDevboxActions } from "@/lib/agent/actions/devbox-action";
+import { activateClusterActions } from "@/lib/agent/actions/cluster-action";
+import { useEffect } from "react";
 
 function Home() {
   const { visibleMessages, appendMessage, isLoading } = useCopilotChat();
@@ -22,6 +25,9 @@ function Home() {
   };
 
   const hasMessages = visibleMessages.length > 0;
+
+  activateDevboxActions();
+  activateClusterActions();
 
   return (
     <motion.div className="flex h-full w-full flex-col items-center" layout>
@@ -56,23 +62,21 @@ function Home() {
         >
           <ScrollArea className="h-full">
             <ChatMessageList className="mx-auto max-w-3xl rounded-xl">
-              {visibleMessages.map((message) => {
-                if (!message.isTextMessage?.()) {
-                  return null;
-                }
+              {visibleMessages
+                .filter((message) => message.isTextMessage?.())
+                .map((message) => {
+                  const textMsg = message as TextMessage;
+                  const variant =
+                    textMsg.role === MessageRole.User ? "sent" : "received";
 
-                const textMsg = message as TextMessage;
-                const variant =
-                  textMsg.role === MessageRole.User ? "sent" : "received";
-
-                return (
-                  <ChatBubble key={message.id} variant={variant}>
-                    <ChatBubbleMessage variant={variant}>
-                      {textMsg.content}
-                    </ChatBubbleMessage>
-                  </ChatBubble>
-                );
-              })}
+                  return textMsg.content ? (
+                    <ChatBubble key={message.id} variant={variant}>
+                      <ChatBubbleMessage variant={variant}>
+                        {textMsg.content}
+                      </ChatBubbleMessage>
+                    </ChatBubble>
+                  ) : null;
+                })}
 
               {isLoading && (
                 <ChatBubble variant="received">
