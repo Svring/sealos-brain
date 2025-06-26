@@ -7,17 +7,24 @@ import {
   ReactNode,
   useState,
   useCallback,
-  useMemo,
 } from "react";
-import { activateDevboxActions } from "@/lib/sealos/devbox/devbox-action";
 import {
-  copilotAgentConfig,
-  CopilotAgentState,
-} from "@/lib/agent/copilot-agent";
-import { codeAgentConfig, CodeAgentState } from "@/lib/agent/code-agent";
+  sealosBrainAgentConfig,
+  SealosBrainAgentState,
+  createSealosBrainConfigurable,
+} from "@/lib/agent/sealos-brain";
+import {
+  codeAgentConfig,
+  CodeAgentState,
+  createCodeAgentConfigurable,
+} from "@/lib/agent/code-agent";
+import { activateDevboxActions } from "@/lib/agent/actions/devbox-action";
+import { activateObjectStorageActions } from "@/lib/agent/actions/objectstorage-action";
+import { activateGraphActions } from "@/lib/agent/actions/graph-action";
+import { activateClusterActions } from "@/lib/agent/actions/cluster-action";
 
 // Type Definitions
-type AgentState = CopilotAgentState | CodeAgentState;
+type AgentState = SealosBrainAgentState | CodeAgentState;
 
 interface CopilotConfig {
   runtimeUrl?: string;
@@ -58,11 +65,14 @@ export function useCopilotConfig() {
   return { config, updateConfig };
 }
 
-// DevboxActionsProvider - Component to handle devbox actions activation
-function DevboxActionsProvider({ agent }: { agent?: string }) {
-  // Only activate devbox actions when the agent is copilot
-  if (agent === "copilot") {
+// AgentActionsProvider - Component to handle agent actions activation
+function AgentActionsProvider({ agent }: { agent?: string }) {
+  // Only activate agent actions when the agent is sealos_brain
+  if (agent === "sealos_brain") {
     activateDevboxActions();
+    activateObjectStorageActions();
+    activateGraphActions();
+    activateClusterActions();
   }
   return null;
 }
@@ -107,7 +117,7 @@ export function CopilotStateProvider({
         config={config}
         updateConfig={updateConfig}
       >
-        <DevboxActionsProvider agent={config.agent} />
+        <AgentActionsProvider agent={config.agent} />
         {children}
       </InnerProvider>
     </CopilotKit>
@@ -122,35 +132,15 @@ interface InnerProviderProps {
 }
 
 function InnerProvider({ children, config, updateConfig }: InnerProviderProps) {
-  const agentConfig = useMemo(
-    () => (config.agent === "code" ? codeAgentConfig : copilotAgentConfig),
-    [config.agent]
-  );
+  // Get agent configuration and system prompt
+  const agentConfig =
+    config.agent === "code" ? codeAgentConfig : sealosBrainAgentConfig;
 
-  // Create the configurable object based on agent type
-  const configurableConfig = useMemo(() => {
-    const baseConfig = {
-      system_prompt: agentConfig.systemPrompt,
-      recursion_limit: 50,
-    };
-
-    // Add project_address and token for code agent only
-    if (config.agent === "code") {
-      return {
-        ...baseConfig,
-        project_address: config.project_address,
-        token: config.token || (agentConfig as any).token,
-      };
-    }
-
-    return baseConfig;
-  }, [
-    agentConfig.systemPrompt,
-    config.agent,
-    config.project_address,
-    config.token,
-    agentConfig,
-  ]);
+  // Create configurable object based on agent type
+  const configurableConfig =
+    config.agent === "code"
+      ? createCodeAgentConfigurable(config.project_address, config.token)
+      : createSealosBrainConfigurable();
 
   const { state, setState } = useCoAgent<AgentState>({
     name: agentConfig.name,

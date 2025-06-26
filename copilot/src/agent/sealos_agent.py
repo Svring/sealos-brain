@@ -44,9 +44,6 @@ class SealosAgentState(CopilotKitState):
     Inherits from CopilotKitState and adds Sealos-specific fields.
     """
 
-    # sealos_data: Any = None
-    # ui_state: Any = None
-
 
 async def sealos_agent_node(
     state: SealosAgentState, config: RunnableConfig
@@ -72,10 +69,10 @@ async def sealos_agent_node(
     )
 
     messages = [SystemMessage(content=system_prompt)]
-    if state.get("sealos_data"):
-        messages.append(
-            HumanMessage(content=f"Current sealos data is {state['sealos_data']}")
-        )
+    # if state.get("sealos_data"):
+    #     messages.append(
+    #         HumanMessage(content=f"Current sealos data is {state['sealos_data']}")
+    #     )
     messages.extend(state["messages"])
 
     # Get model response

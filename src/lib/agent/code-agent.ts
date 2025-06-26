@@ -177,3 +177,24 @@ export const codeAgentConfig: CodeAgentConfig = {
   project_address: "https://uwjpoiybnpbq.sealosbja.site",
   token: "",
 };
+
+// Function to get code agent configuration with optional config overrides
+export function getCodeAgentConfig(config?: Partial<CodeAgentConfig>) {
+  return {
+    ...codeAgentConfig,
+    ...config,
+  };
+}
+
+// Function to create configurable object for the code agent
+export function createCodeAgentConfigurable(
+  project_address?: string,
+  token?: string
+) {
+  return {
+    system_prompt: codeAgentConfig.systemPrompt,
+    recursion_limit: 50,
+    project_address: project_address || codeAgentConfig.project_address,
+    token: token || codeAgentConfig.token,
+  };
+}

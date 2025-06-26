@@ -1,9 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { type Node, type NodeChange, useNodesState } from "@xyflow/react";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { type ExistingResource, useResources } from "@/hooks/use-resources";
 import { useDeleteGraphMutation } from "@/lib/graph/graph-mutation";
-import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-constant";
+import { useGraphsQuery, useGraphQuery } from "@/lib/graph/graph-query";
 import type { GraphResourceGroup } from "@/lib/sealos/k8s/k8s-transform";
 import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
@@ -23,19 +23,22 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const { currentUser } = useSealosStore();
 
-  // Use the simplified resources hook
-  const { allResources, isLoading } = useResources(currentUser);
+  // Use the graph query hooks
+  const { data: mergedGraphs = {}, isLoading: isLoadingGraphs } =
+    useGraphsQuery(currentUser);
+  const { data: specificGraph = {}, isLoading: isLoadingSpecificGraph } =
+    useGraphQuery(currentUser, specificGraphName || "");
+
+  // Use the simplified resources hook for node data
+  const { allResources } = useResources(currentUser);
+
+  // Combined loading state
+  const isLoading = specificGraphName
+    ? isLoadingSpecificGraph
+    : isLoadingGraphs;
 
   // Combined error state (simplified since useResources handles individual query errors)
   const error: string | null = null;
-
-  // Create merged graph list from the resources
-  const mergedGraphs = useMemo(() => {
-    if (isLoading || !allResources.length) {
-      return {};
-    }
-    return groupResourcesByGraph(allResources);
-  }, [allResources, isLoading]);
 
   // Transform graphs into nodes for visualization
   useEffect(() => {
@@ -111,7 +114,7 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     });
 
     if (specificGraphName) {
-      const graphResources = mergedGraphs[specificGraphName];
+      const graphResources = specificGraph;
 
       if (!graphResources || Object.keys(graphResources).length === 0) {
         setNodes([createEmptyStateNode(specificGraphName)]);
@@ -119,8 +122,8 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
       }
 
       const resourceNodes = Object.entries(graphResources).flatMap(
-        ([resourceKind, resourceNames], resourceTypeIndex) =>
-          resourceNames.map((resourceName, resourceIndex) =>
+        ([resourceKind, resourceNames]) =>
+          (resourceNames as string[]).map((resourceName) =>
             createResourceNode(resourceKind, resourceName, 0, 0)
           )
       );
@@ -134,13 +137,17 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
 
       const graphNodes = Object.entries(mergedGraphs).flatMap(
         ([graphName, graphResources], graphIndex) => [
-          createGraphNode(graphName, graphResources, graphIndex),
+          createGraphNode(
+            graphName,
+            graphResources as Record<string, string[]>,
+            graphIndex
+          ),
           ...Object.entries(graphResources).map(
             ([resourceKind, resourceNames], resourceTypeIndex) =>
               createResourceTypeNode(
                 graphName,
                 resourceKind,
-                resourceNames,
+                resourceNames as string[],
                 graphIndex,
                 resourceTypeIndex
               )
@@ -279,23 +286,4 @@ function mapResourceStatus(status: string): string {
   }
 
   return "Unknown";
-}
-
-function groupResourcesByGraph(
-  allResources: ExistingResource[]
-): GraphResourceGroup {
-  const graphGroups: GraphResourceGroup = {};
-  for (const resource of allResources) {
-    const graphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
-    if (graphName) {
-      if (!graphGroups[graphName]) {
-        graphGroups[graphName] = {};
-      }
-      if (!graphGroups[graphName][resource.type]) {
-        graphGroups[graphName][resource.type] = [];
-      }
-      graphGroups[graphName][resource.type].push(resource.name);
-    }
-  }
-  return graphGroups;
 }

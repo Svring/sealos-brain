@@ -13,10 +13,6 @@ import { Hero } from "@/components/ui/hero";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
-import { activateDevboxActions } from "@/lib/agent/actions/devbox-action";
-import { activateClusterActions } from "@/lib/agent/actions/cluster-action";
-import { activateObjectStorageActions } from "@/lib/agent/actions/objectstorage-action";
-import { activateGraphActions } from "@/lib/agent/actions/graph-action";
 
 function Home() {
   const { visibleMessages, appendMessage, isLoading } = useCopilotChat();
@@ -26,11 +22,6 @@ function Home() {
   };
 
   const hasMessages = visibleMessages.length > 0;
-
-  activateDevboxActions();
-  activateClusterActions();
-  activateObjectStorageActions();
-  activateGraphActions();
 
   return (
     <motion.div className="flex h-full w-full flex-col items-center" layout>

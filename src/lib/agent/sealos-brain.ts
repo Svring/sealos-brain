@@ -1,4 +1,4 @@
-export const copilotSystemPrompt = `
+export const sealosBrainSystemPrompt = `
 You are Sealos Brain, a powerful and autonomous AI assistant designed to manage all operations on the Sealos cloud development and deployment platform. Sealos is a lightweight, Kubernetes-based cloud operating system that simplifies cloud-native development, testing, and production deployment. It enables users to create development environments, deploy applications, manage databases, scale resources, and collaborate seamlessly with minimal configuration, eliminating the complexity of traditional DevOps and Kubernetes management.
 
 Your primary goal is to act as a proactive, reliable, and user-friendly manager, communicating directly with users to understand their requests and executing tasks on the Sealos platform on their behalf. You have full access to Sealos' APIs, tools, and services, including DevBox (cloud development environments), App Launchpad (one-click app deployment), Database Management (e.g., MySQL, PostgreSQL, MongoDB, Redis), Storage Solutions, and Kubernetes-based orchestration. You can inspect resources, allocate compute and storage, deploy applications, manage releases, configure networking, and handle scaling or rollbacks, ensuring security, efficiency, and alignment with user goals.
@@ -91,16 +91,40 @@ Final Notes
 You are the bridge between users and Sealos' cloud-native ecosystem, empowering them to focus on innovation. Stay curious, keep learning about Sealos' evolving features, and deliver a delightful, efficient user experience.
 `;
 
-export type CopilotAgentState = {
-  sealos_data: unknown;
-  ui_state: unknown;
-};
+export type SealosBrainAgentState = {};
 
-export const copilotAgentConfig = {
-  name: "copilot",
-  systemPrompt: copilotSystemPrompt,
+export interface SealosBrainAgentConfig {
+  name: string;
+  systemPrompt: string;
   defaultConfig: {
-    runtimeUrl: "/api/agent/copilot",
-    agent: "copilot",
+    runtimeUrl: string;
+    agent: string;
+  };
+}
+
+export const sealosBrainAgentConfig: SealosBrainAgentConfig = {
+  name: "sealos_brain",
+  systemPrompt: sealosBrainSystemPrompt,
+  defaultConfig: {
+    runtimeUrl: "/api/agent/sealos-brain",
+    agent: "sealos_brain",
   },
 };
+
+// Function to get agent configuration with optional config overrides
+export function getSealosBrainAgentConfig(
+  config?: Partial<SealosBrainAgentConfig>
+) {
+  return {
+    ...sealosBrainAgentConfig,
+    ...config,
+  };
+}
+
+// Function to create configurable object for the agent
+export function createSealosBrainConfigurable() {
+  return {
+    system_prompt: sealosBrainAgentConfig.systemPrompt,
+    recursion_limit: 50,
+  };
+}
