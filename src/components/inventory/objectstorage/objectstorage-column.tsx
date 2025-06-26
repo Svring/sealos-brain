@@ -1,21 +1,33 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ObjectstorageColumn } from "./objectstorage-table-schema";
+import { ObjectStorageColumn } from "./objectstorage-table-schema";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Settings, Trash2 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
 
-export const objectstorageColumns: ColumnDef<ObjectstorageColumn>[] = [
+export const objectstorageColumns: ColumnDef<ObjectStorageColumn>[] = [
+    {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
   {
     accessorKey: "name",
     header: "Name",
@@ -107,57 +119,6 @@ export const objectstorageColumns: ColumnDef<ObjectstorageColumn>[] = [
     cell: ({ row }) => {
       const createdAt = row.getValue("createdAt") as string;
       return <div className="text-sm text-muted-foreground">{createdAt}</div>;
-    },
-  },
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      const bucket = row.original;
-
-      const handleConfigure = () => {
-        // TODO: Implement bucket configuration
-        toast.success(`Configuring bucket "${bucket.name}"`);
-      };
-
-      const handleDelete = () => {
-        if (confirm(`Are you sure you want to delete bucket "${bucket.name}"?`)) {
-          // TODO: Implement delete mutation
-          toast.success(`Bucket "${bucket.name}" deleted successfully`);
-        }
-      };
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(bucket.name)}
-            >
-              Copy name
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleConfigure}>
-              <Settings className="mr-2 h-4 w-4" />
-              Configure
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleDelete}
-              className="text-red-600"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
     },
   },
 ]; 

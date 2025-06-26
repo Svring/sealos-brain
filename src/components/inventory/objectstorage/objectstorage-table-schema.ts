@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-const objectstorageColumnSchema = z.object({
-  id: z.string(),
+export const objectStorageTableSchema = z.object({
   name: z.string(),
   status: z.string(),
-  type: z.string(),
+  size: z.string(),
   createdAt: z.string(),
 });
 
-export type ObjectstorageColumn = z.infer<typeof objectstorageColumnSchema>;
+export type ObjectStorageColumn = z.infer<typeof objectStorageTableSchema>;

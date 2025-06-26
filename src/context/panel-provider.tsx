@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface NodeViewContextType {
   openPanel: (id: string, content: ReactNode, onClose?: () => void) => void;
@@ -50,9 +52,18 @@ export const PanelProvider = ({ children }: { children: ReactNode }) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}
             transition={{ duration: 0.2 }}
-            className="fixed top-2 right-2 bottom-2 w-[40%] bg-background border border-border rounded-lg shadow-lg p-4 z-50 overflow-auto"
+            className="fixed top-2 right-2 bottom-2 w-[40%] bg-background border border-border rounded-lg shadow-lg z-50"
           >
-            {Content}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 h-8 w-8 z-10"
+              onClick={closePanel}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close panel</span>
+            </Button>
+            <div className="h-full w-full overflow-auto p-4">{Content}</div>
           </motion.div>
         )}
       </AnimatePresence>

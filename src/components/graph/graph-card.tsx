@@ -48,8 +48,8 @@ export function GraphCard({
   const resourceTypes = Object.keys(resources);
 
   const handleDelete = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation
-    e.stopPropagation(); // Prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
 
     if (onDelete) {
       const toastId = `delete-graph-${graphName}`;
@@ -74,80 +74,73 @@ export function GraphCard({
   };
 
   return (
-    <Card className="group relative w-full cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg">
-      <Link href={`/graph/${encodeURIComponent(graphName)}`}>
+    <Card className="group relative w-full max-w-sm overflow-hidden transition-all hover:shadow-lg">
+      {onDelete && (
+        <AlertDialog
+          onOpenChange={setShowDeleteDialog}
+          open={showDeleteDialog}
+        >
+          <AlertDialogTrigger asChild>
+            <Button
+              className="absolute top-2 right-2 h-7 w-7 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowDeleteDialog(true);
+              }}
+              size="sm"
+              variant="ghost"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Graph</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete the graph "{graphName}"?
+                This will remove the graphName annotation from all{" "}
+                {totalResources} resources in this graph. The resources
+                themselves will not be deleted, but they will no longer
+                be grouped in this graph.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive hover:bg-destructive/90"
+                disabled={isDeleting}
+                onClick={handleDelete}
+              >
+                {isDeleting ? "Deleting..." : "Delete Graph"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+      <Link href={`/graph/${encodeURIComponent(graphName)}`} className="flex flex-col h-full">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="font-semibold text-lg">{graphName}</CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">{totalResources} resources</Badge>
-              {onDelete && (
-                <AlertDialog
-                  onOpenChange={setShowDeleteDialog}
-                  open={showDeleteDialog}
-                >
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      className="h-8 w-8 p-0 opacity-0 transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
-                      disabled={isDeleting}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowDeleteDialog(true);
-                      }}
-                      size="sm"
-                      variant="ghost"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Graph</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete the graph "{graphName}"?
-                        This will remove the graphName annotation from all{" "}
-                        {totalResources} resources in this graph. The resources
-                        themselves will not be deleted, but they will no longer
-                        be grouped in this graph.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        className="bg-destructive hover:bg-destructive/90"
-                        disabled={isDeleting}
-                        onClick={handleDelete}
-                      >
-                        {isDeleting ? "Deleting..." : "Delete Graph"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-            </div>
-          </div>
-          <CardDescription>
-            Graph containing {resourceTypes.length} resource type
-            {resourceTypes.length !== 1 ? "s" : ""}
+          <CardTitle className="text-xl font-bold tracking-tight">
+            {graphName}
+          </CardTitle>
+          <CardDescription className="text-xs">
+            {totalResources} resources across {resourceTypes.length} types
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2">
+          <div className="space-y-1.5">
             {Object.entries(resources).map(([resourceKind, resourceList]) => (
               <div
-                className="flex items-center justify-between rounded-md bg-muted/50 p-2"
+                className="flex items-center justify-between text-xs"
                 key={resourceKind}
               >
-                <span className="font-medium capitalize">{resourceKind}</span>
-                <div className="flex items-center gap-2">
-                  <Badge className="text-xs" variant="outline">
-                    {resourceList.length}
-                  </Badge>
-                  <span className="text-muted-foreground text-xs">
-                    {resourceList.join(", ")}
-                  </span>
-                </div>
+                <span className="font-medium capitalize text-muted-foreground">
+                  {resourceKind}
+                </span>
+                <Badge variant="secondary" className="font-mono text-xs">
+                  {resourceList.length}
+                </Badge>
               </div>
             ))}
           </div>

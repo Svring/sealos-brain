@@ -49,16 +49,9 @@ export function CronJobTable() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isLoading}
+              size="icon"
             >
-              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-            <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Create CronJob
+              <Plus className="h-4 w-4" />
             </Button>
           </div>
         </div>

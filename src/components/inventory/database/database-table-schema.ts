@@ -1,12 +1,11 @@
 import { z } from "zod";
 
-const databaseColumnSchema = z.object({
-  id: z.string(),
+export const databaseTableSchema = z.object({
   name: z.string(),
-  type: z.string(),
   status: z.string(),
+  type: z.string(),
   createdAt: z.string(),
   cost: z.string(),
 });
 
-export type DatabaseColumn = z.infer<typeof databaseColumnSchema>;
+export type DatabaseColumn = z.infer<typeof databaseTableSchema>;

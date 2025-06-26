@@ -18,10 +18,10 @@ export default function InventoryPage() {
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="devbox">Devbox</TabsTrigger>
           <TabsTrigger value="database">Database</TabsTrigger>
+          <TabsTrigger value="objectstorage">Object Storage</TabsTrigger>
           <TabsTrigger value="launchpad">Launchpad</TabsTrigger>
           <TabsTrigger value="ai-proxy">AI Proxy</TabsTrigger>
           <TabsTrigger value="cronjob">CronJob</TabsTrigger>
-          <TabsTrigger value="objectstorage">Object Storage</TabsTrigger>
         </TabsList>
 
         <TabsContent value="devbox">
@@ -30,6 +30,10 @@ export default function InventoryPage() {
 
         <TabsContent value="database">
           <DatabaseTable />
+        </TabsContent>
+
+        <TabsContent value="objectstorage">
+          <ObjectStorageTable />
         </TabsContent>
 
         <TabsContent value="launchpad">
@@ -42,10 +46,6 @@ export default function InventoryPage() {
 
         <TabsContent value="cronjob">
           <CronJobTable />
-        </TabsContent>
-
-        <TabsContent value="objectstorage">
-          <ObjectStorageTable />
         </TabsContent>
       </Tabs>
     </div>

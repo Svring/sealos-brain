@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-const devboxColumnSchema = z.object({
-  id: z.string(),
+export const devboxTableSchema = z.object({
   name: z.string(),
   status: z.string(),
   createdAt: z.string(),
   cost: z.string(),
 });
 
-export type DevboxColumn = z.infer<typeof devboxColumnSchema>;
+export type DevboxColumn = z.infer<typeof devboxTableSchema>;
