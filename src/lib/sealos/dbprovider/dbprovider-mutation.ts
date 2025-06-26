@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { getDBTypeByName } from "./dbprovider-utils";
 
@@ -16,6 +16,7 @@ export function startDBByNameMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (dbName: string) => {
       if (!regionUrl) {
@@ -33,6 +34,9 @@ export function startDBByNameMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
+    },
   });
 }
 
@@ -41,6 +45,7 @@ export function pauseDBByNameMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (dbName: string) => {
       if (!regionUrl) {
@@ -58,6 +63,9 @@ export function pauseDBByNameMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
+    },
   });
 }
 
@@ -66,6 +74,7 @@ export function delDBByNameMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (dbName: string) => {
       const headers = getDBProviderHeaders(currentUser);
@@ -75,6 +84,9 @@ export function delDBByNameMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
+    },
   });
 }
 
@@ -83,6 +95,7 @@ export function createDBMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (dbFormData: any) => {
       if (!regionUrl) {
@@ -95,6 +108,9 @@ export function createDBMutation(
         { headers }
       );
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
     },
   });
 }

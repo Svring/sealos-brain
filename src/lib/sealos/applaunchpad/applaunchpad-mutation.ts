@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
 // Helper to get headers from currentUser
@@ -15,6 +15,7 @@ export function startAppMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (appName: string) => {
       const headers = getAppLaunchpadHeaders(currentUser);
@@ -25,6 +26,9 @@ export function startAppMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applaunchpad", "list"] });
+    },
   });
 }
 
@@ -33,6 +37,7 @@ export function restartAppMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (appName: string) => {
       const headers = getAppLaunchpadHeaders(currentUser);
@@ -43,6 +48,9 @@ export function restartAppMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applaunchpad", "list"] });
+    },
   });
 }
 
@@ -51,6 +59,7 @@ export function pauseAppMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (appName: string) => {
       const headers = getAppLaunchpadHeaders(currentUser);
@@ -61,6 +70,9 @@ export function pauseAppMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applaunchpad", "list"] });
+    },
   });
 }
 
@@ -69,6 +81,7 @@ export function delAppMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (appName: string) => {
       const headers = getAppLaunchpadHeaders(currentUser);
@@ -77,6 +90,9 @@ export function delAppMutation(
         { headers }
       );
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applaunchpad", "list"] });
     },
   });
 }

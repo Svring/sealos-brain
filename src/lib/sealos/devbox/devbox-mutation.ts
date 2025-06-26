@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { DevboxFormValues } from "@/components/flow/node/devbox/create/schema/devbox-create-schema";
 import { generateDevboxFormFromTemplate } from "./devbox-utils";
@@ -19,6 +19,7 @@ export function startDevboxMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (devboxName: string) => {
       const headers = getDevboxHeaders(currentUser);
@@ -29,6 +30,9 @@ export function startDevboxMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+    },
   });
 }
 
@@ -37,6 +41,7 @@ export function shutdownDevboxMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       devboxName,
@@ -53,6 +58,9 @@ export function shutdownDevboxMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+    },
   });
 }
 
@@ -61,6 +69,7 @@ export function restartDevboxMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (devboxName: string) => {
       const headers = getDevboxHeaders(currentUser);
@@ -71,6 +80,9 @@ export function restartDevboxMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+    },
   });
 }
 
@@ -79,6 +91,7 @@ export function deleteDevboxMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (devboxName: string) => {
       const headers = getDevboxHeaders(currentUser);
@@ -88,6 +101,9 @@ export function deleteDevboxMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+    },
   });
 }
 
@@ -96,6 +112,7 @@ export function createDevboxMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (devboxData: any) => {
       const headers = getDevboxHeaders(currentUser);
@@ -106,6 +123,9 @@ export function createDevboxMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+    },
   });
 }
 
@@ -114,6 +134,7 @@ export function releaseDevboxMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       devboxName,
@@ -134,6 +155,10 @@ export function releaseDevboxMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+      queryClient.invalidateQueries({ queryKey: ["devbox", "versions"] });
+    },
   });
 }
 
@@ -142,6 +167,7 @@ export function deleteDevboxVersionMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (versionName: string) => {
       const headers = getDevboxHeaders(currentUser);
@@ -151,6 +177,9 @@ export function deleteDevboxVersionMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devbox", "versions"] });
+    },
   });
 }
 
@@ -159,6 +188,7 @@ export function createDevboxFromTemplateMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (templateName: string) => {
       if (!regionUrl) {
@@ -181,6 +211,9 @@ export function createDevboxFromTemplateMutation(
       );
 
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
     },
   });
 }

@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { customAlphabet } from "nanoid";
 
@@ -21,6 +21,7 @@ export function createObjectStorageBucketMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
       if (!regionUrl) {
@@ -39,6 +40,9 @@ export function createObjectStorageBucketMutation(
       );
       return response.data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["objectstorage", "list"] });
+    },
   });
 }
 
@@ -47,6 +51,7 @@ export function deleteObjectStorageBucketMutation(
   currentUser: any,
   regionUrl: string | undefined
 ) {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (bucketName: string) => {
       if (!regionUrl) {
@@ -60,6 +65,9 @@ export function deleteObjectStorageBucketMutation(
         { headers }
       );
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["objectstorage", "list"] });
     },
   });
 }

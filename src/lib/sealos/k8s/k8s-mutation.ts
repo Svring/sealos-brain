@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@/payload-types";
 import {
   deleteGraphByRemovingAnnotations,
@@ -12,6 +12,7 @@ import { getKubeconfig, getNamespaceFromKubeconfig } from "./k8s-utils";
 
 // Generic patch resource annotation mutation
 export function usePatchResourceAnnotationMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (params: {
       currentUser: User;
@@ -36,11 +37,16 @@ export function usePatchResourceAnnotationMutation() {
         namespace
       );
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["graphs"] });
+      queryClient.invalidateQueries({ queryKey: ["nodes"] });
+    },
   });
 }
 
 // Generic remove resource annotation mutation
 export function useRemoveResourceAnnotationMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (params: {
       currentUser: User;
@@ -63,11 +69,16 @@ export function useRemoveResourceAnnotationMutation() {
         namespace
       );
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["graphs"] });
+      queryClient.invalidateQueries({ queryKey: ["nodes"] });
+    },
   });
 }
 
 // Delete graph mutation (moved from k8s-transform)
 export function useDeleteGraphMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (params: {
       currentUser: User;
@@ -87,6 +98,9 @@ export function useDeleteGraphMutation() {
         params.graphResources,
         namespace
       );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["graphs"] });
     },
   });
 }
