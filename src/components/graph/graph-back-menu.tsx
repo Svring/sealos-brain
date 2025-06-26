@@ -77,7 +77,7 @@ export function GraphBackMenu({
           {editing ? (
             <input
               autoFocus
-              className="max-w-[200px] truncate rounded bg-transparent px-1 text-sm outline-none"
+              className="max-w-xl truncate rounded bg-transparent px-1 text-sm outline-none"
               onBlur={submitRename}
               onChange={(e) => setTempName(e.target.value)}
               onKeyDown={(e) => {

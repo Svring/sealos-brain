@@ -9,15 +9,11 @@ import {
 } from "@kubernetes/client-node";
 
 // Import the correct annotation keys from k8s-utils
-import { GRAPH_ANNOTATION_KEY } from "./k8s-constant";
-
-interface ResourceDefinition {
-  group?: string;
-  version?: string;
-  plural?: string;
-  apiVersion?: string;
-  kind?: string;
-}
+import {
+  GRAPH_ANNOTATION_KEY,
+  RESOURCES,
+  type ResourceType,
+} from "./k8s-constant";
 
 interface ApiClients {
   customApi: CustomObjectsApi;
@@ -25,28 +21,6 @@ interface ApiClients {
   batchApi: BatchV1Api;
   coreApi: CoreV1Api;
 }
-
-const RESOURCES: Record<string, ResourceDefinition> = {
-  devbox: {
-    group: "devbox.sealos.io",
-    version: "v1alpha1",
-    plural: "devboxes",
-  },
-  cluster: {
-    group: "apps.kubeblocks.io",
-    version: "v1alpha1",
-    plural: "clusters",
-  },
-  deployment: { apiVersion: "apps/v1", kind: "Deployment" },
-  cronjob: { apiVersion: "batch/v1", kind: "CronJob" },
-  objectstoragebucket: {
-    group: "objectstorage.sealos.io",
-    version: "v1",
-    plural: "objectstoragebuckets",
-  },
-};
-
-export type ResourceType = keyof typeof RESOURCES;
 
 function createKubeConfig(kubeconfig: string): KubeConfig {
   const kc = new KubeConfig();
@@ -365,4 +339,14 @@ export async function getCurrentContextWithNamespace(
   const currentContext = kc.getCurrentContext();
   const ctx = kc.getContextObject(currentContext);
   return ctx ?? { name: currentContext };
+}
+
+/**
+ * Returns the current cluster object from the kubeconfig.
+ * @param kubeconfig The kubeconfig string
+ * @returns The current cluster object or null if not found
+ */
+export async function getCurrentCluster(kubeconfig: string) {
+  const kc = createKubeConfig(kubeconfig);
+  return kc.getCurrentCluster();
 }

@@ -155,16 +155,16 @@ function GraphPageContent({ graphName }: { graphName: string }) {
               duration: 0.2,
             }}
           >
-            <div className="pointer-events-auto mx-auto mt-4 w-full max-w-4xl">
+            <div className="pointer-events-auto mx-auto mt-4 w-full max-w-2xl">
               <Alert variant="default">
                 <AlertDescription>
                   <div className="flex items-center gap-2 text-foreground text-sm">
                     <span>
-                      Click nodes to connect them • Click edges to delete them
+                      Click nodes to connect them, click edges to delete them
                       {selectedNodes.length > 0 &&
-                        ` • Nodes: ${selectedNodes.length}/2`}
+                        `, Nodes: ${selectedNodes.length}/2`}
                       {selectedEdges.length > 0 &&
-                        ` • Edges: ${selectedEdges.length}`}
+                        `, Edges: ${selectedEdges.length}`}
                     </span>
                     <div className="flex flex-col gap-1 text-muted-foreground text-xs">
                       {pendingEdges.length > 0 && (
@@ -334,7 +334,10 @@ export default function GraphPage({
 
   return (
     <CopilotStateProvider
-      initialConfig={{ runtimeUrl: "/api/agent/copilot", agent: "copilot" }}
+      initialConfig={{
+        runtimeUrl: "/api/agent/sealos-brain",
+        agent: "sealos_brain",
+      }}
     >
       <GraphPageContent graphName={graphName} />
     </CopilotStateProvider>

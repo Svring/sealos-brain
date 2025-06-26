@@ -102,8 +102,8 @@ export default function HomePage() {
   return (
     <CopilotStateProvider
       initialConfig={{
-        runtimeUrl: "/api/copilot",
-        agent: "copilot",
+        runtimeUrl: "/api/agent/sealos-brain",
+        agent: "sealos_brain",
       }}
     >
       <Home />

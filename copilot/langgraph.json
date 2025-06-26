@@ -3,7 +3,7 @@
   "dockerfile_lines": [],
   "dependencies": ["."],
   "graphs": {
-    "copilot": "./src/agent/sealos_agent.py:graph",
+    "sealos_brain": "./src/agent/sealos_agent.py:graph",
     "code": "./src/agent/code_agent.py:graph"
   },
   "env": ".env"

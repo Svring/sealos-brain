@@ -53,3 +53,7 @@ cypress/fixtures
 system-prompt.txt
 
 .turbo
+.cursor
+.husky
+.vscode
+biome.jsonc

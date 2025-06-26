@@ -15,7 +15,7 @@ const runtime = new CopilotRuntime({
       langsmithApiKey: process.env.LANGSMITH_API_KEY || "", // only used in LangGraph Platform deployments
       agents: [
         {
-          name: "copilot",
+          name: "sealos_brain",
           description:
             process.env.NEXT_PUBLIC_COPILOTKIT_AGENT_DESCRIPTION ||
             "A helpful LLM agent.",
@@ -29,7 +29,7 @@ export const POST = async (req: NextRequest) => {
   const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
     runtime,
     serviceAdapter,
-    endpoint: "/api/agent/copilot",
+    endpoint: "/api/agent/sealos-brain",
   });
 
   return handleRequest(req);

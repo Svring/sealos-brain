@@ -24,7 +24,7 @@ from src.provider.backbone_provider import get_sealos_model
 from langchain_core.tools import tool
 
 # Get the model
-llm = get_sealos_model("gemini-2.5-flash-preview-05-20")
+llm = get_sealos_model("gpt-4.1-mini")
 
 
 @tool
@@ -44,8 +44,8 @@ class SealosAgentState(CopilotKitState):
     Inherits from CopilotKitState and adds Sealos-specific fields.
     """
 
-    sealos_data: Any = None
-    ui_state: Any = None
+    # sealos_data: Any = None
+    # ui_state: Any = None
 
 
 async def sealos_agent_node(
@@ -56,10 +56,14 @@ async def sealos_agent_node(
     Handles model binding, system prompts, Sealos context, and tool calls.
     """
 
-    # Bind tools to model
-    model_with_tools = llm.bind_tools(
-        state["copilotkit"]["actions"], parallel_tool_calls=False
-    )
+    # Only bind tools when copilotkit and actions both exist
+    if state.get("copilotkit") and state["copilotkit"].get("actions"):
+        copilotkit = state["copilotkit"]["actions"]
+        # Bind tools to model
+        model_with_tools = llm.bind_tools(copilotkit, parallel_tool_calls=False)
+    else:
+        # Use model without tools when copilotkit actions are not available
+        model_with_tools = llm
 
     # Build messages with system prompt and optional Sealos data
     system_prompt = config.get("configurable", {}).get(
