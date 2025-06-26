@@ -60,6 +60,54 @@ export function useAddGraphEdgesAnnotationMutation() {
   });
 }
 
+// Create graph with existing resources by adding graph annotations
+export function useCreateGraphWithResourcesMutation() {
+  const addResourceToGraphMutation = useAddResourceToGraphMutation();
+
+  return useMutation({
+    mutationFn: async (params: {
+      currentUser: User;
+      graphName: string;
+      resources: { [resourceType in ResourceType]?: string[] };
+      namespaceOverride?: string;
+    }) => {
+      const { currentUser, graphName, resources, namespaceOverride } = params;
+
+      // Collect all annotation update promises
+      const annotationPromises: Promise<any>[] = [];
+
+      // Iterate through each resource type and add annotations
+      for (const [resourceType, resourceNames] of Object.entries(resources)) {
+        if (Array.isArray(resourceNames)) {
+          for (const resourceName of resourceNames) {
+            annotationPromises.push(
+              addResourceToGraphMutation.mutateAsync({
+                currentUser,
+                resourceType: resourceType as ResourceType,
+                resourceName,
+                graphName,
+                namespaceOverride,
+              })
+            );
+          }
+        }
+      }
+
+      // Execute all annotation updates in parallel
+      await Promise.all(annotationPromises);
+
+      return {
+        graphName,
+        resourcesAdded: Object.entries(resources).reduce(
+          (total, [_, names]) =>
+            total + (Array.isArray(names) ? names.length : 0),
+          0
+        ),
+      };
+    },
+  });
+}
+
 // Delete graph by removing graphName annotations from all resources
 export function useDeleteGraphMutation() {
   const deleteGraphMutation = useDeleteGraphMutationBase();
