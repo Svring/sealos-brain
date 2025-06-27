@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "next build --turbopack",
     "start": "next start",
     "lint": "next lint",
     "cypress:open": "cypress open",
@@ -89,6 +89,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.0.5",
     "@eslint/eslintrc": "^3",
+    "@rspack/cli": "^1.4.1",
+    "@rspack/core": "^1.4.1",
     "@tailwindcss/postcss": "^4",
     "@tanstack/react-query-devtools": "^5.80.7",
     "@types/node": "^20",
@@ -98,6 +100,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
     "lint-staged": "^16.1.2",
+    "next-rspack": "^15.3.4",
     "prettier": "3.5.3",
     "react-query-external-sync": "^2.2.2",
     "socket.io-client": "^4.8.1",

@@ -25,7 +25,7 @@ export function directResourceListOptions(
     ],
     enabled: !!currentUser,
     queryFn: async () => {
-      const kubeconfig = getKubeconfig(currentUser);
+      const kubeconfig = getKubeconfig(currentUser as User);
       if (!kubeconfig) {
         throw new Error("No kubeconfig found");
       }

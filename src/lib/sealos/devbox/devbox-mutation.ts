@@ -220,7 +220,10 @@ export async function createMultipleDevboxes(
     })
   );
 
-  return processDevboxBulkResults(results, "created");
+  return processDevboxBulkResults(
+    results as BulkOperationResult<DevboxResult>[],
+    "created"
+  );
 }
 
 /**
@@ -340,5 +343,8 @@ export async function shutdownMultipleDevboxes(
     })
   );
 
-  return processDevboxBulkResults(results, "shutdown");
+  return processDevboxBulkResults(
+    results as BulkOperationResult<ShutdownResult>[],
+    "shutdown"
+  );
 }

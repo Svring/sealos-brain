@@ -1,11 +1,10 @@
-import { z } from "zod";
-import {
+import type {
   DataSchema,
   DevboxSchema,
   TemplateSchema as DevboxTemplateSchema,
 } from "./schemas/devbox-list-schema";
-import { TemplateRepositoryListSchema } from "./schemas/template-repo-schema";
 import { DataSchema as TemplateListDataSchema } from "./schemas/template-list-schema";
+import { TemplateRepositoryListSchema } from "./schemas/template-repo-schema";
 
 export interface DevboxNodeDisplayData extends Record<string, unknown> {
   id: string;
@@ -100,7 +99,7 @@ export const transformTemplateList = (data: any) => {
  * Returns URLs for port 3000 (preview) and port 3051 (galatea)
  */
 export const transformDevboxAddresses = (data: any) => {
-  if (!data?.networks || !Array.isArray(data.networks)) {
+  if (!(data?.networks && Array.isArray(data.networks))) {
     return {
       error: "Devbox is not controlled - no network information available",
     };
@@ -113,7 +112,7 @@ export const transformDevboxAddresses = (data: any) => {
     (network: any) => network.port === 3051
   );
 
-  if (!previewNetwork?.publicDomain || !galateaNetwork?.publicDomain) {
+  if (!(previewNetwork?.publicDomain && galateaNetwork?.publicDomain)) {
     return {
       error:
         "Devbox is not controlled - required ports (3000, 3051) or their public domains are not available",
@@ -177,7 +176,7 @@ export const transformDevboxListToTable = (data: DataSchema) => {
       // Calculate estimated cost (placeholder - you may want to implement real cost calculation)
       const cpu = devbox.spec?.resource?.cpu || "0";
       const memory = devbox.spec?.resource?.memory || "0";
-      const cost = `$${(parseFloat(cpu.replace(/[^0-9.]/g, "")) * 0.001 + parseFloat(memory.replace(/[^0-9.]/g, "")) * 0.0001).toFixed(2)}/day`;
+      const cost = `$${(Number.parseFloat(cpu.replace(/[^0-9.]/g, "")) * 0.001 + Number.parseFloat(memory.replace(/[^0-9.]/g, "")) * 0.0001).toFixed(2)}/day`;
 
       return {
         id: `devbox-${devboxName}`,
@@ -195,7 +194,7 @@ export const transformDevboxListToTable = (data: DataSchema) => {
  * Returns array of network configurations including ports, domains, etc.
  */
 export const transformDevboxNetworks = (data: any) => {
-  if (!data?.networks || !Array.isArray(data.networks)) {
+  if (!(data?.networks && Array.isArray(data.networks))) {
     return [];
   }
 

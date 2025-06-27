@@ -1,6 +1,8 @@
 import { withPayload } from "@payloadcms/next/withPayload";
 import type { NextConfig } from "next";
 
+// import withRspack from "next-rspack";
+
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
