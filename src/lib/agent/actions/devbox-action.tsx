@@ -1,15 +1,18 @@
 import { useCopilotAction } from "@copilotkit/react-core";
-import { useSealosStore } from "@/store/sealos-store";
 import { useQuery } from "@tanstack/react-query";
-import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
 import {
-  startDevboxMutation,
-  shutdownDevboxMutation,
-  deleteDevboxMutation,
-  createDevboxFromTemplateMutation,
-} from "@/lib/sealos/devbox/devbox-mutation";
+  CreateDevboxActionUI,
+  DeleteDevboxActionUI,
+} from "@/components/agent/devbox-action-ui";
 import { DEVBOX_TEMPLATES } from "@/lib/sealos/devbox/devbox-constant";
-import { DevboxActionUI } from "@/components/agent/devbox-action-ui";
+import {
+  createDevboxFromTemplateMutation,
+  deleteDevboxMutation,
+  shutdownDevboxMutation,
+  startDevboxMutation,
+} from "@/lib/sealos/devbox/devbox-mutation";
+import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
+import { useSealosStore } from "@/store/sealos-store";
 
 export function getDevboxListAction() {
   const { currentUser } = useSealosStore();
@@ -96,7 +99,7 @@ export function deleteDevboxAction() {
   useCopilotAction({
     name: "deleteDevbox",
     description: "Delete a specific devbox by name",
-    available: "remote",
+    available: "enabled",
     parameters: [
       {
         name: "devboxName",
@@ -105,9 +108,24 @@ export function deleteDevboxAction() {
         required: true,
       },
     ],
-    handler: async ({ devboxName }) => {
-      const result = await deleteDevbox(devboxName);
-      return `Devbox '${result.devboxName || devboxName}' is successfully deleted`;
+    renderAndWaitForResponse: ({ status, args, result, respond }) => {
+      const { devboxName } = args;
+      return (
+        <DeleteDevboxActionUI
+          devboxName={devboxName || ""}
+          status={status}
+          result={result}
+          onSelect={async () => {
+            const result = await deleteDevbox(devboxName || "");
+            respond?.(
+              `Devbox '${result.devboxName || devboxName}' is successfully deleted`
+            );
+          }}
+          onReject={() => {
+            respond?.("User cancelled the devbox deletion operation");
+          }}
+        />
+      );
     },
   });
 }
@@ -132,14 +150,10 @@ export function createDevboxAction() {
         enum: DEVBOX_TEMPLATES,
       },
     ],
-    // handler: async ({ template }) => {
-    //   const result = await createDevbox(template);
-    //   return `Devbox '${result.devboxName}' is successfully created from template '${result.templateName || template}'`;
-    // },
     renderAndWaitForResponse: ({ status, args, result, respond }) => {
       const { template } = args;
       return (
-        <DevboxActionUI
+        <CreateDevboxActionUI
           template={template || ""}
           status={status}
           result={result}
