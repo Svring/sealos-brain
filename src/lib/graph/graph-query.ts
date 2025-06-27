@@ -38,7 +38,7 @@ export function useGraphsQuery(currentUser: User | null) {
       return groupResourcesByGraph(allResources);
     },
     enabled: !!currentUser && !isLoadingResources,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30_000,
   });
 }
 
@@ -52,6 +52,6 @@ export function useGraphQuery(currentUser: User | null, graphName: string) {
       return allGraphs?.[graphName] || {};
     },
     enabled: !!currentUser && !!allGraphs,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30_000, // 30 seconds
   });
 }

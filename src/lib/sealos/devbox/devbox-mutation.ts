@@ -1,58 +1,32 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
 import type { User } from "@/payload-types";
-import { generateDevboxFormFromTemplate } from "./devbox-utils";
+import {
+  type BulkOperationResult,
+  createDevbox,
+  createDevboxFromTemplate,
+  type DevboxData,
+  type DevboxResult,
+  deleteDevbox,
+  processDevboxBulkResults,
+  restartDevbox,
+  type ShutdownResult,
+  shutdownDevbox,
+  startDevbox,
+} from "./devbox-utils";
 
-interface DevboxData {
-  devboxForm?: {
-    name?: string;
-  };
-  name?: string;
-}
-
-interface DevboxResult {
-  devboxName: string;
-  templateName?: string;
-}
-
-interface ShutdownResult {
-  devboxName: string;
-  action: string;
-}
-
-interface BulkOperationResult<T = unknown> {
-  success: boolean;
-  item: string;
-  result?: T;
-  error?: string;
-}
-
-// Helper to get headers from currentUser
-function getDevboxHeaders(currentUser: User | null) {
-  return {
-    Authorization:
-      currentUser?.tokens?.find((t) => t.type === "kubeconfig")?.value || "",
-    "Authorization-Bearer":
-      currentUser?.tokens?.find((t) => t.type === "custom")?.value || "",
-  };
-}
-
-// Start Devbox
+// Start Devbox Mutation
 export function startDevboxMutation(
   currentUser: User | null,
   regionUrl: string | undefined
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (devboxName: string) => {
-      const headers = getDevboxHeaders(currentUser);
-      const response = await axios.post(
-        `/api/sealos/devbox/startDevbox?regionUrl=${regionUrl}`,
-        { devboxName },
-        { headers }
-      );
-      return { ...response.data, devboxName };
+    mutationFn: (devboxName: string) => {
+      if (!regionUrl) {
+        throw new Error("Region URL is required");
+      }
+      return startDevbox(devboxName, currentUser, regionUrl);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
@@ -64,7 +38,7 @@ export function startDevboxMutation(
   });
 }
 
-// Shutdown Devbox
+// Shutdown Devbox Mutation
 export function shutdownDevboxMutation(
   currentUser: User | null,
   regionUrl: string | undefined
@@ -78,13 +52,16 @@ export function shutdownDevboxMutation(
       devboxName: string;
       shutdownMode: "Stopped" | "Shutdown";
     }) => {
-      const headers = getDevboxHeaders(currentUser);
-      const response = await axios.post(
-        `/api/sealos/devbox/shutdownDevbox?regionUrl=${regionUrl}`,
-        { devboxName, shutdownMode },
-        { headers }
+      if (!regionUrl) {
+        throw new Error("Region URL is required");
+      }
+      const result = await shutdownDevbox(
+        devboxName,
+        currentUser,
+        regionUrl,
+        shutdownMode
       );
-      return { ...response.data, devboxName, shutdownMode };
+      return result;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
@@ -100,21 +77,18 @@ export function shutdownDevboxMutation(
   });
 }
 
-// Restart Devbox
+// Restart Devbox Mutation
 export function restartDevboxMutation(
   currentUser: User | null,
   regionUrl: string | undefined
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (devboxName: string) => {
-      const headers = getDevboxHeaders(currentUser);
-      const response = await axios.post(
-        `/api/sealos/devbox/restartDevbox?regionUrl=${regionUrl}`,
-        { devboxName },
-        { headers }
-      );
-      return { ...response.data, devboxName };
+    mutationFn: (devboxName: string) => {
+      if (!regionUrl) {
+        throw new Error("Region URL is required");
+      }
+      return restartDevbox(devboxName, currentUser, regionUrl);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
@@ -126,20 +100,18 @@ export function restartDevboxMutation(
   });
 }
 
-// Delete Devbox
+// Delete Devbox Mutation
 export function deleteDevboxMutation(
   currentUser: User | null,
   regionUrl: string | undefined
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (devboxName: string) => {
-      const headers = getDevboxHeaders(currentUser);
-      const response = await axios.delete(
-        `/api/sealos/devbox/delDevbox?regionUrl=${regionUrl}&devboxName=${devboxName}`,
-        { headers }
-      );
-      return { ...response.data, devboxName };
+    mutationFn: (devboxName: string) => {
+      if (!regionUrl) {
+        throw new Error("Region URL is required");
+      }
+      return deleteDevbox(devboxName, currentUser, regionUrl);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
@@ -151,24 +123,18 @@ export function deleteDevboxMutation(
   });
 }
 
-// Create Devbox
+// Create Devbox Mutation
 export function createDevboxMutation(
   currentUser: User | null,
   regionUrl: string | undefined
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (devboxData: DevboxData) => {
-      const headers = getDevboxHeaders(currentUser);
-      const response = await axios.post(
-        `/api/sealos/devbox/createDevbox?regionUrl=${regionUrl}`,
-        devboxData,
-        { headers }
-      );
-      // Extract devbox name from the request data
-      const devboxName =
-        devboxData.devboxForm?.name || devboxData.name || "Unknown";
-      return { ...response.data, devboxName };
+    mutationFn: (devboxData: DevboxData) => {
+      if (!regionUrl) {
+        throw new Error("Region URL is required");
+      }
+      return createDevbox(devboxData, currentUser, regionUrl);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
@@ -182,104 +148,18 @@ export function createDevboxMutation(
   });
 }
 
-// Release Devbox
-export function releaseDevboxMutation(
-  currentUser: User | null,
-  regionUrl: string | undefined
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      devboxName,
-      devboxUid,
-      tag,
-      releaseDes,
-    }: {
-      devboxName: string;
-      devboxUid: string;
-      tag: string | number;
-      releaseDes: string;
-    }) => {
-      const headers = getDevboxHeaders(currentUser);
-      const response = await axios.post(
-        `/api/sealos/devbox/releaseDevbox?regionUrl=${regionUrl}`,
-        { devboxName, devboxUid, tag, releaseDes },
-        { headers }
-      );
-      return { ...response.data, devboxName, tag };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
-      queryClient.invalidateQueries({ queryKey: ["devbox", "versions"] });
-      toast.success(
-        `Devbox '${data.devboxName}' version '${data.tag}' is successfully released`
-      );
-    },
-    onError: (error: Error, variables) => {
-      toast.error(
-        `Failed to release devbox '${variables.devboxName}': ${error.message}`
-      );
-    },
-  });
-}
-
-// Delete Devbox Version
-export function deleteDevboxVersionMutation(
-  currentUser: User | null,
-  regionUrl: string | undefined
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (versionName: string) => {
-      const headers = getDevboxHeaders(currentUser);
-      const response = await axios.delete(
-        `/api/sealos/devbox/delDevboxVersionByName?regionUrl=${regionUrl}&versionName=${versionName}`,
-        { headers }
-      );
-      return { ...response.data, versionName };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["devbox", "versions"] });
-      toast.success(
-        `Devbox version '${data.versionName}' is successfully deleted`
-      );
-    },
-    onError: (error: Error, versionName) => {
-      toast.error(
-        `Failed to delete devbox version '${versionName}': ${error.message}`
-      );
-    },
-  });
-}
-
-// Create Devbox from Template Name
+// Create Devbox from Template Mutation
 export function createDevboxFromTemplateMutation(
   currentUser: User | null,
   regionUrl: string | undefined
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (templateName: string) => {
+    mutationFn: (templateName: string) => {
       if (!regionUrl) {
         throw new Error("Region URL is required");
       }
-
-      // First, generate the devboxForm from template name
-      const devboxForm = await generateDevboxFormFromTemplate(
-        templateName,
-        currentUser,
-        regionUrl
-      );
-
-      // Then, create the devbox using the generated form
-      const headers = getDevboxHeaders(currentUser);
-      const response = await axios.post(
-        `/api/sealos/devbox/createDevbox?regionUrl=${regionUrl}`,
-        { devboxForm },
-        { headers }
-      );
-
-      return { ...response.data, devboxName: devboxForm.name, templateName };
+      return createDevboxFromTemplate(templateName, currentUser, regionUrl);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
@@ -314,26 +194,11 @@ export async function createMultipleDevboxes(
           throw new Error("Region URL is required");
         }
 
-        // First, generate the devboxForm from template name
-        const devboxForm = await generateDevboxFormFromTemplate(
+        const result = await createDevboxFromTemplate(
           template,
           currentUser,
           regionUrl
         );
-
-        // Then, create the devbox using the generated form
-        const headers = getDevboxHeaders(currentUser);
-        const response = await axios.post(
-          `/api/sealos/devbox/createDevbox?regionUrl=${regionUrl}`,
-          { devboxForm },
-          { headers }
-        );
-
-        const result = {
-          ...response.data,
-          devboxName: devboxForm.name,
-          templateName: template,
-        };
 
         return {
           success: true,
@@ -355,26 +220,7 @@ export async function createMultipleDevboxes(
     })
   );
 
-  const successful = results.filter(
-    (r): r is BulkOperationResult<DevboxResult> => r.success
-  );
-  const failed = results.filter((r) => !r.success);
-
-  let summary = "";
-  if (successful.length > 0) {
-    summary += `Successfully created ${successful.length} devbox(es):\n`;
-    for (const r of successful) {
-      summary += `- '${r.result?.devboxName}' from template '${r.result?.templateName}'\n`;
-    }
-  }
-  if (failed.length > 0) {
-    summary += `\nFailed to create ${failed.length} devbox(es):\n`;
-    for (const r of failed) {
-      summary += `- Template '${r.item}': ${r.error}\n`;
-    }
-  }
-
-  return { successful, failed, summary: summary.trim() };
+  return processDevboxBulkResults(results, "created");
 }
 
 /**
@@ -392,14 +238,10 @@ export async function deleteMultipleDevboxes(
   const results = await Promise.all(
     devboxNames.map(async (name) => {
       try {
-        const headers = getDevboxHeaders(currentUser);
-        const response = await axios.delete(
-          `/api/sealos/devbox/delDevbox?regionUrl=${regionUrl}&devboxName=${name}`,
-          { headers }
-        );
-
-        const result = { ...response.data, devboxName: name };
-
+        if (!regionUrl) {
+          throw new Error("Region URL is required");
+        }
+        const result = await deleteDevbox(name, currentUser, regionUrl);
         return {
           success: true,
           item: name,
@@ -417,24 +259,7 @@ export async function deleteMultipleDevboxes(
     })
   );
 
-  const successful = results.filter((r) => r.success);
-  const failed = results.filter((r) => !r.success);
-
-  let summary = "";
-  if (successful.length > 0) {
-    summary += `Successfully deleted ${successful.length} devbox(es):\n`;
-    for (const r of successful) {
-      summary += `- '${r.result}'\n`;
-    }
-  }
-  if (failed.length > 0) {
-    summary += `\nFailed to delete ${failed.length} devbox(es):\n`;
-    for (const r of failed) {
-      summary += `- '${r.item}': ${r.error}\n`;
-    }
-  }
-
-  return { successful, failed, summary: summary.trim() };
+  return processDevboxBulkResults(results, "deleted");
 }
 
 /**
@@ -452,15 +277,10 @@ export async function startMultipleDevboxes(
   const results = await Promise.all(
     devboxNames.map(async (name) => {
       try {
-        const headers = getDevboxHeaders(currentUser);
-        const response = await axios.post(
-          `/api/sealos/devbox/startDevbox?regionUrl=${regionUrl}`,
-          { devboxName: name },
-          { headers }
-        );
-
-        const result = { ...response.data, devboxName: name };
-
+        if (!regionUrl) {
+          throw new Error("Region URL is required");
+        }
+        const result = await startDevbox(name, currentUser, regionUrl);
         return {
           success: true,
           item: name,
@@ -478,24 +298,7 @@ export async function startMultipleDevboxes(
     })
   );
 
-  const successful = results.filter((r) => r.success);
-  const failed = results.filter((r) => !r.success);
-
-  let summary = "";
-  if (successful.length > 0) {
-    summary += `Successfully started ${successful.length} devbox(es):\n`;
-    for (const r of successful) {
-      summary += `- '${r.result}'\n`;
-    }
-  }
-  if (failed.length > 0) {
-    summary += `\nFailed to start ${failed.length} devbox(es):\n`;
-    for (const r of failed) {
-      summary += `- '${r.item}': ${r.error}\n`;
-    }
-  }
-
-  return { successful, failed, summary: summary.trim() };
+  return processDevboxBulkResults(results, "started");
 }
 
 /**
@@ -513,18 +316,10 @@ export async function shutdownMultipleDevboxes(
   const results = await Promise.all(
     devboxNames.map(async (name) => {
       try {
-        const headers = getDevboxHeaders(currentUser);
-        const response = await axios.post(
-          `/api/sealos/devbox/shutdownDevbox?regionUrl=${regionUrl}`,
-          { devboxName: name, shutdownMode: "Stopped" },
-          { headers }
-        );
-
-        const result = {
-          ...response.data,
-          devboxName: name,
-          shutdownMode: "Stopped",
-        };
+        if (!regionUrl) {
+          throw new Error("Region URL is required");
+        }
+        const result = await shutdownDevbox(name, currentUser, regionUrl);
         const action =
           result.shutdownMode === "Stopped" ? "stopped" : "shutdown";
 
@@ -545,24 +340,5 @@ export async function shutdownMultipleDevboxes(
     })
   );
 
-  const successful = results.filter(
-    (r): r is BulkOperationResult<ShutdownResult> => r.success
-  );
-  const failed = results.filter((r) => !r.success);
-
-  let summary = "";
-  if (successful.length > 0) {
-    summary += `Successfully shutdown ${successful.length} devbox(es):\n`;
-    for (const r of successful) {
-      summary += `- '${r.result?.devboxName}' is successfully ${r.result?.action}\n`;
-    }
-  }
-  if (failed.length > 0) {
-    summary += `\nFailed to shutdown ${failed.length} devbox(es):\n`;
-    for (const r of failed) {
-      summary += `- '${r.item}': ${r.error}\n`;
-    }
-  }
-
-  return { successful, failed, summary: summary.trim() };
+  return processDevboxBulkResults(results, "shutdown");
 }

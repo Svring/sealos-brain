@@ -8,9 +8,7 @@ import {
 import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
 import {
   createMultipleObjectStorageBuckets,
-  createObjectStorageBucketMutation,
   deleteMultipleObjectStorageBuckets,
-  deleteObjectStorageBucketMutation,
 } from "@/lib/sealos/objectstorage/objectstorage-mutation";
 import { validateBucketNames } from "@/lib/sealos/objectstorage/objectstorage-utils";
 import { useSealosStore } from "@/store/sealos-store";
@@ -42,10 +40,6 @@ export function getObjectStorageListAction() {
 
 export function createObjectStorageAction() {
   const { currentUser, regionUrl } = useSealosStore();
-  const { mutateAsync: createBucket } = createObjectStorageBucketMutation(
-    currentUser,
-    regionUrl
-  );
 
   useCopilotAction({
     name: "createObjectStorage",
@@ -63,44 +57,30 @@ export function createObjectStorageAction() {
     renderAndWaitForResponse: ({ status, args, result, respond }) => {
       const { count = 1 } = args;
       const bucketCount = Math.max(1, Math.min(count || 1, 10)); // Limit to max 10 buckets
-      const isMultiple = bucketCount > 1;
 
       return (
         <CreateObjectStorageActionUI
           bucketName={new Array(bucketCount).fill("auto-generated")}
           onReject={() => {
             respond?.(
-              isMultiple
-                ? "User cancelled the creation of multiple object storage buckets"
-                : "User cancelled the object storage bucket creation operation"
+              "User cancelled the object storage bucket creation operation"
             );
           }}
           onSelect={async () => {
             try {
-              if (isMultiple) {
-                // Create multiple buckets using bulk operation
-                const { summary } = await createMultipleObjectStorageBuckets(
-                  bucketCount,
-                  currentUser,
-                  regionUrl
-                );
-                respond?.(summary);
-              } else {
-                // Create single bucket
-                const bucketResult = await createBucket();
-                respond?.(
-                  `Object storage bucket '${bucketResult.bucketName}' is successfully created`
-                );
-              }
+              const { summary } = await createMultipleObjectStorageBuckets(
+                bucketCount,
+                currentUser,
+                regionUrl
+              );
+              respond?.(summary);
             } catch (error: unknown) {
               const errorMessage =
                 error instanceof Error
                   ? error.message
                   : "Unknown error occurred";
               respond?.(
-                isMultiple
-                  ? `Failed to create object storage buckets: ${errorMessage}`
-                  : `Failed to create object storage bucket: ${errorMessage}`
+                `Failed to create object storage buckets: ${errorMessage}`
               );
             }
           }}
@@ -114,10 +94,6 @@ export function createObjectStorageAction() {
 
 export function deleteObjectStorageAction() {
   const { currentUser, regionUrl } = useSealosStore();
-  const { mutateAsync: deleteBucket } = deleteObjectStorageBucketMutation(
-    currentUser,
-    regionUrl
-  );
 
   useCopilotAction({
     name: "deleteObjectStorage",
@@ -135,7 +111,6 @@ export function deleteObjectStorageAction() {
     renderAndWaitForResponse: ({ status, args, result, respond }) => {
       const { bucketName } = args;
       const bucketNames = Array.isArray(bucketName) ? bucketName : [bucketName];
-      const isMultiple = Array.isArray(bucketName);
 
       // Validate bucket names
       const { isValid, invalidNames } = validateBucketNames(bucketNames);
@@ -164,37 +139,24 @@ export function deleteObjectStorageAction() {
           bucketName={bucketName || []}
           onReject={() => {
             respond?.(
-              isMultiple
-                ? "User cancelled the deletion of multiple object storage buckets"
-                : "User cancelled the object storage bucket deletion operation"
+              "User cancelled the object storage bucket deletion operation"
             );
           }}
           onSelect={async () => {
             try {
-              if (isMultiple) {
-                // Delete multiple buckets using bulk operation
-                const { summary } = await deleteMultipleObjectStorageBuckets(
-                  bucketNames.filter((n): n is string => Boolean(n)),
-                  currentUser,
-                  regionUrl
-                );
-                respond?.(summary);
-              } else {
-                // Delete single bucket
-                const deleteResult = await deleteBucket(bucketNames[0] || "");
-                respond?.(
-                  `Object storage bucket '${deleteResult.bucketName || bucketNames[0]}' is successfully deleted`
-                );
-              }
+              const { summary } = await deleteMultipleObjectStorageBuckets(
+                bucketNames.filter((n): n is string => Boolean(n)),
+                currentUser,
+                regionUrl
+              );
+              respond?.(summary);
             } catch (error: unknown) {
               const errorMessage =
                 error instanceof Error
                   ? error.message
                   : "Unknown error occurred";
               respond?.(
-                isMultiple
-                  ? `Failed to delete object storage buckets: ${errorMessage}`
-                  : `Failed to delete object storage bucket '${bucketNames[0]}': ${errorMessage}`
+                `Failed to delete object storage buckets: ${errorMessage}`
               );
             }
           }}

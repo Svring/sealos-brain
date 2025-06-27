@@ -9,13 +9,9 @@ import {
 } from "@/components/agent/devbox-action-ui";
 import { DEVBOX_TEMPLATES } from "@/lib/sealos/devbox/devbox-constant";
 import {
-  createDevboxFromTemplateMutation,
   createMultipleDevboxes,
-  deleteDevboxMutation,
   deleteMultipleDevboxes,
-  shutdownDevboxMutation,
   shutdownMultipleDevboxes,
-  startDevboxMutation,
   startMultipleDevboxes,
 } from "@/lib/sealos/devbox/devbox-mutation";
 import {
@@ -47,11 +43,6 @@ export function getDevboxListAction() {
 export function startDevboxAction() {
   const { currentUser, regionUrl } = useSealosStore();
 
-  const { mutateAsync: startDevbox } = startDevboxMutation(
-    currentUser,
-    regionUrl
-  );
-
   useCopilotAction({
     name: "startDevbox",
     description: "Start one or more devboxes by name",
@@ -67,7 +58,6 @@ export function startDevboxAction() {
     ],
     handler: async ({ devboxName }) => {
       const devboxNames = Array.isArray(devboxName) ? devboxName : [devboxName];
-      const isMultiple = Array.isArray(devboxName);
 
       // Validate devbox names
       const { isValid, invalidNames } = validateDevboxNames(devboxNames);
@@ -76,24 +66,16 @@ export function startDevboxAction() {
       }
 
       try {
-        if (isMultiple) {
-          // Start multiple devboxes using bulk operation
-          const { summary } = await startMultipleDevboxes(
-            devboxNames.filter((n): n is string => Boolean(n)),
-            currentUser,
-            regionUrl
-          );
-          return summary;
-        }
-        // Start single devbox
-        const result = await startDevbox(devboxNames[0] || "");
-        return `Devbox '${result.devboxName || devboxNames[0]}' is successfully started`;
+        const { summary } = await startMultipleDevboxes(
+          devboxNames.filter((n): n is string => Boolean(n)),
+          currentUser,
+          regionUrl
+        );
+        return summary;
       } catch (error: unknown) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error occurred";
-        return isMultiple
-          ? `Failed to start devboxes: ${errorMessage}`
-          : `Failed to start devbox '${devboxNames[0]}': ${errorMessage}`;
+        return `Failed to start devboxes: ${errorMessage}`;
       }
     },
     render: ({ status, args, result }) => {
@@ -112,11 +94,6 @@ export function startDevboxAction() {
 export function shutdownDevboxAction() {
   const { currentUser, regionUrl } = useSealosStore();
 
-  const { mutateAsync: shutdownDevbox } = shutdownDevboxMutation(
-    currentUser,
-    regionUrl
-  );
-
   useCopilotAction({
     name: "shutdownDevbox",
     description: "Shutdown one or more devboxes by name",
@@ -132,7 +109,6 @@ export function shutdownDevboxAction() {
     ],
     handler: async ({ devboxName }) => {
       const devboxNames = Array.isArray(devboxName) ? devboxName : [devboxName];
-      const isMultiple = Array.isArray(devboxName);
 
       // Validate devbox names
       const { isValid, invalidNames } = validateDevboxNames(devboxNames);
@@ -141,29 +117,16 @@ export function shutdownDevboxAction() {
       }
 
       try {
-        if (isMultiple) {
-          // Shutdown multiple devboxes using bulk operation
-          const { summary } = await shutdownMultipleDevboxes(
-            devboxNames.filter((n): n is string => Boolean(n)),
-            currentUser,
-            regionUrl
-          );
-          return summary;
-        }
-        // Shutdown single devbox
-        const result = await shutdownDevbox({
-          devboxName: devboxNames[0] || "",
-          shutdownMode: "Stopped",
-        });
-        const action =
-          result.shutdownMode === "Stopped" ? "stopped" : "shutdown";
-        return `Devbox '${result.devboxName || devboxNames[0]}' is successfully ${action}`;
+        const { summary } = await shutdownMultipleDevboxes(
+          devboxNames.filter((n): n is string => Boolean(n)),
+          currentUser,
+          regionUrl
+        );
+        return summary;
       } catch (error: unknown) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error occurred";
-        return isMultiple
-          ? `Failed to shutdown devboxes: ${errorMessage}`
-          : `Failed to shutdown devbox '${devboxNames[0]}': ${errorMessage}`;
+        return `Failed to shutdown devboxes: ${errorMessage}`;
       }
     },
     render: ({ status, args, result }) => {
@@ -181,10 +144,6 @@ export function shutdownDevboxAction() {
 
 export function deleteDevboxAction() {
   const { currentUser, regionUrl } = useSealosStore();
-  const { mutateAsync: deleteDevbox } = deleteDevboxMutation(
-    currentUser,
-    regionUrl
-  );
 
   useCopilotAction({
     name: "deleteDevbox",
@@ -202,7 +161,6 @@ export function deleteDevboxAction() {
     renderAndWaitForResponse: ({ status, args, result, respond }) => {
       const { devboxName } = args;
       const devboxNames = Array.isArray(devboxName) ? devboxName : [devboxName];
-      const isMultiple = Array.isArray(devboxName);
 
       // Validate devbox names
       const { isValid, invalidNames } = validateDevboxNames(devboxNames);
@@ -230,39 +188,22 @@ export function deleteDevboxAction() {
         <DeleteDevboxActionUI
           devboxName={devboxName || []}
           onReject={() => {
-            respond?.(
-              isMultiple
-                ? "User cancelled the deletion of multiple devboxes"
-                : "User cancelled the devbox deletion operation"
-            );
+            respond?.("User cancelled the devbox deletion operation");
           }}
           onSelect={async () => {
             try {
-              if (isMultiple) {
-                // Delete multiple devboxes using bulk operation
-                const { summary } = await deleteMultipleDevboxes(
-                  devboxNames.filter((n): n is string => Boolean(n)),
-                  currentUser,
-                  regionUrl
-                );
-                respond?.(summary);
-              } else {
-                // Delete single devbox
-                const deleteResult = await deleteDevbox(devboxNames[0] || "");
-                respond?.(
-                  `Devbox '${deleteResult.devboxName || devboxNames[0]}' is successfully deleted`
-                );
-              }
+              const { summary } = await deleteMultipleDevboxes(
+                devboxNames.filter((n): n is string => Boolean(n)),
+                currentUser,
+                regionUrl
+              );
+              respond?.(summary);
             } catch (error: unknown) {
               const errorMessage =
                 error instanceof Error
                   ? error.message
                   : "Unknown error occurred";
-              respond?.(
-                isMultiple
-                  ? `Failed to delete devboxes: ${errorMessage}`
-                  : `Failed to delete devbox '${devboxNames[0]}': ${errorMessage}`
-              );
+              respond?.(`Failed to delete devboxes: ${errorMessage}`);
             }
           }}
           result={result}
@@ -275,10 +216,6 @@ export function deleteDevboxAction() {
 
 export function createDevboxAction() {
   const { currentUser, regionUrl } = useSealosStore();
-  const { mutateAsync: createDevbox } = createDevboxFromTemplateMutation(
-    currentUser,
-    regionUrl
-  );
 
   useCopilotAction({
     name: "createDevbox",
@@ -318,44 +255,25 @@ export function createDevboxAction() {
         );
       }
 
-      const isMultiple = Array.isArray(template);
-
       return (
         <CreateDevboxActionUI
           onReject={() => {
-            respond?.(
-              isMultiple
-                ? "User cancelled the creation of multiple devboxes"
-                : "User wants to create a different devbox, please withdraw the current action and query the user again"
-            );
+            respond?.("User cancelled the devbox creation operation");
           }}
           onSelect={async () => {
             try {
-              if (isMultiple) {
-                // Create multiple devboxes using bulk operation
-                const { summary } = await createMultipleDevboxes(
-                  templates.filter((t): t is string => Boolean(t)),
-                  currentUser,
-                  regionUrl
-                );
-                respond?.(summary);
-              } else {
-                // Create single devbox
-                const createResult = await createDevbox(templates[0] || "");
-                respond?.(
-                  `Devbox '${createResult.devboxName}' is successfully created from template '${createResult.templateName || templates[0]}'`
-                );
-              }
+              const { summary } = await createMultipleDevboxes(
+                templates.filter((t): t is string => Boolean(t)),
+                currentUser,
+                regionUrl
+              );
+              respond?.(summary);
             } catch (error: unknown) {
               const errorMessage =
                 error instanceof Error
                   ? error.message
                   : "Unknown error occurred";
-              respond?.(
-                isMultiple
-                  ? `Failed to create devboxes: ${errorMessage}`
-                  : `Failed to create devbox from template '${templates[0]}': ${errorMessage}`
-              );
+              respond?.(`Failed to create devboxes: ${errorMessage}`);
             }
           }}
           result={result}
