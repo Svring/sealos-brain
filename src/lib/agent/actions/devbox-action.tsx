@@ -88,10 +88,12 @@ export function startDevboxAction() {
         // Start single devbox
         const result = await startDevbox(devboxNames[0] || "");
         return `Devbox '${result.devboxName || devboxNames[0]}' is successfully started`;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
         return isMultiple
-          ? `Failed to start devboxes: ${error.message}`
-          : `Failed to start devbox '${devboxNames[0]}': ${error.message}`;
+          ? `Failed to start devboxes: ${errorMessage}`
+          : `Failed to start devbox '${devboxNames[0]}': ${errorMessage}`;
       }
     },
     render: ({ status, args, result }) => {
@@ -156,10 +158,12 @@ export function shutdownDevboxAction() {
         const action =
           result.shutdownMode === "Stopped" ? "stopped" : "shutdown";
         return `Devbox '${result.devboxName || devboxNames[0]}' is successfully ${action}`;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
         return isMultiple
-          ? `Failed to shutdown devboxes: ${error.message}`
-          : `Failed to shutdown devbox '${devboxNames[0]}': ${error.message}`;
+          ? `Failed to shutdown devboxes: ${errorMessage}`
+          : `Failed to shutdown devbox '${devboxNames[0]}': ${errorMessage}`;
       }
     },
     render: ({ status, args, result }) => {
@@ -244,16 +248,20 @@ export function deleteDevboxAction() {
                 respond?.(summary);
               } else {
                 // Delete single devbox
-                const result = await deleteDevbox(devboxNames[0] || "");
+                const deleteResult = await deleteDevbox(devboxNames[0] || "");
                 respond?.(
-                  `Devbox '${result.devboxName || devboxNames[0]}' is successfully deleted`
+                  `Devbox '${deleteResult.devboxName || devboxNames[0]}' is successfully deleted`
                 );
               }
-            } catch (error: any) {
+            } catch (error: unknown) {
+              const errorMessage =
+                error instanceof Error
+                  ? error.message
+                  : "Unknown error occurred";
               respond?.(
                 isMultiple
-                  ? `Failed to delete devboxes: ${error.message}`
-                  : `Failed to delete devbox '${devboxNames[0]}': ${error.message}`
+                  ? `Failed to delete devboxes: ${errorMessage}`
+                  : `Failed to delete devbox '${devboxNames[0]}': ${errorMessage}`
               );
             }
           }}
@@ -333,16 +341,20 @@ export function createDevboxAction() {
                 respond?.(summary);
               } else {
                 // Create single devbox
-                const result = await createDevbox(templates[0] || "");
+                const createResult = await createDevbox(templates[0] || "");
                 respond?.(
-                  `Devbox '${result.devboxName}' is successfully created from template '${result.templateName || templates[0]}'`
+                  `Devbox '${createResult.devboxName}' is successfully created from template '${createResult.templateName || templates[0]}'`
                 );
               }
-            } catch (error: any) {
+            } catch (error: unknown) {
+              const errorMessage =
+                error instanceof Error
+                  ? error.message
+                  : "Unknown error occurred";
               respond?.(
                 isMultiple
-                  ? `Failed to create devboxes: ${error.message}`
-                  : `Failed to create devbox from template '${templates[0]}': ${error.message}`
+                  ? `Failed to create devboxes: ${errorMessage}`
+                  : `Failed to create devbox from template '${templates[0]}': ${errorMessage}`
               );
             }
           }}

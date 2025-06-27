@@ -24,7 +24,50 @@ import {
   validateDBNames,
   validateDBTypes,
 } from "@/lib/sealos/dbprovider/dbprovider-utils";
+import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
+
+// Helper function to handle start cluster logic
+async function handleStartCluster(
+  dbNames: string[],
+  isMultiple: boolean,
+  currentUser: User | null,
+  regionUrl: string | undefined,
+  startDB: (dbName: string) => Promise<{ dbName: string }>
+) {
+  if (isMultiple) {
+    const { summary } = await startMultipleDBs(
+      dbNames.filter((n): n is string => Boolean(n)),
+      currentUser,
+      regionUrl
+    );
+    return summary;
+  }
+
+  const dbResult = await startDB(dbNames[0] || "");
+  return `Database '${dbResult.dbName || dbNames[0]}' is successfully started`;
+}
+
+// Helper function to handle pause cluster logic
+async function handlePauseCluster(
+  dbNames: string[],
+  isMultiple: boolean,
+  currentUser: User | null,
+  regionUrl: string | undefined,
+  pauseDB: (dbName: string) => Promise<{ dbName: string }>
+) {
+  if (isMultiple) {
+    const { summary } = await pauseMultipleDBs(
+      dbNames.filter((n): n is string => Boolean(n)),
+      currentUser,
+      regionUrl
+    );
+    return summary;
+  }
+
+  const dbResult = await pauseDB(dbNames[0] || "");
+  return `Database '${dbResult.dbName || dbNames[0]}' is successfully paused`;
+}
 
 export function getClusterListAction() {
   const { currentUser, regionUrl } = useSealosStore();
@@ -40,9 +83,7 @@ export function getClusterListAction() {
       return dbList;
     },
     render: ({ status, result }) => {
-      return (
-        <GetClusterListActionUI dbName={[]} result={result} status={status} />
-      );
+      return <GetClusterListActionUI result={result} status={status} />;
     },
   });
 }
@@ -79,18 +120,13 @@ export function startClusterAction() {
       }
 
       try {
-        if (isMultiple) {
-          // Start multiple dbs using bulk operation
-          const { summary } = await startMultipleDBs(
-            dbNames.filter((n): n is string => Boolean(n)),
-            currentUser,
-            regionUrl
-          );
-          return summary;
-        }
-        // Start single db
-        const dbResult = await startDB(dbNames[0] || "");
-        return `Database '${dbResult.dbName || dbNames[0]}' is successfully started`;
+        return await handleStartCluster(
+          dbNames,
+          isMultiple,
+          currentUser,
+          regionUrl,
+          startDB
+        );
       } catch (error: unknown) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error occurred";
@@ -144,18 +180,13 @@ export function pauseClusterAction() {
       }
 
       try {
-        if (isMultiple) {
-          // Pause multiple dbs using bulk operation
-          const { summary } = await pauseMultipleDBs(
-            dbNames.filter((n): n is string => Boolean(n)),
-            currentUser,
-            regionUrl
-          );
-          return summary;
-        }
-        // Pause single db
-        const dbResult = await pauseDB(dbNames[0] || "");
-        return `Database '${dbResult.dbName || dbNames[0]}' is successfully paused`;
+        return await handlePauseCluster(
+          dbNames,
+          isMultiple,
+          currentUser,
+          regionUrl,
+          pauseDB
+        );
       } catch (error: unknown) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error occurred";
@@ -293,11 +324,22 @@ export function createClusterAction() {
     ],
     renderAndWaitForResponse: ({ status, args, result, respond }) => {
       const { dbType } = args;
-      const dbTypes = Array.isArray(dbType) ? dbType : [dbType];
+
+      // Filter and ensure all types are strings
+      const validDbTypes: string[] = [];
+      if (Array.isArray(dbType)) {
+        for (const type of dbType) {
+          if (typeof type === "string" && type.trim()) {
+            validDbTypes.push(type);
+          }
+        }
+      } else if (typeof dbType === "string" && dbType.trim()) {
+        validDbTypes.push(dbType);
+      }
 
       // Validate that all dbTypes are valid
       const { isValid, invalidTypes } = validateDBTypes(
-        dbTypes,
+        validDbTypes,
         allowedDbTypes
       );
       if (!isValid) {
@@ -324,7 +366,7 @@ export function createClusterAction() {
 
       return (
         <CreateClusterActionUI
-          dbName={dbTypes.map((type) => `${type}-auto-generated`)}
+          dbType={validDbTypes.length === 1 ? validDbTypes[0] : validDbTypes}
           onReject={() => {
             respond?.(
               isMultiple
@@ -336,9 +378,9 @@ export function createClusterAction() {
             try {
               if (isMultiple) {
                 // Create multiple dbs using bulk operation
-                const dbForms = dbTypes
-                  .filter((t): t is string => Boolean(t))
-                  .map((type) => generateDBFormFromType(type));
+                const dbForms = validDbTypes.map(
+                  (type) => generateDBFormFromType(type).dbForm
+                );
                 const { summary } = await createMultipleDBs(
                   dbForms,
                   currentUser,
@@ -347,10 +389,14 @@ export function createClusterAction() {
                 respond?.(summary);
               } else {
                 // Create single db
-                const dbFormObj = generateDBFormFromType(dbTypes[0] || "");
-                const createResult = await createDB(dbFormObj);
+                const selectedType = validDbTypes[0];
+                if (!selectedType) {
+                  throw new Error("No valid database type provided");
+                }
+                const dbFormObj = generateDBFormFromType(selectedType);
+                const createResult = await createDB(dbFormObj.dbForm);
                 respond?.(
-                  `Database '${createResult.dbName}' (${createResult.dbType || dbTypes[0]}) is successfully created`
+                  `Database '${createResult.dbName}' (${createResult.dbType || selectedType}) is successfully created`
                 );
               }
             } catch (error: unknown) {
@@ -361,7 +407,7 @@ export function createClusterAction() {
               respond?.(
                 isMultiple
                   ? `Failed to create databases: ${errorMessage}`
-                  : `Failed to create database from type '${dbTypes[0]}': ${errorMessage}`
+                  : `Failed to create database from type '${validDbTypes[0] || "unknown"}': ${errorMessage}`
               );
             }
           }}

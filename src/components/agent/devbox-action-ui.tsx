@@ -5,6 +5,59 @@ import {
 } from "@/lib/sealos/devbox/schemas/devbox-list-schema";
 import { Button } from "../ui/button";
 
+// Helper function to render template list
+function renderTemplateList(templateList: string[], color: string) {
+  return (
+    <ul className="mt-2 space-y-1">
+      {templateList.map((t) => (
+        <li className="flex items-center" key={t}>
+          <span className={`mr-2 h-2 w-2 rounded-full bg-${color}-500`} />
+          <strong>{t}</strong>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Helper function to render template list in progress
+function renderTemplateListProgress(templateList: string[], color: string) {
+  return (
+    <ul className="mt-2 space-y-1">
+      {templateList.map((t) => (
+        <li className="flex items-center text-sm" key={t}>
+          <span className={`mr-2 h-2 w-2 rounded-full bg-${color}-500`} />
+          <strong>{t}</strong>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Helper function to render name list in progress
+function renderNameListProgress(nameList: string[], color: string) {
+  return (
+    <ul className="mt-2 space-y-1">
+      {nameList.map((name) => (
+        <li className="flex items-center text-sm" key={name}>
+          <span className={`mr-2 h-2 w-2 rounded-full bg-${color}-500`} />
+          <strong>{name}</strong>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Helper function to get status badge class
+function getStatusBadgeClass(status: string) {
+  if (status === "Running") {
+    return "bg-green-100 text-green-800";
+  }
+  if (status === "Stopped") {
+    return "bg-gray-100 text-gray-800";
+  }
+  return "bg-yellow-100 text-yellow-800";
+}
+
 export function CreateDevboxActionUI({
   template,
   onSelect,
@@ -16,7 +69,7 @@ export function CreateDevboxActionUI({
   onSelect: () => void;
   onReject: () => void;
   status: "complete" | "executing" | "inProgress";
-  result: any;
+  result: string | null;
 }) {
   const [userChoice, setUserChoice] = useState<"approved" | "rejected" | null>(
     null
@@ -51,14 +104,7 @@ export function CreateDevboxActionUI({
               Do you want to create <strong>{templateCount} devboxes</strong>{" "}
               from the following templates?
             </p>
-            <ul className="mt-2 space-y-1">
-              {templateList.map((t, index) => (
-                <li className="flex items-center" key={index}>
-                  <span className="mr-2 h-2 w-2 rounded-full bg-blue-500" />
-                  <strong>{t}</strong>
-                </li>
-              ))}
-            </ul>
+            {renderTemplateList(templateList, "blue")}
           </div>
         ) : (
           <p>
@@ -109,14 +155,7 @@ export function CreateDevboxActionUI({
           {isMultiple ? (
             <div>
               <p>Creating {templateCount} devboxes from templates:</p>
-              <ul className="mt-2 space-y-1">
-                {templateList.map((t, index) => (
-                  <li className="flex items-center text-sm" key={index}>
-                    <span className="mr-2 h-2 w-2 rounded-full bg-blue-500" />
-                    <strong>{t}</strong>
-                  </li>
-                ))}
-              </ul>
+              {renderTemplateListProgress(templateList, "blue")}
             </div>
           ) : (
             <p>
@@ -179,7 +218,7 @@ export function DeleteDevboxActionUI({
   onSelect: () => void;
   onReject: () => void;
   status: "complete" | "executing" | "inProgress";
-  result: any;
+  result: string | null;
 }) {
   const [userChoice, setUserChoice] = useState<"approved" | "rejected" | null>(
     null
@@ -215,14 +254,7 @@ export function DeleteDevboxActionUI({
                 <strong>Warning:</strong> Are you sure you want to delete{" "}
                 <strong>{devboxCount} devboxes</strong>?
               </p>
-              <ul className="mt-2 space-y-1">
-                {devboxList.map((name, index) => (
-                  <li className="flex items-center" key={index}>
-                    <span className="mr-2 h-2 w-2 rounded-full bg-red-500" />
-                    <strong>{name}</strong>
-                  </li>
-                ))}
-              </ul>
+              {renderNameListProgress(devboxList, "red")}
             </div>
           ) : (
             <p className="text-red-800">
@@ -280,14 +312,7 @@ export function DeleteDevboxActionUI({
           {isMultiple ? (
             <div>
               <p>Deleting {devboxCount} devboxes:</p>
-              <ul className="mt-2 space-y-1">
-                {devboxList.map((name, index) => (
-                  <li className="flex items-center text-sm" key={index}>
-                    <span className="mr-2 h-2 w-2 rounded-full bg-red-500" />
-                    <strong>{name}</strong>
-                  </li>
-                ))}
-              </ul>
+              {renderNameListProgress(devboxList, "red")}
             </div>
           ) : (
             <p>
@@ -346,7 +371,7 @@ export function StartDevboxActionUI({
 }: {
   devboxName: string | string[];
   status: "inProgress" | "executing" | "complete";
-  result: any;
+  result: string | null;
 }) {
   const isMultiple = Array.isArray(devboxName);
   const devboxList = Array.isArray(devboxName) ? devboxName : [devboxName];
@@ -365,14 +390,7 @@ export function StartDevboxActionUI({
         {isMultiple ? (
           <div>
             <p>Starting {devboxCount} devboxes:</p>
-            <ul className="mt-2 space-y-1">
-              {devboxList.map((name, index) => (
-                <li className="flex items-center text-sm" key={index}>
-                  <span className="mr-2 h-2 w-2 rounded-full bg-green-500" />
-                  <strong>{name}</strong>
-                </li>
-              ))}
-            </ul>
+            {renderNameListProgress(devboxList, "green")}
           </div>
         ) : (
           <p>
@@ -410,7 +428,7 @@ export function ShutdownDevboxActionUI({
 }: {
   devboxName: string | string[];
   status: "inProgress" | "executing" | "complete";
-  result: any;
+  result: string | null;
 }) {
   const isMultiple = Array.isArray(devboxName);
   const devboxList = Array.isArray(devboxName) ? devboxName : [devboxName];
@@ -429,14 +447,7 @@ export function ShutdownDevboxActionUI({
         {isMultiple ? (
           <div>
             <p>Shutting down {devboxCount} devboxes:</p>
-            <ul className="mt-2 space-y-1">
-              {devboxList.map((name, index) => (
-                <li className="flex items-center text-sm" key={index}>
-                  <span className="mr-2 h-2 w-2 rounded-full bg-orange-500" />
-                  <strong>{name}</strong>
-                </li>
-              ))}
-            </ul>
+            {renderNameListProgress(devboxList, "orange")}
           </div>
         ) : (
           <p>
@@ -492,7 +503,7 @@ export function GetDevboxListActionUI({
                 {devboxSummaries.length === 1 ? "" : "es"}
               </p>
               <div className="space-y-2">
-                {devboxSummaries.map((devbox, index) => (
+                {devboxSummaries.map((devbox) => (
                   <div
                     className="rounded-lg border border-gray-200 bg-background p-4 shadow-sm"
                     key={devbox.name}
@@ -504,13 +515,7 @@ export function GetDevboxListActionUI({
                             {devbox.name}
                           </h3>
                           <span
-                            className={`inline-flex items-center rounded-full px-2 py-1 font-medium text-xs ${
-                              devbox.status === "Running"
-                                ? "bg-green-100 text-green-800"
-                                : devbox.status === "Stopped"
-                                  ? "bg-gray-100 text-gray-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                            }`}
+                            className={`inline-flex items-center rounded-full px-2 py-1 font-medium text-xs ${getStatusBadgeClass(devbox.status)}`}
                           >
                             {devbox.status}
                           </span>
@@ -555,7 +560,7 @@ export function GetDevboxListActionUI({
           )}
         </div>
       );
-    } catch (error) {
+    } catch {
       // Fallback to raw JSON if parsing fails
       return (
         <div className="space-y-2">
