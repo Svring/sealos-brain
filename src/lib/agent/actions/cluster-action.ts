@@ -48,7 +48,8 @@ export function startClusterAction() {
       },
     ],
     handler: async ({ dbName }) => {
-      await startDB(dbName);
+      const result = await startDB(dbName);
+      return `Database '${result.dbName || dbName}' is successfully started`;
     },
   });
 }
@@ -74,7 +75,8 @@ export function pauseClusterAction() {
       },
     ],
     handler: async ({ dbName }) => {
-      await pauseDB(dbName);
+      const result = await pauseDB(dbName);
+      return `Database '${result.dbName || dbName}' is successfully paused`;
     },
   });
 }
@@ -96,7 +98,8 @@ export function deleteClusterAction() {
       },
     ],
     handler: async ({ dbName }) => {
-      await deleteDB(dbName);
+      const result = await deleteDB(dbName);
+      return `Database '${result.dbName || dbName}' is successfully deleted`;
     },
   });
 }
@@ -127,12 +130,13 @@ export function createClusterAction() {
     ],
     handler: async ({ dbType }) => {
       const dbFormObj = generateDBFormFromType(dbType);
-      await createDB(dbFormObj);
+      const result = await createDB(dbFormObj);
+      return `Database '${result.dbName}' (${result.dbType || dbType}) is successfully created`;
     },
   });
 }
 
-export function activateClusterActions() {
+export function useActivateClusterActions() {
   getClusterListAction();
   startClusterAction();
   pauseClusterAction();

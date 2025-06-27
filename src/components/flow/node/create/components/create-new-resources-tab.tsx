@@ -22,10 +22,7 @@ export function CreateNewResourcesTab() {
             className="bg-background cursor-pointer border hover:border-primary/40 transition-shadow"
             onClick={() => {
               if (resourceType === "devbox") {
-                openPanel(
-                  "devbox-create",
-                  <DevboxCreateView onComplete={() => {}} />
-                );
+                openPanel("devbox-create", <DevboxCreateView />);
               } else {
                 // No-op or add logic if needed in the future
               }

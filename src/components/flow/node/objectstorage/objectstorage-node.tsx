@@ -55,7 +55,7 @@ export default function ObjectStorageNode({
     <>
       <BaseNode
         content={<div>ObjectStorageDetails</div>}
-        id={nodeId}
+        id={nodeId ?? undefined}
         isSelected={isSelected}
         onClick={onClick}
       >

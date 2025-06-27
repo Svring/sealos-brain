@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering since the layout uses headers()
+export const dynamic = "force-dynamic";
+
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { GraphCard } from "@/components/graph/graph-card";

@@ -30,7 +30,7 @@ export default function DevboxNode({ data }: { data: DevboxNodeData }) {
     <>
       <BaseNode
         content={<DevboxDetails devboxName={devboxName} />}
-        id={nodeId}
+        id={nodeId ?? undefined}
         isSelected={isSelected}
         onClick={onClick}
       >

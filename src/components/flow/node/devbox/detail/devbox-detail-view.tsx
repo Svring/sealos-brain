@@ -38,10 +38,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  activateGalateaForDevbox,
-  cleanupGalateaFilesOnDevbox,
-} from "@/lib/sealos/devbox/devbox-ssh";
+// import {
+//   activateGalateaForDevbox,
+//   cleanupGalateaFilesOnDevbox,
+// } from "@/lib/sealos/devbox/devbox-ssh";
 
 export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   const { currentUser, regionUrl } = useSealosStore();
@@ -129,7 +129,7 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
         },
         project_public_address: devbox.projectPublicAddress || "",
       };
-      await activateGalateaForDevbox(devboxInfo);
+      // await activateGalateaForDevbox(devboxInfo);
       toast.success("Galatea activated!", { id: "galatea-activate" });
     } catch (error: any) {
       console.error("Failed to activate Galatea:", error);
@@ -155,7 +155,7 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
         },
         project_public_address: devbox.projectPublicAddress || "",
       };
-      await cleanupGalateaFilesOnDevbox(devboxInfo);
+      // await cleanupGalateaFilesOnDevbox(devboxInfo);
       toast.success("Galatea cleaned up!", { id: "galatea-cleanup" });
     } catch (error: any) {
       console.error("Failed to cleanup Galatea:", error);

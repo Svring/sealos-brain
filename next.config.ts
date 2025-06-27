@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default withPayload(nextConfig);

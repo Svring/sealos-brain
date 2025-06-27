@@ -1,59 +1,59 @@
-'use client'
+"use client";
 
-import React, { useState, useId, useEffect } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useState, useId, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export default function LoginPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [email, setEmail] = useState('dummy@cute.com')
-  const [password, setPassword] = useState('123')
-  const [error, setError] = useState<string | null>(searchParams.get('error'))
-  const [isLoading, setIsLoading] = useState(false)
+function LoginPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState("dummy@cute.com");
+  const [password, setPassword] = useState("123");
+  const [error, setError] = useState<string | null>(searchParams.get("error"));
+  const [isLoading, setIsLoading] = useState(false);
   const id = useId(); // For unique form element IDs
-  const [dialogOpen, setDialogOpen] = useState(true)
+  const [dialogOpen, setDialogOpen] = useState(true);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError(null) // Clear previous errors
-    setIsLoading(true) // Start loading state
+    e.preventDefault();
+    setError(null); // Clear previous errors
+    setIsLoading(true); // Start loading state
 
     try {
-      const res = await fetch('/api/users/login', {
-        method: 'POST',
+      const res = await fetch("/api/users/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email,
           password,
         }),
-      })
+      });
 
-      const data = await res.json()
+      const data = await res.json();
 
-      console.log("[Login Page] Login data:", data)
+      console.log("[Login Page] Login data:", data);
 
       if (!res.ok || data.error) {
-        throw new Error(data.message || 'Login failed')
+        throw new Error(data.message || "Login failed");
       }
 
-      const redirectUrl = searchParams.get('redirect') || '/'
-      router.push(redirectUrl)
-      router.refresh()
+      const redirectUrl = searchParams.get("redirect") || "/";
+      router.push(redirectUrl);
+      router.refresh();
     } catch (err: any) {
-      console.error(err)
-      setError(err.message || 'An unexpected error occurred.')
+      console.error(err);
+      setError(err.message || "An unexpected error occurred.");
     } finally {
-      setIsLoading(false) // End loading state
+      setIsLoading(false); // End loading state
     }
-  }
+  };
 
   // This ensures dialog is always open and prevents it from being closed
   // by clicking outside or pressing escape
@@ -74,17 +74,17 @@ export default function LoginPage() {
       backdropFilter: "blur(4px) brightness(1.2)",
       transition: {
         duration: 0.8,
-        ease: [0.22, 1, 0.36, 1] // Custom easing for smoother animation
-      }
+        ease: [0.22, 1, 0.36, 1], // Custom easing for smoother animation
+      },
     },
     exit: {
       opacity: 0,
       backdropFilter: "blur(0px) brightness(1)",
       transition: {
         duration: 0.3,
-        ease: "easeIn"
-      }
-    }
+        ease: "easeIn",
+      },
+    },
   };
 
   const contentVariants = {
@@ -108,7 +108,7 @@ export default function LoginPage() {
         ease: [0.22, 1, 0.36, 1],
         staggerChildren: 0.1,
         delayChildren: 0.2,
-      }
+      },
     },
     exit: {
       opacity: 0,
@@ -116,9 +116,9 @@ export default function LoginPage() {
       filter: "blur(4px)",
       transition: {
         duration: 0.25,
-        ease: "easeIn"
-      }
-    }
+        ease: "easeIn",
+      },
+    },
   };
 
   // For dark mode
@@ -143,7 +143,7 @@ export default function LoginPage() {
         ease: [0.22, 1, 0.36, 1],
         staggerChildren: 0.1,
         delayChildren: 0.2,
-      }
+      },
     },
     exit: {
       opacity: 0,
@@ -151,16 +151,16 @@ export default function LoginPage() {
       filter: "blur(4px)",
       transition: {
         duration: 0.25,
-        ease: "easeIn"
-      }
-    }
+        ease: "easeIn",
+      },
+    },
   };
 
   const itemVariants = {
     hidden: {
       opacity: 0,
       y: 15,
-      filter: "blur(4px)"
+      filter: "blur(4px)",
     },
     visible: {
       opacity: 1,
@@ -168,9 +168,9 @@ export default function LoginPage() {
       filter: "blur(0px)",
       transition: {
         duration: 0.5,
-        ease: [0.22, 1, 0.36, 1]
-      }
-    }
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
   };
 
   return (
@@ -180,9 +180,7 @@ export default function LoginPage() {
         size="icon"
         className="absolute right-4 top-4 rounded-full"
         aria-label="Toggle theme"
-      >
-
-      </Button>
+      ></Button>
 
       <AnimatePresence>
         {dialogOpen && (
@@ -203,7 +201,7 @@ export default function LoginPage() {
             <motion.div
               className="fixed z-50 w-full max-w-md rounded-xl border bg-background p-6 shadow-lg backdrop-blur-[2px] backdrop-saturate-[1.8]"
               style={{
-                transformOrigin: 'center center',
+                transformOrigin: "center center",
               }}
             >
               {/* Logo with animation */}
@@ -221,8 +219,8 @@ export default function LoginPage() {
                     transition: {
                       delay: 0.4,
                       duration: 0.5,
-                      ease: [0.22, 1, 0.36, 1]
-                    }
+                      ease: [0.22, 1, 0.36, 1],
+                    },
                   }}
                 >
                   <svg
@@ -233,11 +231,19 @@ export default function LoginPage() {
                     viewBox="0 0 32 32"
                     aria-hidden="true"
                   >
-                    <circle cx="16" cy="16" r="12" fill="none" strokeWidth="8" />
+                    <circle
+                      cx="16"
+                      cy="16"
+                      r="12"
+                      fill="none"
+                      strokeWidth="8"
+                    />
                   </svg>
                 </motion.div>
                 <motion.div className="text-center" variants={itemVariants}>
-                  <h2 className="text-lg font-semibold leading-none tracking-tight">Welcome back</h2>
+                  <h2 className="text-lg font-semibold leading-none tracking-tight">
+                    Welcome back
+                  </h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     Enter your credentials to login to your account.
                   </p>
@@ -281,17 +287,23 @@ export default function LoginPage() {
                 >
                   <div className="flex items-center gap-2">
                     <Checkbox id={`${id}-remember`} disabled={isLoading} />
-                    <Label htmlFor={`${id}-remember`} className="font-normal text-sm text-muted-foreground">
+                    <Label
+                      htmlFor={`${id}-remember`}
+                      className="font-normal text-sm text-muted-foreground"
+                    >
                       Remember me
                     </Label>
                   </div>
-                  <a className="text-sm underline hover:no-underline text-muted-foreground" href="#">
+                  <a
+                    className="text-sm underline hover:no-underline text-muted-foreground"
+                    href="#"
+                  >
                     Forgot password?
                   </a>
                 </motion.div>
                 <motion.div variants={itemVariants}>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Signing in...' : 'Sign in'}
+                    {isLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </motion.div>
               </motion.form>
@@ -304,7 +316,11 @@ export default function LoginPage() {
               </motion.div>
 
               <motion.div variants={itemVariants}>
-                <Button variant="outline" className="w-full" disabled={isLoading}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading}
+                >
                   Login with Google
                 </Button>
               </motion.div>
@@ -316,12 +332,24 @@ export default function LoginPage() {
                 initial={{ opacity: 0 }}
                 animate={{
                   opacity: 0.7,
-                  transition: { delay: 0.8, duration: 0.3 }
+                  transition: { delay: 0.8, duration: 0.3 },
                 }}
                 whileHover={{ opacity: 1 }}
               >
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                  <path d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 15 15"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                >
+                  <path
+                    d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z"
+                    fill="currentColor"
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                  ></path>
                 </svg>
                 <span className="sr-only">Close</span>
               </motion.button>
@@ -330,5 +358,13 @@ export default function LoginPage() {
         )}
       </AnimatePresence>
     </div>
-  )
-} 
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { getDBTypeByName } from "./dbprovider-utils";
+import { toast } from "sonner";
 
 // Helper to get headers from currentUser
 function getDBProviderHeaders(currentUser: any) {
@@ -32,10 +33,14 @@ export function startDBByNameMutation(
         { dbName, dbType },
         { headers }
       );
-      return response.data;
+      return { ...response.data, dbName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
+      toast.success(`Database '${data.dbName}' is successfully started`);
+    },
+    onError: (error: any, dbName) => {
+      toast.error(`Failed to start database '${dbName}': ${error.message}`);
     },
   });
 }
@@ -61,10 +66,14 @@ export function pauseDBByNameMutation(
         { dbName, dbType },
         { headers }
       );
-      return response.data;
+      return { ...response.data, dbName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
+      toast.success(`Database '${data.dbName}' is successfully paused`);
+    },
+    onError: (error: any, dbName) => {
+      toast.error(`Failed to pause database '${dbName}': ${error.message}`);
     },
   });
 }
@@ -82,10 +91,14 @@ export function delDBByNameMutation(
         `/api/sealos/dbprovider/delDBByName?regionUrl=${regionUrl}&name=${dbName}`,
         { headers }
       );
-      return response.data;
+      return { ...response.data, dbName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
+      toast.success(`Database '${data.dbName}' is successfully deleted`);
+    },
+    onError: (error: any, dbName) => {
+      toast.error(`Failed to delete database '${dbName}': ${error.message}`);
     },
   });
 }
@@ -107,10 +120,20 @@ export function createDBMutation(
         dbFormData,
         { headers }
       );
-      return response.data;
+      // Extract database name from form data
+      const dbName = dbFormData.dbName || dbFormData.name || "Unknown";
+      const dbType = dbFormData.dbType || "database";
+      return { ...response.data, dbName, dbType };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
+      toast.success(
+        `Database '${data.dbName}' (${data.dbType}) is successfully created`
+      );
+    },
+    onError: (error: any, dbFormData) => {
+      const dbName = dbFormData.dbName || dbFormData.name || "Unknown";
+      toast.error(`Failed to create database '${dbName}': ${error.message}`);
     },
   });
 }

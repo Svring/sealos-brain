@@ -26,7 +26,6 @@ import {
   pauseDBByNameMutation,
   delDBByNameMutation,
 } from "@/lib/sealos/dbprovider/dbprovider-mutation";
-import { toast } from "sonner";
 import { usePanel } from "@/context/panel-provider";
 import DatabaseCreateView from "./database-create-view";
 
@@ -58,10 +57,8 @@ export function DatabaseTable() {
 
     try {
       await Promise.all(promises);
-      toast.success(`Successfully ${action}ed ${databases.length} database(s)`);
-      queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
     } catch (error: any) {
-      toast.error(`Failed to ${action} database(s): ${error.message}`);
+      console.error(`Failed to ${action} database(s):`, error);
     }
   };
 

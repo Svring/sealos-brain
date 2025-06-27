@@ -1,5 +1,5 @@
-'use client';
-import * as React from 'react';
+"use client";
+import * as React from "react";
 import {
   AnimatePresence,
   motion,
@@ -7,9 +7,9 @@ import {
   Transition,
   Variant,
   Variants,
-} from 'framer-motion';
-import { createContext, useContext, useState, useId, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+} from "framer-motion";
+import { createContext, useContext, useState, useId, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 type DisclosureContextType = {
   open: boolean;
@@ -64,7 +64,7 @@ function DisclosureProvider({
 function useDisclosure() {
   const context = useContext(DisclosureContext);
   if (!context) {
-    throw new Error('useDisclosure must be used within a DisclosureProvider');
+    throw new Error("useDisclosure must be used within a DisclosureProvider");
   }
   return context;
 }
@@ -115,22 +115,22 @@ export function DisclosureTrigger({
     <>
       {React.Children.map(children, (child) => {
         return React.isValidElement(child)
-          ? React.cloneElement(child, {
+          ? React.cloneElement(child as React.ReactElement<any>, {
               onClick: toggle,
-              role: 'button',
-              'aria-expanded': open,
+              role: "button",
+              "aria-expanded": open,
               tabIndex: 0,
               onKeyDown: (e: { key: string; preventDefault: () => void }) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   toggle();
                 }
               },
               className: cn(
                 className,
-                (child as React.ReactElement).props.className
+                (child as React.ReactElement<any>).props.className
               ),
-              ...(child as React.ReactElement).props,
+              ...(child as React.ReactElement<any>).props,
             })
           : child;
       })}
@@ -150,7 +150,7 @@ export function DisclosureContent({
 
   const BASE_VARIANTS: Variants = {
     expanded: {
-      height: 'auto',
+      height: "auto",
       opacity: 1,
     },
     collapsed: {
@@ -165,14 +165,14 @@ export function DisclosureContent({
   };
 
   return (
-    <div className={cn('overflow-hidden', className)}>
+    <div className={cn("overflow-hidden", className)}>
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
             id={uniqueId}
-            initial='collapsed'
-            animate='expanded'
-            exit='collapsed'
+            initial="collapsed"
+            animate="expanded"
+            exit="collapsed"
             variants={combinedVariants}
           >
             {children}

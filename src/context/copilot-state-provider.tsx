@@ -1,27 +1,35 @@
 "use client";
 
-import { useCoAgent, CopilotKit } from "@copilotkit/react-core";
+import {
+  useCoAgent,
+  CopilotKit,
+  useCopilotReadable,
+  useCopilotAction,
+} from "@copilotkit/react-core";
 import {
   createContext,
   useContext,
   ReactNode,
   useState,
   useCallback,
+  useMemo,
 } from "react";
 import {
   sealosBrainAgentConfig,
   SealosBrainAgentState,
   createSealosBrainConfigurable,
+  sealosBrainSystemPrompt,
 } from "@/lib/agent/sealos-brain";
 import {
   codeAgentConfig,
   CodeAgentState,
+  codeSystemPrompt,
   createCodeAgentConfigurable,
 } from "@/lib/agent/code-agent";
-import { activateDevboxActions } from "@/lib/agent/actions/devbox-action";
-import { activateObjectStorageActions } from "@/lib/agent/actions/objectstorage-action";
-import { activateGraphActions } from "@/lib/agent/actions/graph-action";
-import { activateClusterActions } from "@/lib/agent/actions/cluster-action";
+import { useActivateDevboxActions } from "@/lib/agent/actions/devbox-action";
+import { useActivateObjectStorageActions } from "@/lib/agent/actions/objectstorage-action";
+import { useActivateGraphActions } from "@/lib/agent/actions/graph-action";
+import { useActivateClusterActions } from "@/lib/agent/actions/cluster-action";
 
 // Type Definitions
 type AgentState = SealosBrainAgentState | CodeAgentState;
@@ -66,16 +74,13 @@ export function useCopilotConfig() {
 }
 
 // AgentActionsProvider - Component to handle agent actions activation
-function AgentActionsProvider({ agent }: { agent?: string }) {
+const AgentComponent = ({ agent }: { agent?: string }) => {
   // Only activate agent actions when the agent is sealos_brain
   if (agent === "sealos_brain") {
-    activateDevboxActions();
-    activateObjectStorageActions();
-    activateGraphActions();
-    activateClusterActions();
+    // These are now hooks and will be called in the provider's body
   }
   return null;
-}
+};
 
 // Props
 interface CopilotStateProviderProps {
@@ -117,7 +122,7 @@ export function CopilotStateProvider({
         config={config}
         updateConfig={updateConfig}
       >
-        <AgentActionsProvider agent={config.agent} />
+        <AgentComponent agent={config.agent} />
         {children}
       </InnerProvider>
     </CopilotKit>
@@ -147,6 +152,12 @@ function InnerProvider({ children, config, updateConfig }: InnerProviderProps) {
     initialState: {},
     config: { configurable: configurableConfig },
   });
+
+  // Activate actions
+  useActivateDevboxActions();
+  useActivateClusterActions();
+  useActivateObjectStorageActions();
+  useActivateGraphActions();
 
   return (
     <CopilotStateContext.Provider

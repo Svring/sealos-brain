@@ -46,7 +46,7 @@ export default function AIProxyNode({ data }: { data: AIProxyNodeData }) {
     <>
       <BaseNode
         content={<div>AIProxyDetails</div>}
-        id={nodeId}
+        id={nodeId ?? undefined}
         isSelected={isSelected}
         onClick={onClick}
       >

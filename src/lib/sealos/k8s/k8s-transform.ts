@@ -3,7 +3,7 @@
  * and group them by resource type
  */
 
-import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-utils";
+import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-constant";
 
 export interface ResourceItem {
   apiVersion: string;

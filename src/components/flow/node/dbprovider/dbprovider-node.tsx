@@ -38,7 +38,7 @@ export default function DBProviderNode({ data }: { data: DBProviderNodeData }) {
     <>
       <BaseNode
         content={<div>DBProviderDetails</div>}
-        id={nodeId}
+        id={nodeId ?? undefined}
         isSelected={isSelected}
         onClick={onClick}
       >

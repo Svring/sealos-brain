@@ -26,6 +26,8 @@ interface DevboxOption {
   galatea_address: string;
 }
 
+export const dynamic = "force-dynamic";
+
 export default function OperaPage() {
   const [activeTab, setActiveTab] = useState("chat");
   const [isDarkMode, setIsDarkMode] = useState(true);

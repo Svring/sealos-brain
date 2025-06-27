@@ -1,5 +1,8 @@
 "use client";
 
+// Force dynamic rendering since the layout uses headers()
+export const dynamic = "force-dynamic";
+
 import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import { motion } from "framer-motion";

@@ -9,6 +9,7 @@ interface BaseNodeProps {
   content?: React.ReactNode;
   className?: string;
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
+  isSelected?: boolean;
 }
 
 const BaseNode = ({
@@ -17,6 +18,7 @@ const BaseNode = ({
   content,
   className = "",
   onClick,
+  isSelected,
 }: BaseNodeProps) => {
   const { openPanel } = usePanel();
 

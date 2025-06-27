@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { customAlphabet } from "nanoid";
+import { toast } from "sonner";
 
 // Create a custom nanoid with lowercase alphabet and size 12
 const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 12);
@@ -38,10 +39,16 @@ export function createObjectStorageBucketMutation(
         { bucketName, bucketPolicy },
         { headers }
       );
-      return response.data;
+      return { ...response.data, bucketName, bucketPolicy };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["objectstorage", "list"] });
+      toast.success(
+        `Object storage bucket '${data.bucketName}' is successfully created`
+      );
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to create object storage bucket: ${error.message}`);
     },
   });
 }
@@ -64,10 +71,18 @@ export function deleteObjectStorageBucketMutation(
         { bucketName },
         { headers }
       );
-      return response.data;
+      return { ...response.data, bucketName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["objectstorage", "list"] });
+      toast.success(
+        `Object storage bucket '${data.bucketName}' is successfully deleted`
+      );
+    },
+    onError: (error: any, bucketName) => {
+      toast.error(
+        `Failed to delete object storage bucket '${bucketName}': ${error.message}`
+      );
     },
   });
 }

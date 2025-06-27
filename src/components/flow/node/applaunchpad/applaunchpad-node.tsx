@@ -45,7 +45,7 @@ export default function AppLaunchpadNode({
     <>
       <BaseNode
         content={<div>AppLaunchpadDetails</div>}
-        id={nodeId}
+        id={nodeId ?? undefined}
         isSelected={isSelected}
         onClick={onClick}
       >

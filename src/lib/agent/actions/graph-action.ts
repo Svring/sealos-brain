@@ -3,6 +3,10 @@ import { useSealosStore } from "@/store/sealos-store";
 import { useCreateGraphWithResourcesMutation } from "@/lib/graph/graph-mutation";
 import { useGraphsQuery } from "@/lib/graph/graph-query";
 import { type ResourceType } from "@/lib/sealos/k8s/k8s-constant";
+import { customAlphabet } from "nanoid";
+
+// Create a custom nanoid with lowercase alphabet and numbers for 4 characters
+const nanoid4 = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 4);
 
 export function getGraphListAction() {
   const { currentUser } = useSealosStore();
@@ -65,9 +69,12 @@ export function createGraphWithResourcesAction() {
         throw new Error("User not authenticated");
       }
 
+      // Add 4-length nanoid suffix to the graph name
+      const uniqueGraphName = `${graphName}-${nanoid4()}`;
+
       const result = await createGraphWithResources({
         currentUser,
-        graphName,
+        graphName: uniqueGraphName,
         resources: resources as { [resourceType in ResourceType]?: string[] },
       });
 
@@ -76,7 +83,7 @@ export function createGraphWithResourcesAction() {
   });
 }
 
-export function activateGraphActions() {
+export function useActivateGraphActions() {
   getGraphListAction();
   createGraphWithResourcesAction();
 }

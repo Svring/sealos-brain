@@ -36,7 +36,8 @@ export function createObjectStorageAction() {
       "Create a new object storage bucket (name will be generated automatically)",
     available: "remote",
     handler: async () => {
-      await createBucket();
+      const result = await createBucket();
+      return `Object storage bucket '${result.bucketName}' is successfully created`;
     },
   });
 }
@@ -61,12 +62,13 @@ export function deleteObjectStorageAction() {
       },
     ],
     handler: async ({ bucketName }) => {
-      await deleteBucket(bucketName);
+      const result = await deleteBucket(bucketName);
+      return `Object storage bucket '${result.bucketName || bucketName}' is successfully deleted`;
     },
   });
 }
 
-export function activateObjectStorageActions() {
+export function useActivateObjectStorageActions() {
   getObjectStorageListAction();
   createObjectStorageAction();
   deleteObjectStorageAction();

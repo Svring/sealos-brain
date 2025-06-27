@@ -13,13 +13,17 @@ import { Plus, RefreshCw, Trash2, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ObjectStorageColumn } from "./objectstorage-table-schema";
-import { createObjectStorageBucketMutation, deleteObjectStorageBucketMutation } from "@/lib/sealos/objectstorage/objectstorage-mutation";
-import { toast } from "sonner";
+import {
+  createObjectStorageBucketMutation,
+  deleteObjectStorageBucketMutation,
+} from "@/lib/sealos/objectstorage/objectstorage-mutation";
 
 export function ObjectStorageTable() {
   const { currentUser, regionUrl } = useSealosStore();
   const queryClient = useQueryClient();
-  const [selectedRows, setSelectedRows] = React.useState<ObjectStorageColumn[]>([]);
+  const [selectedRows, setSelectedRows] = React.useState<ObjectStorageColumn[]>(
+    []
+  );
 
   const {
     data: objectstorageData,
@@ -27,21 +31,31 @@ export function ObjectStorageTable() {
     error,
     refetch,
   } = useQuery(
-    objectStorageBucketListOptions(currentUser, regionUrl, transformObjectStorageToTable)
+    objectStorageBucketListOptions(
+      currentUser,
+      regionUrl,
+      transformObjectStorageToTable
+    )
   );
 
-  const deleteMutation = deleteObjectStorageBucketMutation(currentUser, regionUrl);
-  const createMutation = createObjectStorageBucketMutation(currentUser, regionUrl);
+  const deleteMutation = deleteObjectStorageBucketMutation(
+    currentUser,
+    regionUrl
+  );
+  const createMutation = createObjectStorageBucketMutation(
+    currentUser,
+    regionUrl
+  );
 
   const handleBulkDelete = async (buckets: ObjectStorageColumn[]) => {
-    const promises = buckets.map(bucket => deleteMutation.mutateAsync(bucket.name));
+    const promises = buckets.map((bucket) =>
+      deleteMutation.mutateAsync(bucket.name)
+    );
 
     try {
       await Promise.all(promises);
-      toast.success(`Successfully deleted ${buckets.length} bucket(s)`);
-      queryClient.invalidateQueries({ queryKey: ["objectstorage", "list"] });
     } catch (error: any) {
-      toast.error(`Failed to delete bucket(s): ${error.message}`);
+      console.error("Failed to delete bucket(s):", error);
     }
   };
 
@@ -72,19 +86,27 @@ export function ObjectStorageTable() {
           <CardTitle>Object Storage Buckets</CardTitle>
           <div className="flex items-center gap-2">
             {selectedRows.length > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    if (confirm(`Are you sure you want to delete ${selectedRows.length} bucket(s)?`)) {
-                      handleBulkDelete(selectedRows);
-                    }
-                  }}
-                  disabled={!canDelete || isActionLoading}
-                >
-                  {isActionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                  Delete
-                </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  if (
+                    confirm(
+                      `Are you sure you want to delete ${selectedRows.length} bucket(s)?`
+                    )
+                  ) {
+                    handleBulkDelete(selectedRows);
+                  }
+                }}
+                disabled={!canDelete || isActionLoading}
+              >
+                {isActionLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-2 h-4 w-4" />
+                )}
+                Delete
+              </Button>
             )}
             <Button
               variant="outline"
@@ -109,13 +131,13 @@ export function ObjectStorageTable() {
             <Skeleton className="h-10 w-full" />
           </div>
         ) : (
-          <DataTable 
-            columns={objectstorageColumns} 
-            data={objectstorageData || []} 
+          <DataTable
+            columns={objectstorageColumns}
+            data={objectstorageData || []}
             onRowSelectionChange={setSelectedRows}
           />
         )}
       </CardContent>
     </Card>
   );
-} 
+}

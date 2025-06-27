@@ -139,7 +139,7 @@ export function createDevboxAction() {
   });
 }
 
-export function activateDevboxActions() {
+export function useActivateDevboxActions() {
   getDevboxListAction();
   startDevboxAction();
   shutdownDevboxAction();

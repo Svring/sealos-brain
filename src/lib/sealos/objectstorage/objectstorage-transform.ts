@@ -1,9 +1,9 @@
-import { ObjectstorageColumn } from "@/components/inventory/objectstorage/objectstorage-table-schema";
+import { ObjectStorageColumn } from "@/components/inventory/objectstorage/objectstorage-table-schema";
 import { ObjectStorageNodeData } from "@/components/flow/node/objectstorage/objectstorage-node";
 
 export function transformObjectStorageToTable(
   data: any
-): ObjectstorageColumn[] {
+): ObjectStorageColumn[] {
   // Handle response structure: { code: 200, data: { list: [...] } }
   const responseData = data?.data || data;
   const buckets = responseData?.list;
@@ -17,6 +17,7 @@ export function transformObjectStorageToTable(
     name: bucket.name || "Unnamed",
     status: bucket.isComplete ? "Complete" : "Incomplete",
     type: bucket.policy || "private",
+    size: "N/A",
     createdAt: "N/A", // Not provided in the response
   }));
 }

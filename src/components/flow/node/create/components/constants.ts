@@ -1,5 +1,5 @@
 import { Box, Database, Code, Clock, HardDrive } from "lucide-react";
-import { type ResourceType } from "@/lib/sealos/k8s/k8s-utils";
+import { type ResourceType } from "@/lib/sealos/k8s/k8s-constant";
 
 // Icon mapping for resource types
 export const resourceIcons: Record<ResourceType, React.ComponentType<any>> = {

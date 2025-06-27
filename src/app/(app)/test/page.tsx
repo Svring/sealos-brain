@@ -27,6 +27,9 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
+// Force dynamic rendering since the layout uses headers()
+export const dynamic = "force-dynamic";
+
 export default function K8sTestPage() {
   const { currentUser, regionUrl } = useSealosStore();
   const queryClient = useQueryClient();

@@ -44,7 +44,7 @@ export default function CronJobNode({ data }: { data: CronJobNodeData }) {
     <>
       <BaseNode
         content={<div>CronJobDetails</div>}
-        id={nodeId}
+        id={nodeId ?? undefined}
         isSelected={isSelected}
         onClick={onClick}
       >
