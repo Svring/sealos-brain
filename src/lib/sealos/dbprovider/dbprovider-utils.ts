@@ -8,6 +8,7 @@ const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 12);
 
 // Regex patterns defined at top level for performance
 const DB_NAME_REGEX = /^[a-z0-9-]+$/;
+const OPERATION_NAME_REGEX = /ed$/;
 
 interface DBResponse {
   dbType?: string;
@@ -148,4 +149,147 @@ export function validateDBTypes(
     isValid: invalidTypes.length === 0,
     invalidTypes,
   };
+}
+
+// Interfaces for database operations
+export interface DBFormData {
+  dbName?: string;
+  name?: string;
+  dbType?: string;
+  [key: string]: unknown;
+}
+
+export interface BulkOperationResult<T = unknown> {
+  success: boolean;
+  item: string;
+  result?: T;
+  error?: string;
+}
+
+// Export the headers function for use in mutations
+export { getDBProviderHeaders };
+
+/**
+ * Core function to start a database
+ */
+export async function startDatabase(
+  dbName: string,
+  currentUser: User | null,
+  regionUrl: string
+): Promise<{ dbName: string }> {
+  if (!regionUrl) {
+    throw new Error("Region URL is required");
+  }
+
+  const dbType = await getDBTypeByName(dbName, currentUser, regionUrl);
+  const headers = getDBProviderHeaders(currentUser);
+
+  const response = await axios.post(
+    `/api/sealos/dbprovider/startDBByName?regionUrl=${regionUrl}`,
+    { dbName, dbType },
+    { headers }
+  );
+
+  return { ...response.data, dbName };
+}
+
+/**
+ * Core function to pause a database
+ */
+export async function pauseDatabase(
+  dbName: string,
+  currentUser: User | null,
+  regionUrl: string
+): Promise<{ dbName: string }> {
+  if (!regionUrl) {
+    throw new Error("Region URL is required");
+  }
+
+  const dbType = await getDBTypeByName(dbName, currentUser, regionUrl);
+  const headers = getDBProviderHeaders(currentUser);
+
+  const response = await axios.post(
+    `/api/sealos/dbprovider/pauseDBByName?regionUrl=${regionUrl}`,
+    { dbName, dbType },
+    { headers }
+  );
+
+  return { ...response.data, dbName };
+}
+
+/**
+ * Core function to delete a database
+ */
+export async function deleteDatabase(
+  dbName: string,
+  currentUser: User | null,
+  regionUrl: string
+): Promise<{ dbName: string }> {
+  const headers = getDBProviderHeaders(currentUser);
+
+  const response = await axios.delete(
+    `/api/sealos/dbprovider/delDBByName?regionUrl=${regionUrl}&name=${dbName}`,
+    { headers }
+  );
+
+  return { ...response.data, dbName };
+}
+
+/**
+ * Core function to create a database
+ */
+export async function createDatabase(
+  dbFormData: DBFormData,
+  currentUser: User | null,
+  regionUrl: string
+): Promise<{ dbName: string; dbType: string }> {
+  if (!regionUrl) {
+    throw new Error("Region URL is required");
+  }
+
+  const headers = getDBProviderHeaders(currentUser);
+
+  const response = await axios.post(
+    `/api/sealos/dbprovider/createDB?regionUrl=${regionUrl}`,
+    { dbForm: dbFormData },
+    { headers }
+  );
+
+  const dbName = dbFormData.dbName || dbFormData.name || "Unknown";
+  const dbType = dbFormData.dbType || "database";
+
+  return { ...response.data, dbName, dbType };
+}
+
+/**
+ * Generic function to process bulk operations with summary generation
+ */
+export function processBulkOperationResults<T>(
+  results: BulkOperationResult<T>[],
+  operationName: string
+): {
+  successful: BulkOperationResult<T>[];
+  failed: BulkOperationResult[];
+  summary: string;
+} {
+  const successful = results.filter(
+    (r): r is BulkOperationResult<T> => r.success
+  );
+  const failed = results.filter((r) => !r.success);
+
+  let summary = "";
+  if (successful.length > 0) {
+    summary += `Successfully ${operationName} ${successful.length} database(s):\n`;
+    for (const r of successful) {
+      summary += `- '${r.result || r.item}'\n`;
+    }
+  }
+  if (failed.length > 0) {
+    summary += `\nFailed to ${operationName.replace(OPERATION_NAME_REGEX, "")} ${failed.length} database(s):\n`;
+    for (const r of failed) {
+      summary += `- '${r.item}': ${r.error}\n`;
+    }
+  }
+
+  return { successful, failed, summary: summary.trim() };
 }

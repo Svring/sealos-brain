@@ -1,5 +1,9 @@
 import { useCopilotAction } from "@copilotkit/react-core";
 import { customAlphabet } from "nanoid";
+import {
+  CreateGraphWithResourcesActionUI,
+  GetGraphListActionUI,
+} from "@/components/agent/graph-action-ui";
 import { useCreateGraphWithResourcesMutation } from "@/lib/graph/graph-mutation";
 import { useGraphsQuery } from "@/lib/graph/graph-query";
 import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
@@ -22,6 +26,9 @@ export function getGraphListAction() {
         graphNames: Object.keys(allGraphs || {}),
       };
     },
+    render: ({ status, result }) => {
+      return <GetGraphListActionUI result={result} status={status} />;
+    },
   });
 }
 
@@ -34,7 +41,7 @@ export function createGraphWithResourcesAction() {
     name: "createGraphWithResources",
     description:
       "Create a graph and add existing resources to it by their names",
-    available: "remote",
+    available: "enabled",
     parameters: [
       {
         name: "graphName",
@@ -64,21 +71,60 @@ export function createGraphWithResourcesAction() {
         ],
       },
     ],
-    handler: async ({ graphName, resources }) => {
-      if (!currentUser) {
-        throw new Error("User not authenticated");
+    renderAndWaitForResponse: ({ status, args, result, respond }) => {
+      const { graphName, resources } = args;
+
+      if (!(graphName && resources)) {
+        respond?.("Missing required parameters: graphName and resources");
+        return (
+          <div className="space-y-2">
+            <h2 className="font-semibold text-lg text-red-600">
+              Invalid Parameters
+            </h2>
+            <p>Missing required parameters: graphName and resources</p>
+          </div>
+        );
       }
 
       // Add 4-length nanoid suffix to the graph name
       const uniqueGraphName = `${graphName}-${nanoid4()}`;
 
-      const result = await createGraphWithResources({
-        currentUser,
-        graphName: uniqueGraphName,
-        resources: resources as { [resourceType in ResourceType]?: string[] },
-      });
+      return (
+        <CreateGraphWithResourcesActionUI
+          graphName={uniqueGraphName}
+          onReject={() => {
+            respond?.("User cancelled the graph creation operation");
+          }}
+          onSelect={async () => {
+            try {
+              if (!currentUser) {
+                throw new Error("User not authenticated");
+              }
 
-      return result;
+              const createResult = await createGraphWithResources({
+                currentUser,
+                graphName: uniqueGraphName,
+                resources: resources as {
+                  [resourceType in ResourceType]?: string[];
+                },
+              });
+
+              respond?.(
+                `Graph '${createResult.graphName}' created successfully with ${createResult.resourcesAdded} resources added`
+              );
+            } catch (error: unknown) {
+              const errorMessage =
+                error instanceof Error
+                  ? error.message
+                  : "Unknown error occurred";
+              respond?.(`Failed to create graph: ${errorMessage}`);
+            }
+          }}
+          resources={resources as Record<string, string[]>}
+          result={result}
+          status={status}
+        />
+      );
     },
   });
 }

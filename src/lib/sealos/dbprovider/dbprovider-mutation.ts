@@ -1,53 +1,28 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
 import type { User } from "@/payload-types";
-import { getDBTypeByName } from "./dbprovider-utils";
+import {
+  type BulkOperationResult,
+  createDatabase,
+  type DBFormData,
+  deleteDatabase,
+  pauseDatabase,
+  processBulkOperationResults,
+  startDatabase,
+} from "./dbprovider-utils";
 
-interface BulkOperationResult<T = unknown> {
-  success: boolean;
-  item: string;
-  result?: T;
-  error?: string;
-}
-
-interface DBFormData {
-  dbName?: string;
-  name?: string;
-  dbType?: string;
-  [key: string]: unknown;
-}
-
-// Helper to get headers from currentUser
-function getDBProviderHeaders(currentUser: User | null) {
-  return {
-    Authorization:
-      currentUser?.tokens?.find((t) => t.type === "kubeconfig")?.value || "",
-  };
-}
-
-// Start Database
+// Start Database Mutation
 export function startDBByNameMutation(
   currentUser: User | null,
   regionUrl: string | undefined
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (dbName: string) => {
+    mutationFn: (dbName: string) => {
       if (!regionUrl) {
         throw new Error("Region URL is required");
       }
-
-      // Automatically determine the database type
-      const dbType = await getDBTypeByName(dbName, currentUser, regionUrl);
-
-      const headers = getDBProviderHeaders(currentUser);
-      const response = await axios.post(
-        `/api/sealos/dbprovider/startDBByName?regionUrl=${regionUrl}`,
-        { dbName, dbType },
-        { headers }
-      );
-      return { ...response.data, dbName };
+      return startDatabase(dbName, currentUser, regionUrl);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
@@ -59,28 +34,18 @@ export function startDBByNameMutation(
   });
 }
 
-// Pause Database
+// Pause Database Mutation
 export function pauseDBByNameMutation(
   currentUser: User | null,
   regionUrl: string | undefined
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (dbName: string) => {
+    mutationFn: (dbName: string) => {
       if (!regionUrl) {
         throw new Error("Region URL is required");
       }
-
-      // Automatically determine the database type
-      const dbType = await getDBTypeByName(dbName, currentUser, regionUrl);
-
-      const headers = getDBProviderHeaders(currentUser);
-      const response = await axios.post(
-        `/api/sealos/dbprovider/pauseDBByName?regionUrl=${regionUrl}`,
-        { dbName, dbType },
-        { headers }
-      );
-      return { ...response.data, dbName };
+      return pauseDatabase(dbName, currentUser, regionUrl);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
@@ -92,20 +57,18 @@ export function pauseDBByNameMutation(
   });
 }
 
-// Delete Database
+// Delete Database Mutation
 export function delDBByNameMutation(
   currentUser: User | null,
   regionUrl: string | undefined
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (dbName: string) => {
-      const headers = getDBProviderHeaders(currentUser);
-      const response = await axios.delete(
-        `/api/sealos/dbprovider/delDBByName?regionUrl=${regionUrl}&name=${dbName}`,
-        { headers }
-      );
-      return { ...response.data, dbName };
+    mutationFn: (dbName: string) => {
+      if (!regionUrl) {
+        throw new Error("Region URL is required");
+      }
+      return deleteDatabase(dbName, currentUser, regionUrl);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
@@ -117,27 +80,18 @@ export function delDBByNameMutation(
   });
 }
 
-// Create Database
+// Create Database Mutation
 export function createDBMutation(
   currentUser: User | null,
   regionUrl: string | undefined
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (dbFormData: DBFormData) => {
+    mutationFn: (dbFormData: DBFormData) => {
       if (!regionUrl) {
         throw new Error("Region URL is required");
       }
-      const headers = getDBProviderHeaders(currentUser);
-      const response = await axios.post(
-        `/api/sealos/dbprovider/createDB?regionUrl=${regionUrl}`,
-        dbFormData,
-        { headers }
-      );
-      // Extract database name from form data
-      const dbName = dbFormData.dbName || dbFormData.name || "Unknown";
-      const dbType = dbFormData.dbType || "database";
-      return { ...response.data, dbName, dbType };
+      return createDatabase(dbFormData, currentUser, regionUrl);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
@@ -170,18 +124,7 @@ export async function startMultipleDBs(
         if (!regionUrl) {
           throw new Error("Region URL is required");
         }
-
-        const dbType = await getDBTypeByName(name, currentUser, regionUrl);
-
-        const headers = getDBProviderHeaders(currentUser);
-        const response = await axios.post(
-          `/api/sealos/dbprovider/startDBByName?regionUrl=${regionUrl}`,
-          { dbName: name, dbType },
-          { headers }
-        );
-
-        const result = { ...response.data, dbName: name };
-
+        const result = await startDatabase(name, currentUser, regionUrl);
         return {
           success: true,
           item: name,
@@ -199,29 +142,7 @@ export async function startMultipleDBs(
     })
   );
 
-  const successful = results.filter((r) => r.success);
-  const failed = results.filter((r) => !r.success);
-
-  let summary = "";
-  if (successful.length > 0) {
-    summary += `Successfully started ${successful.length} database(s):
-`;
-    for (const r of successful) {
-      summary += `- '${r.result}'
-`;
-    }
-  }
-  if (failed.length > 0) {
-    summary += `
-Failed to start ${failed.length} database(s):
-`;
-    for (const r of failed) {
-      summary += `- '${r.item}': ${r.error}
-`;
-    }
-  }
-
-  return { successful, failed, summary: summary.trim() };
+  return processBulkOperationResults(results, "started");
 }
 
 /**
@@ -242,18 +163,7 @@ export async function pauseMultipleDBs(
         if (!regionUrl) {
           throw new Error("Region URL is required");
         }
-
-        const dbType = await getDBTypeByName(name, currentUser, regionUrl);
-
-        const headers = getDBProviderHeaders(currentUser);
-        const response = await axios.post(
-          `/api/sealos/dbprovider/pauseDBByName?regionUrl=${regionUrl}`,
-          { dbName: name, dbType },
-          { headers }
-        );
-
-        const result = { ...response.data, dbName: name };
-
+        const result = await pauseDatabase(name, currentUser, regionUrl);
         return {
           success: true,
           item: name,
@@ -271,29 +181,7 @@ export async function pauseMultipleDBs(
     })
   );
 
-  const successful = results.filter((r) => r.success);
-  const failed = results.filter((r) => !r.success);
-
-  let summary = "";
-  if (successful.length > 0) {
-    summary += `Successfully paused ${successful.length} database(s):
-`;
-    for (const r of successful) {
-      summary += `- '${r.result}'
-`;
-    }
-  }
-  if (failed.length > 0) {
-    summary += `
-Failed to pause ${failed.length} database(s):
-`;
-    for (const r of failed) {
-      summary += `- '${r.item}': ${r.error}
-`;
-    }
-  }
-
-  return { successful, failed, summary: summary.trim() };
+  return processBulkOperationResults(results, "paused");
 }
 
 /**
@@ -311,14 +199,10 @@ export async function deleteMultipleDBs(
   const results = await Promise.all(
     dbNames.map(async (name) => {
       try {
-        const headers = getDBProviderHeaders(currentUser);
-        const response = await axios.delete(
-          `/api/sealos/dbprovider/delDBByName?regionUrl=${regionUrl}&name=${name}`,
-          { headers }
-        );
-
-        const result = { ...response.data, dbName: name };
-
+        if (!regionUrl) {
+          throw new Error("Region URL is required");
+        }
+        const result = await deleteDatabase(name, currentUser, regionUrl);
         return {
           success: true,
           item: name,
@@ -336,29 +220,7 @@ export async function deleteMultipleDBs(
     })
   );
 
-  const successful = results.filter((r) => r.success);
-  const failed = results.filter((r) => !r.success);
-
-  let summary = "";
-  if (successful.length > 0) {
-    summary += `Successfully deleted ${successful.length} database(s):
-`;
-    for (const r of successful) {
-      summary += `- '${r.result}'
-`;
-    }
-  }
-  if (failed.length > 0) {
-    summary += `
-Failed to delete ${failed.length} database(s):
-`;
-    for (const r of failed) {
-      summary += `- '${r.item}': ${r.error}
-`;
-    }
-  }
-
-  return { successful, failed, summary: summary.trim() };
+  return processBulkOperationResults(results, "deleted");
 }
 
 /**
@@ -379,16 +241,8 @@ export async function createMultipleDBs(
         if (!regionUrl) {
           throw new Error("Region URL is required");
         }
-        const headers = getDBProviderHeaders(currentUser);
-        const response = await axios.post(
-          `/api/sealos/dbprovider/createDB?regionUrl=${regionUrl}`,
-          dbFormData,
-          { headers }
-        );
+        const result = await createDatabase(dbFormData, currentUser, regionUrl);
         const dbName = dbFormData.dbName || dbFormData.name || "Unknown";
-        const dbType = dbFormData.dbType || "database";
-        const result = { ...response.data, dbName, dbType };
-
         return {
           success: true,
           item: dbName,
@@ -407,27 +261,5 @@ export async function createMultipleDBs(
     })
   );
 
-  const successful = results.filter((r) => r.success);
-  const failed = results.filter((r) => !r.success);
-
-  let summary = "";
-  if (successful.length > 0) {
-    summary += `Successfully created ${successful.length} database(s):
-`;
-    for (const r of successful) {
-      summary += `- '${r.result}'
-`;
-    }
-  }
-  if (failed.length > 0) {
-    summary += `
-Failed to create ${failed.length} database(s):
-`;
-    for (const r of failed) {
-      summary += `- '${r.item}': ${r.error}
-`;
-    }
-  }
-
-  return { successful, failed, summary: summary.trim() };
+  return processBulkOperationResults(results, "created");
 }

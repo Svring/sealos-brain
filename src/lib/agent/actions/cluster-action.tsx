@@ -9,13 +9,9 @@ import {
 } from "@/components/agent/cluster-action-ui";
 import { DB_TYPE_VERSION_MAP } from "@/lib/sealos/dbprovider/dbprovider-constant";
 import {
-  createDBMutation,
   createMultipleDBs,
-  delDBByNameMutation,
   deleteMultipleDBs,
-  pauseDBByNameMutation,
   pauseMultipleDBs,
-  startDBByNameMutation,
   startMultipleDBs,
 } from "@/lib/sealos/dbprovider/dbprovider-mutation";
 import { dbProviderListOptions } from "@/lib/sealos/dbprovider/dbprovider-query";
@@ -24,50 +20,7 @@ import {
   validateDBNames,
   validateDBTypes,
 } from "@/lib/sealos/dbprovider/dbprovider-utils";
-import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
-
-// Helper function to handle start cluster logic
-async function handleStartCluster(
-  dbNames: string[],
-  isMultiple: boolean,
-  currentUser: User | null,
-  regionUrl: string | undefined,
-  startDB: (dbName: string) => Promise<{ dbName: string }>
-) {
-  if (isMultiple) {
-    const { summary } = await startMultipleDBs(
-      dbNames.filter((n): n is string => Boolean(n)),
-      currentUser,
-      regionUrl
-    );
-    return summary;
-  }
-
-  const dbResult = await startDB(dbNames[0] || "");
-  return `Database '${dbResult.dbName || dbNames[0]}' is successfully started`;
-}
-
-// Helper function to handle pause cluster logic
-async function handlePauseCluster(
-  dbNames: string[],
-  isMultiple: boolean,
-  currentUser: User | null,
-  regionUrl: string | undefined,
-  pauseDB: (dbName: string) => Promise<{ dbName: string }>
-) {
-  if (isMultiple) {
-    const { summary } = await pauseMultipleDBs(
-      dbNames.filter((n): n is string => Boolean(n)),
-      currentUser,
-      regionUrl
-    );
-    return summary;
-  }
-
-  const dbResult = await pauseDB(dbNames[0] || "");
-  return `Database '${dbResult.dbName || dbNames[0]}' is successfully paused`;
-}
 
 export function getClusterListAction() {
   const { currentUser, regionUrl } = useSealosStore();
@@ -91,11 +44,6 @@ export function getClusterListAction() {
 export function startClusterAction() {
   const { currentUser, regionUrl } = useSealosStore();
 
-  const { mutateAsync: startDB } = startDBByNameMutation(
-    currentUser,
-    regionUrl
-  );
-
   useCopilotAction({
     name: "startCluster",
     description: "Start one or more database clusters by name",
@@ -111,7 +59,6 @@ export function startClusterAction() {
     ],
     handler: async ({ dbName }) => {
       const dbNames = Array.isArray(dbName) ? dbName : [dbName];
-      const isMultiple = Array.isArray(dbName);
 
       // Validate db names
       const { isValid, invalidNames } = validateDBNames(dbNames);
@@ -120,19 +67,16 @@ export function startClusterAction() {
       }
 
       try {
-        return await handleStartCluster(
-          dbNames,
-          isMultiple,
+        const { summary } = await startMultipleDBs(
+          dbNames.filter((n): n is string => Boolean(n)),
           currentUser,
-          regionUrl,
-          startDB
+          regionUrl
         );
+        return summary;
       } catch (error: unknown) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error occurred";
-        return isMultiple
-          ? `Failed to start databases: ${errorMessage}`
-          : `Failed to start database '${dbNames[0]}': ${errorMessage}`;
+        return `Failed to start databases: ${errorMessage}`;
       }
     },
     render: ({ status, args, result }) => {
@@ -151,11 +95,6 @@ export function startClusterAction() {
 export function pauseClusterAction() {
   const { currentUser, regionUrl } = useSealosStore();
 
-  const { mutateAsync: pauseDB } = pauseDBByNameMutation(
-    currentUser,
-    regionUrl
-  );
-
   useCopilotAction({
     name: "pauseCluster",
     description: "Pause one or more database clusters by name",
@@ -171,7 +110,6 @@ export function pauseClusterAction() {
     ],
     handler: async ({ dbName }) => {
       const dbNames = Array.isArray(dbName) ? dbName : [dbName];
-      const isMultiple = Array.isArray(dbName);
 
       // Validate db names
       const { isValid, invalidNames } = validateDBNames(dbNames);
@@ -180,19 +118,16 @@ export function pauseClusterAction() {
       }
 
       try {
-        return await handlePauseCluster(
-          dbNames,
-          isMultiple,
+        const { summary } = await pauseMultipleDBs(
+          dbNames.filter((n): n is string => Boolean(n)),
           currentUser,
-          regionUrl,
-          pauseDB
+          regionUrl
         );
+        return summary;
       } catch (error: unknown) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error occurred";
-        return isMultiple
-          ? `Failed to pause databases: ${errorMessage}`
-          : `Failed to pause database '${dbNames[0]}': ${errorMessage}`;
+        return `Failed to pause databases: ${errorMessage}`;
       }
     },
     render: ({ status, args, result }) => {
@@ -210,7 +145,6 @@ export function pauseClusterAction() {
 
 export function deleteClusterAction() {
   const { currentUser, regionUrl } = useSealosStore();
-  const { mutateAsync: deleteDB } = delDBByNameMutation(currentUser, regionUrl);
 
   useCopilotAction({
     name: "deleteCluster",
@@ -228,7 +162,6 @@ export function deleteClusterAction() {
     renderAndWaitForResponse: ({ status, args, result, respond }) => {
       const { dbName } = args;
       const dbNames = Array.isArray(dbName) ? dbName : [dbName];
-      const isMultiple = Array.isArray(dbName);
 
       // Validate db names
       const { isValid, invalidNames } = validateDBNames(dbNames);
@@ -257,39 +190,22 @@ export function deleteClusterAction() {
         <DeleteClusterActionUI
           dbName={dbName || []}
           onReject={() => {
-            respond?.(
-              isMultiple
-                ? "User cancelled the deletion of multiple database clusters"
-                : "User cancelled the database cluster deletion operation"
-            );
+            respond?.("User cancelled the database cluster deletion operation");
           }}
           onSelect={async () => {
             try {
-              if (isMultiple) {
-                // Delete multiple dbs using bulk operation
-                const { summary } = await deleteMultipleDBs(
-                  dbNames.filter((n): n is string => Boolean(n)),
-                  currentUser,
-                  regionUrl
-                );
-                respond?.(summary);
-              } else {
-                // Delete single db
-                const deleteResult = await deleteDB(dbNames[0] || "");
-                respond?.(
-                  `Database '${deleteResult.dbName || dbNames[0]}' is successfully deleted`
-                );
-              }
+              const { summary } = await deleteMultipleDBs(
+                dbNames.filter((n): n is string => Boolean(n)),
+                currentUser,
+                regionUrl
+              );
+              respond?.(summary);
             } catch (error: unknown) {
               const errorMessage =
                 error instanceof Error
                   ? error.message
                   : "Unknown error occurred";
-              respond?.(
-                isMultiple
-                  ? `Failed to delete databases: ${errorMessage}`
-                  : `Failed to delete database '${dbNames[0]}': ${errorMessage}`
-              );
+              respond?.(`Failed to delete databases: ${errorMessage}`);
             }
           }}
           result={result}
@@ -302,7 +218,6 @@ export function deleteClusterAction() {
 
 export function createClusterAction() {
   const { currentUser, regionUrl } = useSealosStore();
-  const { mutateAsync: createDB } = createDBMutation(currentUser, regionUrl);
 
   // Only allow dbTypes with non-empty versions
   const allowedDbTypes = Object.entries(DB_TYPE_VERSION_MAP)
@@ -324,18 +239,11 @@ export function createClusterAction() {
     ],
     renderAndWaitForResponse: ({ status, args, result, respond }) => {
       const { dbType } = args;
-
-      // Filter and ensure all types are strings
-      const validDbTypes: string[] = [];
-      if (Array.isArray(dbType)) {
-        for (const type of dbType) {
-          if (typeof type === "string" && type.trim()) {
-            validDbTypes.push(type);
-          }
-        }
-      } else if (typeof dbType === "string" && dbType.trim()) {
-        validDbTypes.push(dbType);
-      }
+      const dbTypes = Array.isArray(dbType) ? dbType : [dbType];
+      const validDbTypes = dbTypes.filter(
+        (type): type is string =>
+          typeof type === "string" && type.trim().length > 0
+      );
 
       // Validate that all dbTypes are valid
       const { isValid, invalidTypes } = validateDBTypes(
@@ -362,53 +270,29 @@ export function createClusterAction() {
         );
       }
 
-      const isMultiple = Array.isArray(dbType);
-
       return (
         <CreateClusterActionUI
           dbType={validDbTypes.length === 1 ? validDbTypes[0] : validDbTypes}
           onReject={() => {
-            respond?.(
-              isMultiple
-                ? "User cancelled the creation of multiple database clusters"
-                : "User wants to create a different database cluster, please withdraw the current action and query the user again"
-            );
+            respond?.("User cancelled the database cluster creation operation");
           }}
           onSelect={async () => {
             try {
-              if (isMultiple) {
-                // Create multiple dbs using bulk operation
-                const dbForms = validDbTypes.map(
-                  (type) => generateDBFormFromType(type).dbForm
-                );
-                const { summary } = await createMultipleDBs(
-                  dbForms,
-                  currentUser,
-                  regionUrl
-                );
-                respond?.(summary);
-              } else {
-                // Create single db
-                const selectedType = validDbTypes[0];
-                if (!selectedType) {
-                  throw new Error("No valid database type provided");
-                }
-                const dbFormObj = generateDBFormFromType(selectedType);
-                const createResult = await createDB(dbFormObj.dbForm);
-                respond?.(
-                  `Database '${createResult.dbName}' (${createResult.dbType || selectedType}) is successfully created`
-                );
-              }
+              const dbForms = validDbTypes.map(
+                (type) => generateDBFormFromType(type).dbForm
+              );
+              const { summary } = await createMultipleDBs(
+                dbForms,
+                currentUser,
+                regionUrl
+              );
+              respond?.(summary);
             } catch (error: unknown) {
               const errorMessage =
                 error instanceof Error
                   ? error.message
                   : "Unknown error occurred";
-              respond?.(
-                isMultiple
-                  ? `Failed to create databases: ${errorMessage}`
-                  : `Failed to create database from type '${validDbTypes[0] || "unknown"}': ${errorMessage}`
-              );
+              respond?.(`Failed to create databases: ${errorMessage}`);
             }
           }}
           result={result}
