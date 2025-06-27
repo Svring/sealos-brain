@@ -7,7 +7,7 @@ export function HomePage() {
   return (
     <div className="flex h-full w-full flex-col items-center">
       <CopilotChat
-        className="h-full min-w-3xl max-w-4xl"
+        className="h-full w-4xl"
         instructions={
           "You are assisting the user as best as you can. Answer in the best way possible given the data you have."
         }

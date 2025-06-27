@@ -130,3 +130,187 @@ const DataSchema = z.array(z.array(z.union([DevboxSchema, TemplateSchema])));
 export type DataSchema = z.infer<typeof DataSchema>;
 export type DevboxSchema = z.infer<typeof DevboxSchema>;
 export type TemplateSchema = z.infer<typeof TemplateSchema>;
+
+interface DevboxSpec {
+  image: string;
+  state: string;
+  templateID: string;
+  resource: {
+    cpu: string;
+    memory: string;
+  };
+  config: {
+    appPorts: Array<{
+      name: string;
+      port: number;
+      protocol: string;
+      targetPort: number;
+    }>;
+    ports: Array<{
+      containerPort: number;
+      name: string;
+      protocol: string;
+    }>;
+    releaseArgs: string[];
+    releaseCommand: string[];
+    user: string;
+    workingDir: string;
+  };
+  network: {
+    extraPorts: Array<{
+      containerPort: number;
+      protocol: string;
+    }>;
+    type: string;
+  };
+  squash: boolean;
+  affinity: {
+    nodeAffinity: {
+      requiredDuringSchedulingIgnoredDuringExecution: {
+        nodeSelectorTerms: Array<{
+          matchExpressions: Array<{
+            key: string;
+            operator: string;
+          }>;
+        }>;
+      };
+    };
+  };
+  tolerations: Array<{
+    effect: string;
+    key: string;
+    operator: string;
+  }>;
+}
+
+interface DevboxStatus {
+  phase: string;
+  network: {
+    nodePort: number;
+    tailnet: string;
+    type: string;
+  };
+  state: {
+    running?: {
+      startedAt: string;
+    };
+  };
+  lastState: {
+    terminated?: {
+      containerID: string;
+      exitCode: number;
+      finishedAt: string;
+      reason: string;
+      startedAt: string;
+    };
+  };
+  commitHistory: Array<{
+    containerID: string;
+    image: string;
+    node: string;
+    pod: string;
+    predicatedStatus: string;
+    status: string;
+    time: string;
+  }>;
+}
+
+interface DevboxMetadata {
+  name: string;
+  namespace: string;
+  uid: string;
+  creationTimestamp: string;
+  generation: number;
+  resourceVersion: string;
+  finalizers: string[];
+  annotations?: {
+    [key: string]: string;
+  };
+  managedFields: Array<{
+    apiVersion: string;
+    fieldsType: string;
+    fieldsV1: object;
+    manager: string;
+    operation: string;
+    time: string;
+    subresource?: string;
+  }>;
+}
+
+export interface DevboxItem {
+  apiVersion: string;
+  kind: string;
+  metadata: DevboxMetadata;
+  spec: DevboxSpec;
+  status: DevboxStatus;
+}
+
+export interface DevboxList {
+  apiVersion: string;
+  kind: string;
+  metadata: {
+    continue: string;
+    resourceVersion: string;
+  };
+  items: DevboxItem[];
+}
+
+// Helper interface for simplified display
+export interface DevboxSummary {
+  name: string;
+  template: string;
+  status: string;
+  phase: string;
+  createdAt: string;
+  image: string;
+  cpu: string;
+  memory: string;
+  ports: string[];
+}
+
+// Function to extract simple info from DevboxItem
+export function extractDevboxSummary(devbox: DevboxItem): DevboxSummary {
+  // Extract template name from image or use templateID
+  const getTemplateName = (image: string): string => {
+    // Extract template from image URL like "ghcr.io/labring-actions/devbox/go-1.23.0:13aacd8"
+    const imageParts = image.split("/");
+    if (imageParts.length > 3) {
+      const templatePart = imageParts[3]; // "go-1.23.0:13aacd8"
+      return templatePart.split(":")[0]; // "go-1.23.0"
+    }
+    return devbox.spec.templateID || "Unknown";
+  };
+
+  // Format ports for display
+  const formatPorts = (
+    appPorts: DevboxSpec["config"]["appPorts"]
+  ): string[] => {
+    return appPorts.map(
+      (port) => `${port.port}/${port.protocol.toLowerCase()}`
+    );
+  };
+
+  // Format creation date
+  const formatDate = (timestamp: string): string => {
+    return new Date(timestamp).toLocaleString();
+  };
+
+  return {
+    name: devbox.metadata.name,
+    template: getTemplateName(devbox.spec.image),
+    status: devbox.spec.state,
+    phase: devbox.status.phase,
+    createdAt: formatDate(devbox.metadata.creationTimestamp),
+    image: devbox.spec.image,
+    cpu: devbox.spec.resource.cpu,
+    memory: devbox.spec.resource.memory,
+    ports: formatPorts(devbox.spec.config.appPorts),
+  };
+}
+
+// Function to extract summaries from DevboxList
+export function extractDevboxListSummaries(
+  devboxList: DevboxList
+): DevboxSummary[] {
+  return devboxList.items.map(extractDevboxSummary);
+}

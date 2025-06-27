@@ -1,4 +1,8 @@
 import { useState } from "react";
+import {
+  type DevboxList,
+  extractDevboxListSummaries,
+} from "@/lib/sealos/devbox/schemas/devbox-list-schema";
 import { Button } from "../ui/button";
 
 export function CreateDevboxActionUI({
@@ -204,7 +208,7 @@ export function DeleteDevboxActionUI({
             ? "Multiple Devboxes Deletion Confirmation"
             : "Devbox Deletion Confirmation"}
         </h2>
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+        <div className="rounded-lg border border-red-200 bg-background p-4">
           {isMultiple ? (
             <div>
               <p className="text-red-800">
@@ -468,10 +472,104 @@ export function GetDevboxListActionUI({
   result,
 }: {
   status: "inProgress" | "executing" | "complete";
-  result: any;
+  result: DevboxList;
 }) {
   if (status === "complete" && result) {
-    return <div className="space-y-2">{result}</div>;
+    try {
+      const devboxSummaries = extractDevboxListSummaries(result);
+
+      return (
+        <div className="space-y-4">
+          <h2 className="font-semibold text-foreground text-lg">Devbox List</h2>
+          {devboxSummaries.length === 0 ? (
+            <div className="rounded-lg border border-gray-200 bg-background p-4 text-center">
+              <p className="text-foreground">No devboxes found</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-foreground text-sm">
+                Found {devboxSummaries.length} devbox
+                {devboxSummaries.length === 1 ? "" : "es"}
+              </p>
+              <div className="space-y-2">
+                {devboxSummaries.map((devbox, index) => (
+                  <div
+                    className="rounded-lg border border-gray-200 bg-background p-4 shadow-sm"
+                    key={devbox.name}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-foreground text-lg">
+                            {devbox.name}
+                          </h3>
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-1 font-medium text-xs ${
+                              devbox.status === "Running"
+                                ? "bg-green-100 text-green-800"
+                                : devbox.status === "Stopped"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {devbox.status}
+                          </span>
+                          <span className="text-foreground text-xs">
+                            ({devbox.phase})
+                          </span>
+                        </div>
+                        <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-foreground">Template:</span>
+                            <span className="ml-1 font-mono text-foreground">
+                              {devbox.template}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-foreground">Resources:</span>
+                            <span className="ml-1 text-foreground">
+                              {devbox.cpu} CPU, {devbox.memory} Memory
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-foreground">Ports:</span>
+                            <span className="ml-1 text-foreground">
+                              {devbox.ports.length > 0
+                                ? devbox.ports.join(", ")
+                                : "None"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-foreground">Created:</span>
+                            <span className="ml-1 text-foreground">
+                              {devbox.createdAt}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    } catch (error) {
+      // Fallback to raw JSON if parsing fails
+      return (
+        <div className="space-y-2">
+          <h2 className="font-semibold text-foreground text-lg">
+            Devbox List (Raw Data)
+          </h2>
+          <div className="max-h-96 overflow-auto rounded border bg-background p-3">
+            <pre className="text-foreground text-xs">
+              {JSON.stringify(result, null, 2)}
+            </pre>
+          </div>
+        </div>
+      );
+    }
   }
 
   if (status === "executing" || status === "inProgress") {
@@ -480,10 +578,10 @@ export function GetDevboxListActionUI({
         <h2 className="font-semibold text-blue-600 text-lg">
           Getting Devbox List...
         </h2>
-        <p>Retrieving all devboxes</p>
+        <p className="text-foreground">Retrieving all devboxes</p>
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 animate-spin rounded-full border-blue-600 border-b-2" />
-          <span className="text-gray-600 text-sm">Please wait...</span>
+          <span className="text-foreground text-sm">Please wait...</span>
         </div>
       </div>
     );
@@ -491,8 +589,10 @@ export function GetDevboxListActionUI({
 
   return (
     <div className="space-y-2">
-      <h2 className="font-semibold text-lg">Get Devbox List Action</h2>
-      <p>
+      <h2 className="font-semibold text-foreground text-lg">
+        Get Devbox List Action
+      </h2>
+      <p className="text-foreground">
         Status: <strong>{status}</strong>
       </p>
     </div>

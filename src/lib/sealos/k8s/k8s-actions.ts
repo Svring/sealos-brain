@@ -132,7 +132,9 @@ export async function listResourcesByType(
       res = await clients.batchApi.listNamespacedCronJob({ namespace });
     }
 
-    if (!res) throw new Error(`Unsupported resource type: ${resourceType}`);
+    if (!res) {
+      throw new Error(`Unsupported resource type: ${resourceType}`);
+    }
     return JSON.parse(JSON.stringify(res));
   } catch (error) {
     console.error(`Error listing ${resourceType}:`, error);

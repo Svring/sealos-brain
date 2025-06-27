@@ -2,13 +2,14 @@
 
 import { queryOptions } from "@tanstack/react-query";
 import { queryDebugLog } from "@/lib/query-debug-log";
+import type { User } from "@/payload-types";
 import { listResourcesByType, readDevboxSecret } from "./k8s-actions";
 import type { ResourceType } from "./k8s-constant";
 import { getKubeconfig, getNamespaceFromKubeconfig } from "./k8s-utils";
 
 // Generic resource list query options
 export function directResourceListOptions(
-  currentUser: any,
+  currentUser: User | null,
   resourceType: ResourceType,
   namespaceOverride?: string,
   postprocess: (data: any) => any = (d) => d
