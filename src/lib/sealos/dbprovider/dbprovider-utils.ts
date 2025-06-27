@@ -1,18 +1,25 @@
 import axios from "axios";
-import { DB_TYPE_VERSION_MAP } from "./dbprovider-constant";
 import { customAlphabet } from "nanoid";
-
-// Helper to get headers from currentUser
-function getDBProviderHeaders(currentUser: any) {
-  return {
-    Authorization:
-      currentUser?.tokens?.find((t: any) => t.type === "kubeconfig")?.value ||
-      "",
-  };
-}
+import type { User } from "@/payload-types";
+import { DB_TYPE_VERSION_MAP } from "./dbprovider-constant";
 
 // Create a custom nanoid with lowercase alphabet and size 12
 const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 12);
+
+// Regex patterns defined at top level for performance
+const DB_NAME_REGEX = /^[a-z0-9-]+$/;
+
+interface DBResponse {
+  dbType?: string;
+}
+
+// Helper to get headers from currentUser
+function getDBProviderHeaders(currentUser: User | null) {
+  return {
+    Authorization:
+      currentUser?.tokens?.find((t) => t.type === "kubeconfig")?.value || "",
+  };
+}
 
 /**
  * Get database type by database name
@@ -23,10 +30,10 @@ const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 12);
  */
 export async function getDBTypeByName(
   dbName: string,
-  currentUser: any,
+  currentUser: User | null,
   regionUrl: string
 ): Promise<string> {
-  if (!dbName || !currentUser || !regionUrl) {
+  if (!(dbName && currentUser && regionUrl)) {
     throw new Error(
       "Missing required parameters: dbName, currentUser, or regionUrl"
     );
@@ -34,7 +41,7 @@ export async function getDBTypeByName(
 
   try {
     const headers = getDBProviderHeaders(currentUser);
-    const response = await axios.get(
+    const response = await axios.get<DBResponse>(
       `/api/sealos/dbprovider/getDBByName?regionUrl=${regionUrl}&name=${dbName}`,
       { headers }
     );
@@ -47,9 +54,11 @@ export async function getDBTypeByName(
     }
 
     return dbType;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
     throw new Error(
-      `Failed to get database type for ${dbName}: ${error.message}`
+      `Failed to get database type for ${dbName}: ${errorMessage}`
     );
   }
 }
@@ -65,7 +74,7 @@ export function getFirstDBVersion(dbType: string): string | undefined {
   if (Array.isArray(versions) && versions.length > 0 && versions[0]) {
     return versions[0].id;
   }
-  return undefined;
+  return;
 }
 
 /**
@@ -99,5 +108,44 @@ export function generateDBFormFromType(dbType: string) {
       terminationPolicy: "Delete",
     },
     isEdit: false,
+  };
+}
+
+/**
+ * Validate database names (basic validation)
+ */
+export function validateDBNames(names: (string | undefined)[]): {
+  isValid: boolean;
+  invalidNames: string[];
+} {
+  const validNames = names.filter((n): n is string => Boolean(n));
+  const invalidNames = validNames.filter(
+    (name) => !name || name.trim().length === 0 || !DB_NAME_REGEX.test(name)
+  );
+
+  return {
+    isValid: invalidNames.length === 0,
+    invalidNames,
+  };
+}
+
+/**
+ * Validate database types against allowed types
+ */
+export function validateDBTypes(
+  types: (string | undefined)[],
+  allowedTypes: string[]
+): {
+  isValid: boolean;
+  invalidTypes: string[];
+} {
+  const validTypes = types.filter((t): t is string => Boolean(t));
+  const invalidTypes = validTypes.filter(
+    (type) => !allowedTypes.includes(type)
+  );
+
+  return {
+    isValid: invalidTypes.length === 0,
+    invalidTypes,
   };
 }

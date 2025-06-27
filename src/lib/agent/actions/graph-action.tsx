@@ -1,9 +1,9 @@
 import { useCopilotAction } from "@copilotkit/react-core";
-import { useSealosStore } from "@/store/sealos-store";
+import { customAlphabet } from "nanoid";
 import { useCreateGraphWithResourcesMutation } from "@/lib/graph/graph-mutation";
 import { useGraphsQuery } from "@/lib/graph/graph-query";
-import { type ResourceType } from "@/lib/sealos/k8s/k8s-constant";
-import { customAlphabet } from "nanoid";
+import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
+import { useSealosStore } from "@/store/sealos-store";
 
 // Create a custom nanoid with lowercase alphabet and numbers for 4 characters
 const nanoid4 = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 4);
@@ -15,7 +15,7 @@ export function getGraphListAction() {
   useCopilotAction({
     name: "getGraphList",
     description: "Get all graphs with their resources",
-    handler: async () => {
+    handler: () => {
       return {
         graphs: allGraphs || {},
         totalGraphs: Object.keys(allGraphs || {}).length,
