@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { type Node, useNodesState } from "@xyflow/react";
+import { type Node, type NodeChange, useNodesState } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useGraphEdge } from "@/hooks/use-graph-edge";
 import { useGraphLayout } from "@/hooks/use-graph-layout";
@@ -18,17 +18,39 @@ export function useGraph(specificGraphName?: string) {
   // Core node-related logic
   const nodeLogic = useGraphNode(specificGraphName);
 
-  // Node state management - initialize with nodeLogic.nodes
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(nodeLogic.nodes);
+  // Node state management
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
 
-  // Track previous node count to detect significant changes
-  const prevNodeCountRef = useRef(nodeLogic.nodes.length);
+  // Track if nodes have been initialized to prevent unnecessary updates
+  const nodesInitializedRef = useRef(false);
+  const previousNodeCountRef = useRef(0);
 
-  // Update nodes only when there's a significant change (different count)
+  // Sync nodes from nodeLogic only when they actually change
   useEffect(() => {
-    if (nodeLogic.nodes.length !== prevNodeCountRef.current) {
+    const currentNodeCount = nodeLogic.nodes.length;
+
+    // Initialize nodes if not done yet
+    if (!nodesInitializedRef.current && currentNodeCount > 0) {
       setNodes(nodeLogic.nodes);
-      prevNodeCountRef.current = nodeLogic.nodes.length;
+      nodesInitializedRef.current = true;
+      previousNodeCountRef.current = currentNodeCount;
+    }
+    // Update nodes only if count changes (indicating actual data change)
+    else if (
+      nodesInitializedRef.current &&
+      currentNodeCount !== previousNodeCountRef.current
+    ) {
+      setNodes(nodeLogic.nodes);
+      previousNodeCountRef.current = currentNodeCount;
+    }
+    // Special case: if we had nodes but now have none (e.g., all deleted)
+    else if (
+      nodesInitializedRef.current &&
+      currentNodeCount === 0 &&
+      previousNodeCountRef.current > 0
+    ) {
+      setNodes(nodeLogic.nodes);
+      previousNodeCountRef.current = 0;
     }
   }, [nodeLogic.nodes, setNodes]);
 

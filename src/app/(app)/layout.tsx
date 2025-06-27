@@ -1,18 +1,16 @@
 // Core Next.js and Type Imports
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
-
-// Provider Components
-import { ThemeProvider } from "@/context/theme-provider";
-import AppSidebar from "@/context/app-sidebar-provider";
-import { PanelProvider } from "@/context/panel-provider";
-import { SealosStoreHydrator } from "@/context/sealos-store-hydrator";
-import { QueryProvider } from "@/context/query-provider";
-import { SidebarProvider } from "@/components/ui/sidebar";
-
 // UI Components
 import LoginPanel from "@/components/ui/login-panel";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import AppSidebar from "@/context/app-sidebar-provider";
+import { PanelProvider } from "@/context/panel-provider";
+import { QueryProvider } from "@/context/query-provider";
+import { SealosStoreHydrator } from "@/context/sealos-store-hydrator";
+// Provider Components
+import { ThemeProvider } from "@/context/theme-provider";
 
 // Database Actions
 import { getCurrentUser } from "@/database/actions/user-actions";
@@ -60,7 +58,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${nunito.variable} font-nunito antialiased w-screen h-screen`}
+        className={`${nunito.variable} h-screen w-screen font-nunito antialiased`}
       >
         <ThemeProvider>
           <QueryProvider>
@@ -68,7 +66,7 @@ export default async function RootLayout({
             <PanelProvider>
               <SidebarProvider defaultOpen={false}>
                 <AppSidebar />
-                <main className="w-full h-screen">{children}</main>
+                <main className="h-screen w-full">{children}</main>
                 <Toaster />
               </SidebarProvider>
             </PanelProvider>
