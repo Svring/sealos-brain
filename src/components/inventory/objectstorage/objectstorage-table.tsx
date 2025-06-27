@@ -13,7 +13,7 @@ import { Plus, RefreshCw, Trash2, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ObjectStorageColumn } from "./objectstorage-table-schema";
-import { deleteObjectStorageBucketMutation } from "@/lib/sealos/objectstorage/objectstorage-mutation";
+import { createObjectStorageBucketMutation, deleteObjectStorageBucketMutation } from "@/lib/sealos/objectstorage/objectstorage-mutation";
 import { toast } from "sonner";
 
 export function ObjectStorageTable() {
@@ -31,6 +31,7 @@ export function ObjectStorageTable() {
   );
 
   const deleteMutation = deleteObjectStorageBucketMutation(currentUser, regionUrl);
+  const createMutation = createObjectStorageBucketMutation(currentUser, regionUrl);
 
   const handleBulkDelete = async (buckets: ObjectStorageColumn[]) => {
     const promises = buckets.map(bucket => deleteMutation.mutateAsync(bucket.name));
@@ -88,8 +89,14 @@ export function ObjectStorageTable() {
             <Button
               variant="outline"
               size="icon"
+              onClick={() => createMutation.mutate()}
+              disabled={createMutation.isPending}
             >
-              <Plus className="h-4 w-4" />
+              {createMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>

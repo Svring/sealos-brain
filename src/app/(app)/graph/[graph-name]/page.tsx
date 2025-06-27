@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { MenuBar, type MenuBarItem } from "@/components/ui/menu-bar";
 import { MessageSwiper } from "@/components/ui/message-swiper";
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
+import { Loading } from "@/components/ui/loading";
 import { usePanel } from "@/context/panel-provider";
 import { useGraph } from "@/hooks/use-graph";
 import {
@@ -322,14 +323,7 @@ export default function GraphPage({
   }, [params]);
 
   if (!graphName) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-gray-900 border-b-2" />
-          <p className="text-gray-600">Loading graph...</p>
-        </div>
-      </div>
-    );
+    return <Loading fullPage text="Loading graph..." />;
   }
 
   return (

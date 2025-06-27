@@ -1,10 +1,37 @@
-import { AIProxyTable } from "@/components/inventory/aiproxy/aiproxy-table";
-import { AppLaunchpadTable } from "@/components/inventory/applaunchpad/applaunchpad-table";
-import { CronJobTable } from "@/components/inventory/cronjob/cronjob-table";
-import { DatabaseTable } from "@/components/inventory/database/database-table";
-import { DevboxTable } from "@/components/inventory/devbox/devbox-table";
-import { ObjectStorageTable } from "@/components/inventory/objectstorage/objectstorage-table";
+import React, { Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loading } from "@/components/ui/loading";
+
+const DevboxTable = React.lazy(() =>
+  import("@/components/inventory/devbox/devbox-table").then((module) => ({
+    default: module.DevboxTable,
+  }))
+);
+const DatabaseTable = React.lazy(() =>
+  import("@/components/inventory/database/database-table").then((module) => ({
+    default: module.DatabaseTable,
+  }))
+);
+const ObjectStorageTable = React.lazy(() =>
+  import("@/components/inventory/objectstorage/objectstorage-table").then(
+    (module) => ({ default: module.ObjectStorageTable })
+  )
+);
+const AppLaunchpadTable = React.lazy(() =>
+  import("@/components/inventory/applaunchpad/applaunchpad-table").then(
+    (module) => ({ default: module.AppLaunchpadTable })
+  )
+);
+const AIProxyTable = React.lazy(() =>
+  import("@/components/inventory/aiproxy/aiproxy-table").then((module) => ({
+    default: module.AIProxyTable,
+  }))
+);
+const CronJobTable = React.lazy(() =>
+  import("@/components/inventory/cronjob/cronjob-table").then((module) => ({
+    default: module.CronJobTable,
+  }))
+);
 
 export default function InventoryPage() {
   return (
@@ -24,29 +51,31 @@ export default function InventoryPage() {
           <TabsTrigger value="cronjob">CronJob</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="devbox">
-          <DevboxTable />
-        </TabsContent>
+        <Suspense fallback={<Loading text="Loading inventory..." />}>
+          <TabsContent value="devbox">
+            <DevboxTable />
+          </TabsContent>
 
-        <TabsContent value="database">
-          <DatabaseTable />
-        </TabsContent>
+          <TabsContent value="database">
+            <DatabaseTable />
+          </TabsContent>
 
-        <TabsContent value="objectstorage">
-          <ObjectStorageTable />
-        </TabsContent>
+          <TabsContent value="objectstorage">
+            <ObjectStorageTable />
+          </TabsContent>
 
-        <TabsContent value="launchpad">
-          <AppLaunchpadTable />
-        </TabsContent>
+          <TabsContent value="launchpad">
+            <AppLaunchpadTable />
+          </TabsContent>
 
-        <TabsContent value="ai-proxy">
-          <AIProxyTable />
-        </TabsContent>
+          <TabsContent value="ai-proxy">
+            <AIProxyTable />
+          </TabsContent>
 
-        <TabsContent value="cronjob">
-          <CronJobTable />
-        </TabsContent>
+          <TabsContent value="cronjob">
+            <CronJobTable />
+          </TabsContent>
+        </Suspense>
       </Tabs>
     </div>
   );

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { DevboxFormValues } from "@/components/flow/node/devbox/create/schema/devbox-create-schema";
 import { generateDevboxFormFromTemplate } from "./devbox-utils";
+import { toast } from "sonner";
 
 // Helper to get headers from currentUser
 function getDevboxHeaders(currentUser: any) {
@@ -28,10 +29,14 @@ export function startDevboxMutation(
         { devboxName },
         { headers }
       );
-      return response.data;
+      return { ...response.data, devboxName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+      toast.success(`Devbox '${data.devboxName}' is successfully started`);
+    },
+    onError: (error: any, devboxName) => {
+      toast.error(`Failed to start devbox '${devboxName}': ${error.message}`);
     },
   });
 }
@@ -56,10 +61,18 @@ export function shutdownDevboxMutation(
         { devboxName, shutdownMode },
         { headers }
       );
-      return response.data;
+      return { ...response.data, devboxName, shutdownMode };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+      const action = data.shutdownMode === "Stopped" ? "stopped" : "shutdown";
+      toast.success(`Devbox '${data.devboxName}' is successfully ${action}`);
+    },
+    onError: (error: any, variables) => {
+      const action = variables.shutdownMode === "Stopped" ? "stop" : "shutdown";
+      toast.error(
+        `Failed to ${action} devbox '${variables.devboxName}': ${error.message}`
+      );
     },
   });
 }
@@ -78,10 +91,14 @@ export function restartDevboxMutation(
         { devboxName },
         { headers }
       );
-      return response.data;
+      return { ...response.data, devboxName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+      toast.success(`Devbox '${data.devboxName}' is successfully restarted`);
+    },
+    onError: (error: any, devboxName) => {
+      toast.error(`Failed to restart devbox '${devboxName}': ${error.message}`);
     },
   });
 }
@@ -99,10 +116,14 @@ export function deleteDevboxMutation(
         `/api/sealos/devbox/delDevbox?regionUrl=${regionUrl}&devboxName=${devboxName}`,
         { headers }
       );
-      return response.data;
+      return { ...response.data, devboxName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+      toast.success(`Devbox '${data.devboxName}' is successfully deleted`);
+    },
+    onError: (error: any, devboxName) => {
+      toast.error(`Failed to delete devbox '${devboxName}': ${error.message}`);
     },
   });
 }
@@ -121,10 +142,19 @@ export function createDevboxMutation(
         devboxData,
         { headers }
       );
-      return response.data;
+      // Extract devbox name from the request data
+      const devboxName =
+        devboxData.devboxForm?.name || devboxData.name || "Unknown";
+      return { ...response.data, devboxName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+      toast.success(`Devbox '${data.devboxName}' is successfully created`);
+    },
+    onError: (error: any, devboxData) => {
+      const devboxName =
+        devboxData.devboxForm?.name || devboxData.name || "Unknown";
+      toast.error(`Failed to create devbox '${devboxName}': ${error.message}`);
     },
   });
 }
@@ -153,11 +183,19 @@ export function releaseDevboxMutation(
         { devboxName, devboxUid, tag, releaseDes },
         { headers }
       );
-      return response.data;
+      return { ...response.data, devboxName, tag };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
       queryClient.invalidateQueries({ queryKey: ["devbox", "versions"] });
+      toast.success(
+        `Devbox '${data.devboxName}' version '${data.tag}' is successfully released`
+      );
+    },
+    onError: (error: any, variables) => {
+      toast.error(
+        `Failed to release devbox '${variables.devboxName}': ${error.message}`
+      );
     },
   });
 }
@@ -175,10 +213,18 @@ export function deleteDevboxVersionMutation(
         `/api/sealos/devbox/delDevboxVersionByName?regionUrl=${regionUrl}&versionName=${versionName}`,
         { headers }
       );
-      return response.data;
+      return { ...response.data, versionName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "versions"] });
+      toast.success(
+        `Devbox version '${data.versionName}' is successfully deleted`
+      );
+    },
+    onError: (error: any, versionName) => {
+      toast.error(
+        `Failed to delete devbox version '${versionName}': ${error.message}`
+      );
     },
   });
 }
@@ -210,10 +256,18 @@ export function createDevboxFromTemplateMutation(
         { headers }
       );
 
-      return response.data;
+      return { ...response.data, devboxName: devboxForm.name, templateName };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
+      toast.success(
+        `Devbox '${data.devboxName}' is successfully created from template '${data.templateName}'`
+      );
+    },
+    onError: (error: any, templateName) => {
+      toast.error(
+        `Failed to create devbox from template '${templateName}': ${error.message}`
+      );
     },
   });
 }

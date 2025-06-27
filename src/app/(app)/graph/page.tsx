@@ -5,6 +5,7 @@ import Link from "next/link";
 import { GraphCard } from "@/components/graph/graph-card";
 import { Button } from "@/components/ui/button";
 import { useGraphNode } from "@/hooks/use-graph-node";
+import { Loading } from "@/components/ui/loading";
 import { generateGraphName } from "@/lib/utils";
 
 export default function GraphPage() {
@@ -14,14 +15,7 @@ export default function GraphPage() {
 
   const renderContent = () => (
     <div className="rounded-lg border p-6">
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <h2 className="mb-2 font-semibold text-xl">Loading...</h2>
-          <p className="text-muted-foreground">
-            Fetching your infrastructure resources
-          </p>
-        </div>
-      </div>
+      <Loading text="Fetching your infrastructure resources" />
     </div>
   );
 

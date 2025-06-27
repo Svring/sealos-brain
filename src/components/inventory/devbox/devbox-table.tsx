@@ -18,7 +18,6 @@ import {
   shutdownDevboxMutation,
   deleteDevboxMutation,
 } from "@/lib/sealos/devbox/devbox-mutation";
-import { toast } from "sonner";
 import { usePanel } from "@/context/panel-provider";
 import DevboxCreateView from "@/components/flow/node/devbox/create/view/devbox-create-view";
 
@@ -59,10 +58,8 @@ export function DevboxTable() {
 
     try {
       await Promise.all(promises);
-      toast.success(`Successfully ${action}ed ${devboxes.length} devbox(es)`);
-      queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
     } catch (error: any) {
-      toast.error(`Failed to ${action} devbox(es): ${error.message}`);
+      console.error(`Failed to ${action} devbox(es):`, error);
     }
   };
 

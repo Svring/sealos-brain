@@ -47,7 +47,8 @@ export function startDevboxAction() {
       },
     ],
     handler: async ({ devboxName }) => {
-      await startDevbox(devboxName);
+      const result = await startDevbox(devboxName);
+      return `Devbox '${result.devboxName || devboxName}' is successfully started`;
     },
   });
 }
@@ -74,7 +75,12 @@ export function shutdownDevboxAction() {
       },
     ],
     handler: async ({ devboxName }) => {
-      await shutdownDevbox({ devboxName, shutdownMode: "Stopped" });
+      const result = await shutdownDevbox({
+        devboxName,
+        shutdownMode: "Stopped",
+      });
+      const action = result.shutdownMode === "Stopped" ? "stopped" : "shutdown";
+      return `Devbox '${result.devboxName || devboxName}' is successfully ${action}`;
     },
   });
 }
@@ -99,7 +105,8 @@ export function deleteDevboxAction() {
       },
     ],
     handler: async ({ devboxName }) => {
-      await deleteDevbox(devboxName);
+      const result = await deleteDevbox(devboxName);
+      return `Devbox '${result.devboxName || devboxName}' is successfully deleted`;
     },
   });
 }
@@ -115,6 +122,7 @@ export function createDevboxAction() {
     name: "createDevbox",
     description: "Create a new devbox",
     available: "remote",
+    followUp: true,
     parameters: [
       {
         name: "template",
@@ -125,7 +133,8 @@ export function createDevboxAction() {
       },
     ],
     handler: async ({ template }) => {
-      await createDevbox(template);
+      const result = await createDevbox(template);
+      return `Devbox '${result.devboxName}' is successfully created from template '${result.templateName || template}'`;
     },
   });
 }
