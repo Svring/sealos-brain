@@ -37,16 +37,16 @@ def greeting(name: str):
 tools = [greeting]
 
 
-class SealosAgentState(CopilotKitState):
+class SealosBrainState(CopilotKitState):
     """
-    Sealos Agent State
+    Sealos Brain State
 
     Inherits from CopilotKitState and adds Sealos-specific fields.
     """
 
 
-async def sealos_agent_node(
-    state: SealosAgentState, config: RunnableConfig
+async def sealos_brain_node(
+    state: SealosBrainState, config: RunnableConfig
 ) -> Command[Literal["tool_node", "__end__"]]:
     """
     Optimized chat node based on the ReAct design pattern.
@@ -93,11 +93,11 @@ async def sealos_agent_node(
 
 
 # Define the workflow graph
-workflow = StateGraph(SealosAgentState)
-workflow.add_node("sealos_agent_node", sealos_agent_node)
+workflow = StateGraph(SealosBrainState)
+workflow.add_node("sealos_brain_node", sealos_brain_node)
 workflow.add_node("tool_node", ToolNode(tools=tools))
-workflow.add_edge("tool_node", "sealos_agent_node")
-workflow.set_entry_point("sealos_agent_node")
+workflow.add_edge("tool_node", "sealos_brain_node")
+workflow.set_entry_point("sealos_brain_node")
 
 # Compile the workflow graph
 graph = workflow.compile()

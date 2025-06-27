@@ -1,29 +1,28 @@
 "use client";
 
-import * as React from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSealosStore } from "@/store/sealos-store";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2, Play, Plus, Square, Trash2 } from "lucide-react";
+import React from "react";
+import DevboxCreateView from "@/components/flow/node/devbox/create/view/devbox-create-view";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { usePanel } from "@/context/panel-provider";
+import {
+  deleteDevboxMutation,
+  shutdownDevboxMutation,
+  startDevboxMutation,
+} from "@/lib/sealos/devbox/devbox-mutation";
 import { devboxListOptions } from "@/lib/sealos/devbox/devbox-query";
 import { transformDevboxListToTable } from "@/lib/sealos/devbox/devbox-transform";
+import { useSealosStore } from "@/store/sealos-store";
 import { DataTable } from "../../ui/data-table";
 import { devboxColumns } from "./devbox-column";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw, Play, Square, Trash2, Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DevboxColumn } from "./devbox-table-schema";
-import {
-  startDevboxMutation,
-  shutdownDevboxMutation,
-  deleteDevboxMutation,
-} from "@/lib/sealos/devbox/devbox-mutation";
-import { usePanel } from "@/context/panel-provider";
-import DevboxCreateView from "@/components/flow/node/devbox/create/view/devbox-create-view";
+import type { DevboxColumn } from "./devbox-table-schema";
 
 export function DevboxTable() {
   const { currentUser, regionUrl } = useSealosStore();
-  const queryClient = useQueryClient();
   const [selectedRows, setSelectedRows] = React.useState<DevboxColumn[]>([]);
   const { openPanel } = usePanel();
 
@@ -31,7 +30,6 @@ export function DevboxTable() {
     data: devboxData,
     isLoading,
     error,
-    refetch,
   } = useQuery(
     devboxListOptions(currentUser, regionUrl, transformDevboxListToTable)
   );
@@ -51,9 +49,8 @@ export function DevboxTable() {
           devboxName: devbox.name,
           shutdownMode: "Stopped",
         });
-      } else {
-        return mutation.mutateAsync(devbox.name);
       }
+      return mutation.mutateAsync(devbox.name);
     });
 
     try {
@@ -102,8 +99,7 @@ export function DevboxTable() {
             {selectedRows.length > 0 && (
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
-                  size="sm"
+                  disabled={!canStart || isActionLoading}
                   onClick={() =>
                     handleBulkAction(
                       startMutation,
@@ -113,7 +109,8 @@ export function DevboxTable() {
                       "start"
                     )
                   }
-                  disabled={!canStart || isActionLoading}
+                  size="sm"
+                  variant="outline"
                 >
                   {isActionLoading && startMutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -123,8 +120,7 @@ export function DevboxTable() {
                   Start
                 </Button>
                 <Button
-                  variant="outline"
-                  size="sm"
+                  disabled={!canStop || isActionLoading}
                   onClick={() =>
                     handleBulkAction(
                       shutdownMutation,
@@ -134,7 +130,8 @@ export function DevboxTable() {
                       "stop"
                     )
                   }
-                  disabled={!canStop || isActionLoading}
+                  size="sm"
+                  variant="outline"
                 >
                   {isActionLoading && shutdownMutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -144,12 +141,12 @@ export function DevboxTable() {
                   Stop
                 </Button>
                 <Button
-                  variant="destructive"
-                  size="sm"
+                  disabled={!canDelete || isActionLoading}
                   onClick={() =>
                     handleBulkAction(deleteMutation, selectedRows, "delete")
                   }
-                  disabled={!canDelete || isActionLoading}
+                  size="sm"
+                  variant="destructive"
                 >
                   {isActionLoading && deleteMutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -161,9 +158,9 @@ export function DevboxTable() {
               </div>
             )}
             <Button
-              variant="outline"
-              size="icon"
               onClick={() => openPanel("create-devbox", <DevboxCreateView />)}
+              size="icon"
+              variant="outline"
             >
               <Plus className="h-4 w-4" />
             </Button>

@@ -1,5 +1,5 @@
-import * as React from "react";
 import { ArrowDown } from "lucide-react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { useAutoScroll } from "@/hooks/use-auto-scroll";
 
@@ -21,12 +21,12 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
     });
 
     return (
-      <div className="relative w-full h-full">
+      <div className="relative h-full w-full">
         <div
-          className={`flex flex-col w-full h-full p-4 overflow-y-auto scrollbar-hide ${className}`}
-          ref={scrollRef}
-          onWheel={disableAutoScroll}
+          className={`scrollbar-hide flex h-full w-full flex-col overflow-y-auto p-4 ${className}`}
           onTouchMove={disableAutoScroll}
+          onWheel={disableAutoScroll}
+          ref={scrollRef}
           {...props}
         >
           <div className="flex flex-col gap-2">{children}</div>
@@ -34,13 +34,13 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
 
         {!isAtBottom && (
           <Button
+            aria-label="Scroll to bottom"
+            className="-translate-x-1/2 absolute bottom-2 left-1/2 inline-flex transform rounded-full shadow-md"
             onClick={() => {
               scrollToBottom();
             }}
             size="icon"
             variant="outline"
-            className="absolute bottom-2 left-1/2 transform -translate-x-1/2 inline-flex rounded-full shadow-md"
-            aria-label="Scroll to bottom"
           >
             <ArrowDown className="h-4 w-4" />
           </Button>

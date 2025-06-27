@@ -1,35 +1,27 @@
 "use client";
 
-import {
-  useCoAgent,
-  CopilotKit,
-  useCopilotReadable,
-  useCopilotAction,
-} from "@copilotkit/react-core";
+import { CopilotKit, useCoAgent } from "@copilotkit/react-core";
 import {
   createContext,
-  useContext,
-  ReactNode,
-  useState,
+  type ReactNode,
   useCallback,
-  useMemo,
+  useContext,
+  useState,
 } from "react";
+import { useActivateClusterActions } from "@/lib/agent/actions/cluster-action";
+import { useActivateDevboxActions } from "@/lib/agent/actions/devbox-action";
+import { useActivateGraphActions } from "@/lib/agent/actions/graph-action";
+import { useActivateObjectStorageActions } from "@/lib/agent/actions/objectstorage-action";
 import {
-  sealosBrainAgentConfig,
-  SealosBrainAgentState,
-  createSealosBrainConfigurable,
-  sealosBrainSystemPrompt,
-} from "@/lib/agent/sealos-brain";
-import {
+  type CodeAgentState,
   codeAgentConfig,
-  CodeAgentState,
-  codeSystemPrompt,
   createCodeAgentConfigurable,
 } from "@/lib/agent/code-agent";
-import { useActivateDevboxActions } from "@/lib/agent/actions/devbox-action";
-import { useActivateObjectStorageActions } from "@/lib/agent/actions/objectstorage-action";
-import { useActivateGraphActions } from "@/lib/agent/actions/graph-action";
-import { useActivateClusterActions } from "@/lib/agent/actions/cluster-action";
+import {
+  createSealosBrainConfigurable,
+  type SealosBrainAgentState,
+  sealosBrainAgentConfig,
+} from "@/lib/agent/sealos-brain";
 
 // Type Definitions
 type AgentState = SealosBrainAgentState | CodeAgentState;
@@ -109,17 +101,17 @@ export function CopilotStateProvider({
 
   return (
     <CopilotKit
-      runtimeUrl={config.runtimeUrl}
-      publicApiKey={config.publicApiKey}
       agent={config.agent}
+      publicApiKey={config.publicApiKey}
+      runtimeUrl={config.runtimeUrl}
     >
       <InnerProvider
+        config={config}
         key={
           config.agent === "code"
             ? `${config.agent}-${config.project_address}`
             : config.agent
         }
-        config={config}
         updateConfig={updateConfig}
       >
         <AgentComponent agent={config.agent} />

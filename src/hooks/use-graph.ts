@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { type Node, useNodesState } from "@xyflow/react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useGraphEdge } from "@/hooks/use-graph-edge";
 import { useGraphLayout } from "@/hooks/use-graph-layout";
 import { useGraphNode } from "@/hooks/use-graph-node";
@@ -17,6 +18,20 @@ export function useGraph(specificGraphName?: string) {
   // Core node-related logic
   const nodeLogic = useGraphNode(specificGraphName);
 
+  // Node state management - initialize with nodeLogic.nodes
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(nodeLogic.nodes);
+
+  // Track previous node count to detect significant changes
+  const prevNodeCountRef = useRef(nodeLogic.nodes.length);
+
+  // Update nodes only when there's a significant change (different count)
+  useEffect(() => {
+    if (nodeLogic.nodes.length !== prevNodeCountRef.current) {
+      setNodes(nodeLogic.nodes);
+      prevNodeCountRef.current = nodeLogic.nodes.length;
+    }
+  }, [nodeLogic.nodes, setNodes]);
+
   // Edge-related logic
   const edgeLogic = useGraphEdge(currentUser, specificGraphName);
 
@@ -30,13 +45,13 @@ export function useGraph(specificGraphName?: string) {
   const enhancedNodes = useMemo(() => {
     if (!edgeLogic.editMode) {
       // When not in edit mode, set draggable: false for all nodes
-      return nodeLogic.nodes.map((node) => ({
+      return nodes.map((node) => ({
         ...node,
         draggable: false,
       }));
     }
 
-    return nodeLogic.nodes.map((node) => ({
+    return nodes.map((node) => ({
       ...node,
       draggable: node.id !== "empty-state",
       data: {
@@ -56,7 +71,7 @@ export function useGraph(specificGraphName?: string) {
       },
     }));
   }, [
-    nodeLogic.nodes,
+    nodes,
     edgeLogic.editMode,
     edgeLogic.selectedNodes,
     edgeLogic.handleNodeClick,
@@ -105,19 +120,19 @@ export function useGraph(specificGraphName?: string) {
     (direction: "TB" | "LR" | "BT" | "RL" = "TB") => {
       const layouted = applyLayout(enhancedNodes, enhancedEdges, direction);
 
-      console.log("layouted", layouted);
-
       // Update node positions with the layouted positions
-      nodeLogic.setNodes(layouted.nodes);
+      setNodes(layouted.nodes);
     },
-    [applyLayout, enhancedNodes, enhancedEdges, nodeLogic.setNodes]
+    [applyLayout, enhancedNodes, enhancedEdges, setNodes]
   );
 
   // Mutation to rename graph (patch annotations)
   const renameGraph = useCallback(
     async (newName: string) => {
       const resources = nodeLogic.mergedGraphs[specificGraphName ?? ""];
-      if (!resources || !currentUser) return;
+      if (!(resources && currentUser)) {
+        return;
+      }
 
       const mutations: Promise<unknown>[] = [];
       for (const [kind, names] of Object.entries(resources)) {
@@ -125,7 +140,7 @@ export function useGraph(specificGraphName?: string) {
           mutations.push(
             addToGraphMutation.mutateAsync({
               currentUser,
-              resourceType: kind as any,
+              resourceType: kind as ResourceType,
               resourceName: name,
               graphName: newName,
             })
@@ -150,7 +165,14 @@ export function useGraph(specificGraphName?: string) {
 
   return {
     // Node data
-    ...nodeLogic,
+    nodes,
+    setNodes,
+    onNodesChange,
+    isLoading: nodeLogic.isLoading,
+    error: nodeLogic.error,
+    mergedGraphs: nodeLogic.mergedGraphs,
+    deleteGraph: nodeLogic.deleteGraph,
+    isDeletingGraph: nodeLogic.isDeletingGraph,
 
     // Edge data & functions
     editMode: edgeLogic.editMode,

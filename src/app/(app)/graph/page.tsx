@@ -7,8 +7,8 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { GraphCard } from "@/components/graph/graph-card";
 import { Button } from "@/components/ui/button";
-import { useGraphNode } from "@/hooks/use-graph-node";
 import { Loading } from "@/components/ui/loading";
+import { useGraphNode } from "@/hooks/use-graph-node";
 import { generateGraphName } from "@/lib/utils";
 
 export default function GraphPage() {

@@ -63,6 +63,7 @@ interface UseGraphEdgeReturn {
   handleQuitEditMode: () => void;
   isApplyingConnections: boolean;
   isLoadingEdges: boolean;
+  hasEdges: boolean;
 }
 
 // Helper function to create edge from connection info
@@ -360,6 +361,39 @@ function processPendingEdgeDeletion(
   }
 }
 
+// Helper function to check if any edges exist for resources in a specific graph
+export function hasEdgesInGraph(
+  allResources: ExistingResource[],
+  specificGraphName?: string
+): boolean {
+  if (!allResources.length) {
+    return false;
+  }
+
+  for (const resource of allResources) {
+    if (!isResourceInGraph(resource, specificGraphName)) {
+      continue;
+    }
+
+    const edgesAnnotation = resource.annotations?.[GRAPH_EDGES_ANNOTATION_KEY];
+    if (edgesAnnotation) {
+      try {
+        const edgeInfo: EdgeInfo = JSON.parse(edgesAnnotation);
+        if (
+          (Array.isArray(edgeInfo.in) && edgeInfo.in.length > 0) ||
+          (Array.isArray(edgeInfo.out) && edgeInfo.out.length > 0)
+        ) {
+          return true;
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }
+
+  return false;
+}
+
 export function useGraphEdge(
   currentUser: User | null = null,
   specificGraphName?: string
@@ -616,5 +650,6 @@ export function useGraphEdge(
     handleQuitEditMode,
     isApplyingConnections: addGraphEdgesMutation.isPending,
     isLoadingEdges: isLoadingResources,
+    hasEdges: hasEdgesInGraph(allResources, specificGraphName),
   };
 }

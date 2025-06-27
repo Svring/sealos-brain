@@ -19,10 +19,10 @@ import nodeTypes from "@/components/flow/node/node-types";
 import { GraphBackMenu } from "@/components/graph/graph-back-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Loading } from "@/components/ui/loading";
 import { MenuBar, type MenuBarItem } from "@/components/ui/menu-bar";
 import { MessageSwiper } from "@/components/ui/message-swiper";
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
-import { Loading } from "@/components/ui/loading";
 import { usePanel } from "@/context/panel-provider";
 import { useGraph } from "@/hooks/use-graph";
 import {
@@ -64,17 +64,27 @@ function GraphPageContent({ graphName }: { graphName: string }) {
   // Add refreshKey state
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Ref to track if we've already applied layout to prevent infinite loops
+  const layoutAppliedRef = useRef(false);
+
   // Automatically apply BT layout when nodes are unpositioned (e.g., on data refresh)
   useEffect(() => {
-    if (enhancedNodes.length === 0 || isLoading) return;
+    if (enhancedNodes.length === 0 || isLoading) {
+      return;
+    }
 
     // Detect if any node still needs layout (position remains at origin)
     const needsLayout = enhancedNodes.some(
       (n) => n.position.x === 0 && n.position.y === 0
     );
 
-    if (needsLayout) {
+    // Only apply layout if needed and not already applied
+    if (needsLayout && !layoutAppliedRef.current) {
+      layoutAppliedRef.current = true;
       handleApplyLayout("BT");
+    } else if (!needsLayout) {
+      // Reset the flag when nodes are properly positioned
+      layoutAppliedRef.current = false;
     }
   }, [enhancedNodes, isLoading, handleApplyLayout]);
 

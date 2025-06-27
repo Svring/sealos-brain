@@ -32,7 +32,7 @@ export function startDevboxMutation(
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
       toast.success(`Devbox '${data.devboxName}' is successfully started`);
     },
-    onError: (error: Error, devboxName) => {
+    onError: (error: Error, devboxName: string) => {
       toast.error(`Failed to start devbox '${devboxName}': ${error.message}`);
     },
   });
