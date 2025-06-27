@@ -89,15 +89,7 @@ export function ObjectStorageTable() {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => {
-                  if (
-                    confirm(
-                      `Are you sure you want to delete ${selectedRows.length} bucket(s)?`
-                    )
-                  ) {
-                    handleBulkDelete(selectedRows);
-                  }
-                }}
+                onClick={() => handleBulkDelete(selectedRows)}
                 disabled={!canDelete || isActionLoading}
               >
                 {isActionLoading ? (

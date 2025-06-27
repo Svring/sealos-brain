@@ -146,15 +146,9 @@ export function DevboxTable() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => {
-                    if (
-                      confirm(
-                        `Are you sure you want to delete ${selectedRows.length} devbox(es)?`
-                      )
-                    ) {
-                      handleBulkAction(deleteMutation, selectedRows, "delete");
-                    }
-                  }}
+                  onClick={() =>
+                    handleBulkAction(deleteMutation, selectedRows, "delete")
+                  }
                   disabled={!canDelete || isActionLoading}
                 >
                   {isActionLoading && deleteMutation.isPending ? (

@@ -151,15 +151,9 @@ export function DatabaseTable() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => {
-                    if (
-                      confirm(
-                        `Are you sure you want to delete ${selectedRows.length} database(s)?`
-                      )
-                    ) {
-                      handleBulkAction(deleteMutation, selectedRows, "delete");
-                    }
-                  }}
+                  onClick={() =>
+                    handleBulkAction(deleteMutation, selectedRows, "delete")
+                  }
                   disabled={!canDelete || isActionLoading}
                 >
                   {isActionLoading && deleteMutation.isPending ? (

@@ -106,10 +106,8 @@ export const aiproxyColumns: ColumnDef<AiproxyColumn>[] = [
       };
 
       const handleDelete = () => {
-        if (confirm(`Are you sure you want to delete token "${token.name}"?`)) {
-          // TODO: Implement delete mutation
-          toast.success(`Token "${token.name}" deleted successfully`);
-        }
+        // TODO: Implement delete mutation
+        toast.success(`Token "${token.name}" deleted successfully`);
       };
 
       return (
@@ -132,10 +130,7 @@ export const aiproxyColumns: ColumnDef<AiproxyColumn>[] = [
               Copy name
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleDelete}
-              className="text-red-600"
-            >
+            <DropdownMenuItem onClick={handleDelete} className="text-red-600">
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>
@@ -144,4 +139,4 @@ export const aiproxyColumns: ColumnDef<AiproxyColumn>[] = [
       );
     },
   },
-]; 
+];

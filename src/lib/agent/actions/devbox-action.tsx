@@ -9,6 +9,7 @@ import {
   createDevboxFromTemplateMutation,
 } from "@/lib/sealos/devbox/devbox-mutation";
 import { DEVBOX_TEMPLATES } from "@/lib/sealos/devbox/devbox-constant";
+import { DevboxActionUI } from "@/components/agent/devbox-action-ui";
 
 export function getDevboxListAction() {
   const { currentUser } = useSealosStore();
@@ -121,8 +122,7 @@ export function createDevboxAction() {
   useCopilotAction({
     name: "createDevbox",
     description: "Create a new devbox",
-    available: "remote",
-    followUp: true,
+    available: "enabled",
     parameters: [
       {
         name: "template",
@@ -132,9 +132,30 @@ export function createDevboxAction() {
         enum: DEVBOX_TEMPLATES,
       },
     ],
-    handler: async ({ template }) => {
-      const result = await createDevbox(template);
-      return `Devbox '${result.devboxName}' is successfully created from template '${result.templateName || template}'`;
+    // handler: async ({ template }) => {
+    //   const result = await createDevbox(template);
+    //   return `Devbox '${result.devboxName}' is successfully created from template '${result.templateName || template}'`;
+    // },
+    renderAndWaitForResponse: ({ status, args, result, respond }) => {
+      const { template } = args;
+      return (
+        <DevboxActionUI
+          template={template || ""}
+          status={status}
+          result={result}
+          onSelect={async () => {
+            const result = await createDevbox(template || "");
+            respond?.(
+              `Devbox '${result.devboxName}' is successfully created from template '${result.templateName || template}'`
+            );
+          }}
+          onReject={() => {
+            respond?.(
+              "User wants to create a different devbox, please withdraw the current action and query the user again"
+            );
+          }}
+        />
+      );
     },
   });
 }

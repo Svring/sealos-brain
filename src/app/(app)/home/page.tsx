@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 import { useCopilotChat } from "@copilotkit/react-core";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
 import { motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
 import { AI_Prompt } from "@/components/ai-chat/animated-ai-input";
 import {
   ChatBubble,
@@ -14,6 +15,11 @@ import {
 import { ChatMessageList } from "@/components/ai-chat/chat-message-list";
 import { Hero } from "@/components/ui/hero";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Disclosure,
+  DisclosureTrigger,
+  DisclosureContent,
+} from "@/components/ui/disclosure";
 
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
 
@@ -59,9 +65,9 @@ function Home() {
         >
           <ScrollArea className="h-full">
             <ChatMessageList className="mx-auto max-w-3xl rounded-xl">
-              {visibleMessages
-                .filter((message) => message.isTextMessage?.())
-                .map((message) => {
+              {visibleMessages.map((message) => {
+                // Handle text messages normally
+                if (message.isTextMessage?.()) {
                   const textMsg = message as TextMessage;
                   const variant =
                     textMsg.role === MessageRole.User ? "sent" : "received";
@@ -73,7 +79,35 @@ function Home() {
                       </ChatBubbleMessage>
                     </ChatBubble>
                   ) : null;
-                })}
+                }
+
+                // Handle non-text messages as collapsible JSON
+                const variant = "received"; // Non-text messages are typically system/agent messages
+
+                return (
+                  <ChatBubble key={message.id} variant={variant}>
+                    <ChatBubbleMessage variant={variant}>
+                      <div className="font-mono text-sm">
+                        <Disclosure open={false}>
+                          <DisclosureTrigger>
+                            <div className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-muted/50">
+                              <ChevronRight className="h-4 w-4 transition-transform duration-200" />
+                              <div className="text-xs text-muted-foreground">
+                                {message.type} Message
+                              </div>
+                            </div>
+                          </DisclosureTrigger>
+                          <DisclosureContent>
+                            <pre className="mt-2 whitespace-pre-wrap break-words rounded bg-muted p-2 text-xs">
+                              {JSON.stringify(message, null, 2)}
+                            </pre>
+                          </DisclosureContent>
+                        </Disclosure>
+                      </div>
+                    </ChatBubbleMessage>
+                  </ChatBubble>
+                );
+              })}
 
               {isLoading && (
                 <ChatBubble variant="received">

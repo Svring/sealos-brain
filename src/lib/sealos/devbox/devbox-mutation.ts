@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { DevboxFormValues } from "@/components/flow/node/devbox/create/schema/devbox-create-schema";
 import { generateDevboxFormFromTemplate } from "./devbox-utils";
 import { toast } from "sonner";
 

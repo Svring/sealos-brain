@@ -4,7 +4,15 @@ import { ColumnDef } from "@tanstack/react-table";
 import { AppLaunchpadColumn } from "./applaunchpad-table-schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Play, Square, RotateCcw, Rocket, ExternalLink, Loader2 } from "lucide-react";
+import {
+  MoreHorizontal,
+  Play,
+  Square,
+  RotateCcw,
+  Rocket,
+  ExternalLink,
+  Loader2,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,11 +22,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSealosStore } from "@/store/sealos-store";
-import { 
-  startAppMutation, 
-  restartAppMutation, 
-  pauseAppMutation, 
-  delAppMutation 
+import {
+  startAppMutation,
+  restartAppMutation,
+  pauseAppMutation,
+  delAppMutation,
 } from "@/lib/sealos/applaunchpad/applaunchpad-mutation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -42,7 +50,7 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
     header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
-      
+
       const getStatusVariant = (status: string) => {
         switch (status.toLowerCase()) {
           case "running":
@@ -114,7 +122,7 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
       const app = row.original;
       const { currentUser, regionUrl } = useSealosStore();
       const queryClient = useQueryClient();
-      
+
       const isRunning = app.status.toLowerCase() === "running";
       const isStopped = app.status.toLowerCase() === "stopped";
       const isCreating = app.status.toLowerCase() === "creating";
@@ -155,10 +163,6 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
       };
 
       const handleDelete = async () => {
-        if (!confirm(`Are you sure you want to delete application "${app.name}"? This action cannot be undone.`)) {
-          return;
-        }
-        
         try {
           await deleteMutation.mutateAsync(app.name);
           toast.success(`Application "${app.name}" deleted successfully`);
@@ -168,13 +172,20 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
         }
       };
 
-      const isLoading = startMutation.isPending || restartMutation.isPending || 
-                      pauseMutation.isPending || deleteMutation.isPending;
+      const isLoading =
+        startMutation.isPending ||
+        restartMutation.isPending ||
+        pauseMutation.isPending ||
+        deleteMutation.isPending;
 
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0" disabled={isLoading}>
+            <Button
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              disabled={isLoading}
+            >
               <span className="sr-only">Open menu</span>
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -225,8 +236,8 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
               </>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleDelete} 
+            <DropdownMenuItem
+              onClick={handleDelete}
               disabled={isLoading}
               className="text-red-600"
             >
