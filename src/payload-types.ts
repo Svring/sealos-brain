@@ -135,7 +135,9 @@ export interface User {
         /**
          * Type of token for categorization
          */
-        type?: ('kubeconfig' | 'region_token' | 'app_token' | 'custom') | null;
+        type?:
+          | ('kubeconfig' | 'region_token' | 'app_token' | 'custom' | 'devbox_token' | 'api_key' | 'base_url')
+          | null;
         id?: string | null;
       }[]
     | null;

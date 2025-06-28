@@ -196,40 +196,34 @@ Response: "I'll check your running devboxes and stop them to save costs."
 Remember: Your goal is to make cloud resource management intuitive and efficient by organizing resources into meaningful graphs that support user applications and workflows.
 `;
 
-export type SealosBrainAgentState = {};
+export type SealosBrainAgentState = Record<string, never>;
 
 export interface SealosBrainAgentConfig {
   name: string;
   systemPrompt: string;
-  defaultConfig: {
+  providerConfig: {
     runtimeUrl: string;
     agent: string;
   };
 }
 
-export const sealosBrainAgentConfig: SealosBrainAgentConfig = {
+export const sealosBrainConfig: SealosBrainAgentConfig = {
   name: "sealos_brain",
   systemPrompt: sealosBrainSystemPrompt,
-  defaultConfig: {
+  providerConfig: {
     runtimeUrl: "/api/agent/sealos-brain",
     agent: "sealos_brain",
   },
 };
 
-// Function to get agent configuration with optional config overrides
-export function getSealosBrainAgentConfig(
-  config?: Partial<SealosBrainAgentConfig>
-) {
-  return {
-    ...sealosBrainAgentConfig,
-    ...config,
-  };
-}
-
 // Function to create configurable object for the agent
-export function createSealosBrainConfigurable() {
+export function createSealosBrainConfigurable(apiKey: string, baseUrl: string) {
   return {
-    system_prompt: sealosBrainAgentConfig.systemPrompt,
     recursion_limit: 50,
+    configurable: {
+      api_key: apiKey,
+      base_url: baseUrl,
+      system_prompt: sealosBrainConfig.systemPrompt,
+    },
   };
 }

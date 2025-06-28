@@ -1,10 +1,10 @@
-import { NextRequest } from "next/server";
 import {
   CopilotRuntime,
   copilotRuntimeNextJSAppRouterEndpoint,
   ExperimentalEmptyAdapter,
   langGraphPlatformEndpoint,
 } from "@copilotkit/runtime";
+import type { NextRequest } from "next/server";
 
 const serviceAdapter = new ExperimentalEmptyAdapter();
 

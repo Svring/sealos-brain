@@ -1,16 +1,19 @@
 "use client";
 
 import { CopilotChat } from "@copilotkit/react-ui";
-import { CopilotStateProvider } from "@/context/copilot-state-provider";
+import {
+  CopilotStateProvider,
+  useSealosBrainAgent,
+} from "@/context/copilot-state-provider";
+import { sealosBrainConfig } from "@/lib/agent/sealos-brain";
 
-export function HomePage() {
+function HomePageContent() {
+  useSealosBrainAgent();
+
   return (
     <div className="flex h-full w-full flex-col items-center">
       <CopilotChat
         className="h-full w-4xl"
-        instructions={
-          "You are assisting the user as best as you can. Answer in the best way possible given the data you have."
-        }
         labels={{
           initial: "Hi! 👋 How can I assist you today?",
         }}
@@ -22,12 +25,12 @@ export function HomePage() {
 export default function Home() {
   return (
     <CopilotStateProvider
-      initialConfig={{
-        runtimeUrl: "/api/agent/sealos-brain",
-        agent: "sealos_brain",
+      providerConfig={{
+        runtimeUrl: sealosBrainConfig.providerConfig.runtimeUrl,
+        agent: sealosBrainConfig.providerConfig.agent,
       }}
     >
-      <HomePage />
+      <HomePageContent />
     </CopilotStateProvider>
   );
 }

@@ -337,7 +337,7 @@ export function getDevboxHeaders(currentUser: User | null) {
     Authorization:
       currentUser?.tokens?.find((t) => t.type === "kubeconfig")?.value || "",
     "Authorization-Bearer":
-      currentUser?.tokens?.find((t) => t.type === "custom")?.value || "",
+      currentUser?.tokens?.find((t) => t.type === "devbox_token")?.value || "",
   };
 }
 

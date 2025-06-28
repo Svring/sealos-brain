@@ -50,6 +50,9 @@ export const Users: CollectionConfig = {
             { label: "Region Token", value: "region_token" },
             { label: "App Token", value: "app_token" },
             { label: "Custom", value: "custom" },
+            { label: "Devbox Token", value: "devbox_token" },
+            { label: "API Key", value: "api_key" },
+            { label: "Base URL", value: "base_url" },
           ],
           defaultValue: "custom",
           admin: {

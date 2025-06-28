@@ -192,9 +192,11 @@ export function createCodeAgentConfigurable(
   token?: string
 ) {
   return {
-    system_prompt: codeAgentConfig.systemPrompt,
     recursion_limit: 50,
-    project_address: project_address || codeAgentConfig.project_address,
-    token: token || codeAgentConfig.token,
+    configurable: {
+      project_address: project_address || codeAgentConfig.project_address,
+      token: token || codeAgentConfig.token,
+      system_prompt: codeAgentConfig.systemPrompt,
+    },
   };
 }
