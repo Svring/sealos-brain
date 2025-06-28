@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import type { DevboxFormValues } from "@/components/flow/node/devbox/create/schema/devbox-create-schema";
 import type { User } from "@/payload-types";
 import {
   type BulkOperationResult,
   createDevbox,
   createDevboxFromTemplate,
-  type DevboxData,
   type DevboxResult,
   deleteDevbox,
   processDevboxBulkResults,
@@ -130,19 +130,18 @@ export function createDevboxMutation(
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (devboxData: DevboxData) => {
+    mutationFn: (devboxFormValues: DevboxFormValues) => {
       if (!regionUrl) {
         throw new Error("Region URL is required");
       }
-      return createDevbox(devboxData, currentUser, regionUrl);
+      return createDevbox(devboxFormValues, currentUser, regionUrl);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
       toast.success(`Devbox '${data.devboxName}' is successfully created`);
     },
-    onError: (error: Error, devboxData) => {
-      const devboxName =
-        devboxData.devboxForm?.name || devboxData.name || "Unknown";
+    onError: (error: Error, devboxFormValues) => {
+      const devboxName = devboxFormValues.name || "Unknown";
       toast.error(`Failed to create devbox '${devboxName}': ${error.message}`);
     },
   });

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import {
   makeDevboxApiRequest,
   validateHeaders,
@@ -52,12 +52,11 @@ export async function POST(req: NextRequest) {
 
     if (result.data) {
       return NextResponse.json(result.data);
-    } else {
-      return NextResponse.json(
-        { message: result.message },
-        { status: result.status }
-      );
     }
+    return NextResponse.json(
+      { message: result.message },
+      { status: result.status }
+    );
   } catch (error: any) {
     return NextResponse.json(
       { message: error.message || "An unexpected error occurred" },

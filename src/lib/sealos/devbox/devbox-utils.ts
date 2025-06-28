@@ -413,19 +413,17 @@ export async function deleteDevbox(
  * Core function to create a devbox
  */
 export async function createDevbox(
-  devboxData: DevboxData,
+  devboxFormValues: DevboxFormValues,
   currentUser: User | null,
   regionUrl: string
 ): Promise<{ devboxName: string }> {
   const headers = getDevboxHeaders(currentUser);
   const response = await axios.post(
     `/api/sealos/devbox/createDevbox?regionUrl=${regionUrl}`,
-    devboxData,
+    { ...devboxFormValues },
     { headers }
   );
-  const devboxName =
-    devboxData.devboxForm?.name || devboxData.name || "Unknown";
-  return { ...response.data, devboxName };
+  return { ...response.data, devboxName: devboxFormValues.name };
 }
 
 /**
@@ -437,7 +435,7 @@ export async function createDevboxFromTemplate(
   regionUrl: string
 ): Promise<{ devboxName: string; templateName: string }> {
   // First, generate the devboxForm from template name
-  const devboxForm = await generateDevboxFormFromTemplate(
+  const devboxFormValues = await generateDevboxFormFromTemplate(
     templateName,
     currentUser,
     regionUrl
@@ -447,11 +445,13 @@ export async function createDevboxFromTemplate(
   const headers = getDevboxHeaders(currentUser);
   const response = await axios.post(
     `/api/sealos/devbox/createDevbox?regionUrl=${regionUrl}`,
-    { devboxForm },
+    { ...devboxFormValues },
     { headers }
   );
 
-  return { ...response.data, devboxName: devboxForm.name, templateName };
+  console.log("response of createDevboxFromTemplate", response.data);
+
+  return { ...response.data, devboxName: devboxFormValues.name, templateName };
 }
 
 // Regex patterns defined at top level for performance
