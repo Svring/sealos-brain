@@ -12,7 +12,7 @@ export function directResourceListOptions(
   currentUser: User | null,
   resourceType: ResourceType,
   namespaceOverride?: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: [
@@ -47,10 +47,10 @@ export function directResourceListOptions(
 
 // Direct Devbox secret query options
 export function directDevboxSecretOptions(
-  currentUser: any,
+  currentUser: User | null,
   devboxName: string,
   namespaceOverride?: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: [
@@ -64,7 +64,7 @@ export function directDevboxSecretOptions(
     ],
     enabled: !!currentUser && !!devboxName,
     queryFn: async () => {
-      const kubeconfig = getKubeconfig(currentUser);
+      const kubeconfig = getKubeconfig(currentUser as User);
       if (!kubeconfig) {
         throw new Error("No kubeconfig found");
       }

@@ -14,8 +14,8 @@ import {
   shutdownDevboxMutation,
   startDevboxMutation,
 } from "@/lib/sealos/devbox/devbox-mutation";
-import { devboxListOptions } from "@/lib/sealos/devbox/devbox-query";
-import { transformDevboxListToTable } from "@/lib/sealos/devbox/devbox-transform";
+import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
+import { transformK8sDevboxesToTable } from "@/lib/sealos/k8s/k8s-transform";
 import { useSealosStore } from "@/store/sealos-store";
 import { DataTable } from "../../ui/data-table";
 import { devboxColumns } from "./devbox-column";
@@ -31,7 +31,12 @@ export function DevboxTable() {
     isLoading,
     error,
   } = useQuery(
-    devboxListOptions(currentUser, regionUrl, transformDevboxListToTable)
+    directResourceListOptions(
+      currentUser,
+      "devbox",
+      undefined,
+      transformK8sDevboxesToTable
+    )
   );
 
   const startMutation = startDevboxMutation(currentUser, regionUrl);
@@ -39,7 +44,7 @@ export function DevboxTable() {
   const deleteMutation = deleteDevboxMutation(currentUser, regionUrl);
 
   const handleBulkAction = async (
-    mutation: any,
+    mutation: { mutateAsync: (param: unknown) => Promise<unknown> },
     devboxes: DevboxColumn[],
     action: "start" | "stop" | "delete"
   ) => {
@@ -55,8 +60,14 @@ export function DevboxTable() {
 
     try {
       await Promise.all(promises);
-    } catch (error: any) {
-      console.error(`Failed to ${action} devbox(es):`, error);
+    } catch (bulkActionError: unknown) {
+      // Log error for debugging
+      if (bulkActionError instanceof Error) {
+        throw new Error(
+          `Failed to ${action} devbox(es): ${bulkActionError.message}`
+        );
+      }
+      throw new Error(`Failed to ${action} devbox(es)`);
     }
   };
 

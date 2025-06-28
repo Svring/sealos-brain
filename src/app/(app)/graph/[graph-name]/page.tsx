@@ -30,6 +30,7 @@ import {
   TextMessage,
   useGraphCopilotChat,
 } from "@/hooks/use-graph-copilot-chat";
+import { sealosBrainConfig } from "@/lib/agent/sealos-brain";
 
 function GraphPageContent({ graphName }: { graphName: string }) {
   const {
@@ -341,9 +342,9 @@ export default function GraphPage({
 
   return (
     <CopilotStateProvider
-      initialConfig={{
-        runtimeUrl: "/api/agent/sealos-brain",
-        agent: "sealos_brain",
+      providerConfig={{
+        runtimeUrl: sealosBrainConfig.providerConfig.runtimeUrl,
+        agent: sealosBrainConfig.providerConfig.agent,
       }}
     >
       <GraphPageContent graphName={graphName} />

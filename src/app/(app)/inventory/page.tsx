@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loading } from "@/components/ui/loading";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Force dynamic rendering since the layout uses headers()
 export const dynamic = "force-dynamic";

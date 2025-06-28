@@ -13,23 +13,83 @@ export interface ResourceItem {
     annotations?: {
       [key: string]: string;
     };
-    [key: string]: any;
+    creationTimestamp?: string;
+    [key: string]: unknown;
   };
-  spec?: any;
-  status?: any;
+  spec?: {
+    state?: string;
+    resource?: {
+      cpu?: string;
+      memory?: string;
+    };
+    [key: string]: unknown;
+  };
+  status?: {
+    phase?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface ResourceList {
   apiVersion: string;
   kind: string;
   items: ResourceItem[];
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface GraphResourceGroup {
   [graphName: string]: {
     [resourceKind: string]: string[];
   };
+}
+
+/**
+ * Transform k8s devbox resources into table format
+ * Converts direct k8s API response to format expected by the DevboxColumn schema
+ */
+export function transformK8sDevboxesToTable(resourceList: ResourceList) {
+  if (!(resourceList?.items && Array.isArray(resourceList.items))) {
+    return [];
+  }
+
+  return resourceList.items
+    .map((devbox: ResourceItem) => {
+      if (!devbox.metadata?.name) {
+        return null;
+      }
+
+      const devboxName = devbox.metadata.name;
+
+      // Determine status from devbox spec or status
+      let status = "Unknown";
+      if (devbox.spec?.state) {
+        status = devbox.spec.state;
+      } else if (devbox.status?.phase) {
+        status = devbox.status.phase;
+      }
+
+      // Format creation timestamp
+      const createdAt = devbox.metadata?.creationTimestamp
+        ? new Date(devbox.metadata.creationTimestamp).toLocaleDateString()
+        : "Unknown";
+
+      // Calculate estimated cost (placeholder - you may want to implement real cost calculation)
+      const cpu = devbox.spec?.resource?.cpu || "0";
+      const memory = devbox.spec?.resource?.memory || "0";
+      const cost = `$${(
+        Number.parseFloat(cpu.replace(/[^0-9.]/g, "")) * 0.001 +
+        Number.parseFloat(memory.replace(/[^0-9.]/g, "")) * 0.0001
+      ).toFixed(2)}/day`;
+
+      return {
+        id: `devbox-${devboxName}`,
+        name: devboxName,
+        status,
+        createdAt,
+        cost,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 }
 
 /**
@@ -40,11 +100,7 @@ export interface GraphResourceGroup {
 export function transformResourcesByGraphName(
   resourceList: ResourceList
 ): GraphResourceGroup {
-  if (
-    !resourceList ||
-    !resourceList.items ||
-    !Array.isArray(resourceList.items)
-  ) {
+  if (!(resourceList?.items && Array.isArray(resourceList.items))) {
     return {};
   }
 
@@ -54,7 +110,7 @@ export function transformResourcesByGraphName(
   const listKind = resourceList.kind;
   const resourceKind = listKind.replace("List", "").toLowerCase();
 
-  resourceList.items.forEach((item: ResourceItem) => {
+  for (const item of resourceList.items) {
     // Check if the resource has a graphName annotation
     const graphName = item.metadata?.annotations?.[GRAPH_ANNOTATION_KEY];
 
@@ -72,7 +128,7 @@ export function transformResourcesByGraphName(
       // Add the resource name to the appropriate group
       result[graphName][resourceKind].push(item.metadata.name);
     }
-  });
+  }
 
   return result;
 }
@@ -87,20 +143,20 @@ export function mergeGraphResourceGroups(
 ): GraphResourceGroup {
   const result: GraphResourceGroup = {};
 
-  groups.forEach((group) => {
-    Object.entries(group).forEach(([graphName, resourceTypes]) => {
+  for (const group of groups) {
+    for (const [graphName, resourceTypes] of Object.entries(group)) {
       if (!result[graphName]) {
         result[graphName] = {};
       }
 
-      Object.entries(resourceTypes).forEach(([resourceKind, names]) => {
+      for (const [resourceKind, names] of Object.entries(resourceTypes)) {
         if (!result[graphName][resourceKind]) {
           result[graphName][resourceKind] = [];
         }
         result[graphName][resourceKind].push(...names);
-      });
-    });
-  });
+      }
+    }
+  }
 
   return result;
 }

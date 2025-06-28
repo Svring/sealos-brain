@@ -2,6 +2,8 @@
 
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { ChatPanel } from "@/components/opera/chat-panel";
+import { PreviewPanel } from "@/components/opera/preview-panel";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -17,8 +19,6 @@ import {
   transformDevboxListToNames,
 } from "@/lib/sealos/devbox/devbox-transform";
 import { useSealosStore } from "@/store/sealos-store";
-import { ChatPanel } from "./components/chat-panel";
-import { PreviewPanel } from "./components/preview-panel";
 
 interface DevboxOption {
   name: string;

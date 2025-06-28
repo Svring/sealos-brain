@@ -1,19 +1,17 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
 import { useCopilotChat } from "@copilotkit/react-core";
-import { useCopilotState } from "@/context/copilot-state-provider";
 import { MessageRole, TextMessage } from "@copilotkit/runtime-client-gql";
+import { useEffect, useState } from "react";
+import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
 import {
   ChatBubble,
   ChatBubbleMessage,
-  ChatBubbleTimestamp,
   ChatBubbleStatus,
+  ChatBubbleTimestamp,
 } from "@/components/ai-chat/chat-bubble";
-import { ChatMessageList } from "@/components/ai-chat/chat-message-list";
 import { ChatErrorBoundary } from "@/components/ai-chat/chat-error-boundary";
-import { useState, useEffect } from "react";
+import { ChatMessageList } from "@/components/ai-chat/chat-message-list";
 import {
   Select,
   SelectContent,
@@ -21,7 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CodeAgentState } from "@/lib/agent/code-agent";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCopilotState } from "@/context/copilot-state-provider";
+import type { CodeAgentState } from "@/lib/agent/code-agent";
 
 interface DevboxOption {
   name: string;
@@ -79,12 +79,7 @@ export function ChatPanel({
         }));
       }
     }
-  }, [
-    selectedDevboxName,
-    devboxOptions,
-    updateConfig,
-    config.project_address,
-  ]);
+  }, [selectedDevboxName, devboxOptions, updateConfig, config.project_address]);
 
   const [failedMessages, setFailedMessages] = useState<Set<string>>(new Set());
   const [hiddenMessages] = useState<Set<string>>(new Set());
@@ -120,11 +115,11 @@ export function ChatPanel({
   };
 
   return (
-    <div className="h-full flex flex-col bg-background border border-border rounded-lg">
+    <div className="flex h-full flex-col rounded-lg border border-border bg-background">
       {/* Devbox Select - only show for code agent */}
       {config.agent === "code" && (
-        <div className="p-2 border-b border-border">
-          <Select value={selectedDevboxName} onValueChange={onSelectDevbox}>
+        <div className="border-border border-b p-2">
+          <Select onValueChange={onSelectDevbox} value={selectedDevboxName}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Devbox" />
             </SelectTrigger>
@@ -142,30 +137,30 @@ export function ChatPanel({
       {/* Chat/Design Tabs - keep for non-code agents or fallback */}
       {config.agent !== "code" && (
         <Tabs
-          value={activeTab}
+          className="flex min-h-0 flex-1 flex-col"
           onValueChange={setActiveTab}
-          className="flex-1 flex flex-col min-h-0"
+          value={activeTab}
         >
-          <TabsList className="flex flex-row w-full bg-background border-border rounded-lg">
+          <TabsList className="flex w-full flex-row rounded-lg border-border bg-background">
             <TabsTrigger
-              value="chat"
               className="data-[state=active]:bg-background"
+              value="chat"
             >
               Chat
             </TabsTrigger>
             <TabsTrigger
-              value="design"
               className="data-[state=active]:bg-background"
+              value="design"
             >
               Design
             </TabsTrigger>
           </TabsList>
 
           <TabsContent
+            className="mt-0 flex min-h-0 flex-1 flex-col p-2"
             value="chat"
-            className="flex-1 flex flex-col mt-0 p-2 min-h-0"
           >
-            <div className="flex-1 min-h-0">
+            <div className="min-h-0 flex-1">
               <ChatMessageList>
                 {visibleMessages.map((message) => {
                   const isTextMessage = message.isTextMessage();
@@ -174,7 +169,7 @@ export function ChatPanel({
                     : null;
 
                   // Skip non-text messages
-                  if (!isTextMessage || !textMessage?.content) {
+                  if (!(isTextMessage && textMessage?.content)) {
                     return null;
                   }
 
@@ -185,23 +180,23 @@ export function ChatPanel({
                   return (
                     <ChatErrorBoundary key={message.id}>
                       <ChatBubble
+                        isVisible={isVisible}
                         messageId={message.id}
                         variant="received"
-                        isVisible={isVisible}
                       >
-                        <div className="flex flex-col gap-1 flex-1">
+                        <div className="flex flex-1 flex-col gap-1">
                           <ChatBubbleMessage
-                            variant="received"
                             hasError={hasError}
-                            onRetry={() => handleRetryMessage(message.id)}
                             onCopy={() =>
                               handleCopyMessage(textMessage.content)
                             }
+                            onRetry={() => handleRetryMessage(message.id)}
+                            variant="received"
                           >
                             {textMessage.content}
                           </ChatBubbleMessage>
 
-                          <div className="flex items-center gap-2 justify-start">
+                          <div className="flex items-center justify-start gap-2">
                             <ChatBubbleTimestamp
                               timestamp={message.createdAt}
                             />
@@ -220,13 +215,13 @@ export function ChatPanel({
             </div>
 
             {/* Chat Input - Fixed at bottom */}
-            <div className="flex-shrink-0 mt-2">
+            <div className="mt-2 flex-shrink-0">
               <PromptInputBox onSend={handleSendMessage} />
             </div>
           </TabsContent>
 
-          <TabsContent value="design" className="flex-1 p-4 overflow-y-auto">
-            <div className="text-center text-muted-foreground mt-8">
+          <TabsContent className="flex-1 overflow-y-auto p-4" value="design">
+            <div className="mt-8 text-center text-muted-foreground">
               Design tools coming soon...
             </div>
           </TabsContent>
@@ -235,8 +230,8 @@ export function ChatPanel({
 
       {/* Direct chat content for code agent */}
       {config.agent === "code" && (
-        <div className="flex-1 flex flex-col min-h-0 p-2">
-          <div className="flex-1 min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col p-2">
+          <div className="min-h-0 flex-1">
             <ChatMessageList>
               {visibleMessages.map((message) => {
                 const isTextMessage = message.isTextMessage();
@@ -245,7 +240,7 @@ export function ChatPanel({
                   : null;
 
                 // Skip non-text messages
-                if (!isTextMessage || !textMessage?.content) {
+                if (!(isTextMessage && textMessage?.content)) {
                   return null;
                 }
 
@@ -256,22 +251,21 @@ export function ChatPanel({
                 return (
                   <ChatErrorBoundary key={message.id}>
                     <ChatBubble
+                      isVisible={isVisible}
                       messageId={message.id}
                       variant="received"
-                      isVisible={isVisible}
                     >
-
-                      <div className="flex flex-col gap-1 flex-1">
+                      <div className="flex flex-1 flex-col gap-1">
                         <ChatBubbleMessage
-                          variant="received"
                           hasError={hasError}
-                          onRetry={() => handleRetryMessage(message.id)}
                           onCopy={() => handleCopyMessage(textMessage.content)}
+                          onRetry={() => handleRetryMessage(message.id)}
+                          variant="received"
                         >
                           {textMessage.content}
                         </ChatBubbleMessage>
 
-                        <div className="flex items-center gap-2 justify-start">
+                        <div className="flex items-center justify-start gap-2">
                           <ChatBubbleTimestamp timestamp={message.createdAt} />
                           {isUser && (
                             <ChatBubbleStatus
@@ -288,7 +282,7 @@ export function ChatPanel({
           </div>
 
           {/* Chat Input - Fixed at bottom */}
-          <div className="flex-shrink-0 mt-2">
+          <div className="mt-2 flex-shrink-0">
             <PromptInputBox onSend={handleSendMessage} />
           </div>
         </div>
