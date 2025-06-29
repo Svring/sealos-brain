@@ -146,7 +146,9 @@ Output: Generate the complete app/dashboard/page.tsx file with a card-based layo
 Proceed with generating or modifying code based on the user's prompt, adhering strictly to these guidelines and leveraging the provided tools.
 `;
 
-export type CodeAgentState = {};
+export type CodeAgentState = {
+  devpod_address: string;
+};
 
 export interface CodeAgentConfig {
   name: string;
@@ -168,17 +170,17 @@ export const codeAgentConfig: CodeAgentConfig = {
 
 // Function to create configurable object for the code agent
 export function createCodeAgentConfigurable(
-  devpodAddress: string,
   apiKey: string,
-  baseUrl: string
+  baseUrl: string,
+  kubeConfig: string
 ) {
   return {
     recursion_limit: 50,
     configurable: {
       system_prompt: codeAgentConfig.systemPrompt,
-      devpod_address: devpodAddress,
       api_key: apiKey,
       base_url: baseUrl,
+      kubeconfig: kubeConfig,
     },
   };
 }

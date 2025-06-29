@@ -135,20 +135,20 @@ async def codebase_find_files(
     dir: str,
     suffixes: List[str],
     exclude_dirs: Optional[List[str]] = None,
+    config: Optional[RunnableConfig] = None,
     state: Annotated[CodebaseState, InjectedState] = None,
-    config: RunnableConfig = None,
 ) -> dict:
     """Find files in the project matching specific suffixes and excluding directories."""
     if not config or "configurable" not in config:
         return {"success": False, "error": "Missing configuration"}
 
-    if not state or "project_address" not in state:
+    if not state or "devpod_address" not in state:
         return {"success": False, "error": f"Missing state: {state}"}
 
     print("state of codebase_find_files", state)
 
     token = config["configurable"]["token"]
-    url = state["project_address"]
+    url = state["devpod_address"]
 
     async with aiohttp.ClientSession() as session:
         request_data = {
@@ -186,18 +186,18 @@ async def codebase_editor_command(
     new_str: Optional[str] = None,
     old_str: Optional[str] = None,
     view_range: Optional[List[int]] = None,
-    config: RunnableConfig = None,
+    config: Optional[RunnableConfig] = None,
     state: Annotated[CodebaseState, InjectedState] = None,
 ) -> dict:
     """Send an editor command (view, create, str_replace, insert, undo_edit) to the backend for file operations."""
-    if not state or "project_address" not in state:
+    if not state or "devpod_address" not in state:
         return {"success": False, "error": f"Missing state: {state}"}
 
     if not config or "configurable" not in config:
         return {"success": False, "error": "Missing configuration"}
 
     token = config["configurable"]["token"]
-    url = state["project_address"]
+    url = state["devpod_address"]
     # Validation logic similar to TypeScript superRefine
     if command == "view":
         if not path and (not paths or len(paths) == 0):
@@ -261,18 +261,18 @@ async def codebase_editor_command(
 @tool("codebase_npm_script", args_schema=NpmScriptParams)
 async def codebase_npm_script(
     script: Literal["lint", "format"],
-    config: RunnableConfig = None,
+    config: Optional[RunnableConfig] = None,
     state: Annotated[CodebaseState, InjectedState] = None,
 ) -> dict:
     """Run npm scripts (lint or format) in the project root and return their output."""
     if not config or "configurable" not in config:
         return {"success": False, "error": "Missing configuration"}
 
-    if not state or "project_address" not in state:
+    if not state or "devpod_address" not in state:
         return {"success": False, "error": f"Missing state: {state}"}
 
     token = config["configurable"]["token"]
-    url = state["project_address"]
+    url = state["devpod_address"]
     async with aiohttp.ClientSession() as session:
         result = await fetch_with_timeout_and_retry(
             session=session,

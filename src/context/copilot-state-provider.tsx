@@ -29,10 +29,11 @@ export function useSealosBrainAgent() {
 
   const agentConfig = createSealosBrainConfigurable(
     currentUser?.tokens?.find((t) => t.type === "api_key")?.value || "",
-    currentUser?.tokens?.find((t) => t.type === "base_url")?.value || ""
+    currentUser?.tokens?.find((t) => t.type === "base_url")?.value || "",
+    currentUser?.tokens?.find((t) => t.type === "kubeconfig")?.value || ""
   );
 
-  const { state } = useCoAgent<SealosBrainAgentState>({
+  const { state, setState } = useCoAgent<SealosBrainAgentState>({
     name: sealosBrainConfig.name,
     config: agentConfig,
   });
@@ -45,26 +46,29 @@ export function useSealosBrainAgent() {
 
   return {
     state,
+    setState,
   };
 }
 
 // Hook for Code Agent
-export function useCodeAgent(devpodAddress: string) {
+export function useCodeAgent() {
   const { currentUser } = useSealosStore();
 
   const agentConfig = createCodeAgentConfigurable(
-    devpodAddress,
     currentUser?.tokens?.find((t) => t.type === "api_key")?.value || "",
-    currentUser?.tokens?.find((t) => t.type === "base_url")?.value || ""
+    currentUser?.tokens?.find((t) => t.type === "base_url")?.value || "",
+    currentUser?.tokens?.find((t) => t.type === "kubeconfig")?.value || ""
   );
 
-  const { state } = useCoAgent<CodeAgentState>({
+  const { state, setState } = useCoAgent<CodeAgentState>({
     name: codeAgentConfig.name,
+    initialState: { devpod_address: "" },
     config: agentConfig,
   });
 
   return {
     state,
+    setState,
   };
 }
 

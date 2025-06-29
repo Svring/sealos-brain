@@ -1,13 +1,12 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, Check, Copy, RotateCcw } from "lucide-react";
 import * as React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
-
-import { Button } from "@/components/ui/button";
-import { Copy, RotateCcw, AlertCircle, Check } from "lucide-react";
-import { MessageLoading } from "@/components/ai-chat/message-loading";
 import { toast } from "sonner";
+import { MessageLoading } from "@/components/ai-chat/message-loading";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ChatBubbleProps {
   variant?: "sent" | "received";
@@ -28,21 +27,21 @@ export function ChatBubble({
     <AnimatePresence mode="wait">
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
+          className={cn(
+            "group mb-4 flex items-start gap-2",
+            variant === "sent" && "flex-row-reverse",
+            className
+          )}
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
+          id={messageId}
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{
             type: "spring",
             stiffness: 200,
             damping: 20,
             duration: 0.3,
           }}
-          className={cn(
-            "flex items-start gap-2 mb-4 group",
-            variant === "sent" && "flex-row-reverse",
-            className
-          )}
-          id={messageId}
         >
           {children}
         </motion.div>
@@ -92,17 +91,17 @@ export function ChatBubbleMessage({
   return (
     <div className="flex flex-col gap-2">
       <motion.div
-        initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
         className={cn(
-          "rounded-lg p-3 py-1.5 relative",
+          "relative rounded-lg p-3 py-1",
           variant === "sent"
-            ? "bg-primary text-primary-foreground ml-auto"
+            ? "ml-auto bg-primary text-primary-foreground"
             : "bg-muted",
-          hasError && "border-destructive border",
+          hasError && "border border-destructive",
           isLoading && "animate-pulse",
           className
         )}
+        initial={{ scale: 0.95 }}
       >
         {isLoading ? (
           <div className="flex items-center space-x-2">
@@ -141,12 +140,12 @@ export function ChatBubbleAction({
 }: ChatBubbleActionProps) {
   return (
     <Button
-      variant="ghost"
-      size="icon"
-      className={cn("h-6 w-6 hover:scale-110 transition-transform", className)}
-      onClick={onClick}
-      disabled={disabled}
       aria-label={ariaLabel}
+      className={cn("h-6 w-6 transition-transform hover:scale-110", className)}
+      disabled={disabled}
+      onClick={onClick}
+      size="icon"
+      variant="ghost"
     >
       {icon}
     </Button>
@@ -162,9 +161,9 @@ export function ChatBubbleActionWrapper({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn("flex items-center gap-1", className)}
+      initial={{ opacity: 0, y: 5 }}
     >
       {children}
     </motion.div>
@@ -196,7 +195,7 @@ export function ChatBubbleTimestamp({
   };
 
   return (
-    <div className={cn("text-xs text-muted-foreground px-1", className)}>
+    <div className={cn("px-1 text-muted-foreground text-xs", className)}>
       {formatTime(timestamp)}
     </div>
   );
@@ -213,26 +212,26 @@ export function ChatBubbleStatus({ status, className }: ChatBubbleStatusProps) {
     switch (status) {
       case "sending":
         return (
-          <div className="w-3 h-3 border border-muted-foreground border-t-transparent rounded-full animate-spin" />
+          <div className="h-3 w-3 animate-spin rounded-full border border-muted-foreground border-t-transparent" />
         );
       case "sent":
-        return <Check className="w-3 h-3 text-muted-foreground" />;
+        return <Check className="h-3 w-3 text-muted-foreground" />;
       case "delivered":
         return (
           <div className="flex">
-            <Check className="w-3 h-3 text-muted-foreground" />
-            <Check className="w-3 h-3 text-muted-foreground -ml-1" />
+            <Check className="h-3 w-3 text-muted-foreground" />
+            <Check className="-ml-1 h-3 w-3 text-muted-foreground" />
           </div>
         );
       case "read":
         return (
           <div className="flex">
-            <Check className="w-3 h-3 text-blue-500" />
-            <Check className="w-3 h-3 text-blue-500 -ml-1" />
+            <Check className="h-3 w-3 text-blue-500" />
+            <Check className="-ml-1 h-3 w-3 text-blue-500" />
           </div>
         );
       case "failed":
-        return <AlertCircle className="w-3 h-3 text-destructive" />;
+        return <AlertCircle className="h-3 w-3 text-destructive" />;
       default:
         return null;
     }

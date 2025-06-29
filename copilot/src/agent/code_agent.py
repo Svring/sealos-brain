@@ -6,8 +6,6 @@ It defines the workflow graph, state, tools, nodes and edges.
 # python -m src.agent.code_agent
 from typing_extensions import Literal
 
-from copilotkit import CopilotKitState
-
 from langchain_core.messages import (
     AIMessage,
     SystemMessage,
@@ -18,6 +16,7 @@ from langgraph.types import Command
 from langgraph.prebuilt import ToolNode
 
 from src.provider.backbone_provider import get_sealos_model
+from src.state.codebase_state import CodebaseState
 from src.tool.codebase_tool import (
     codebase_find_files,
     codebase_editor_command,
@@ -30,14 +29,6 @@ from src.utils.context_utils import (
 )
 
 
-class CodebaseState(CopilotKitState):
-    """
-    Codebase State
-
-    Inherits from CopilotKitState and adds Codebase-specific fields.
-    """
-
-
 async def code_agent_node(
     state: CodebaseState, config: RunnableConfig
 ) -> Command[Literal["tool_node", "__end__"]]:
@@ -47,13 +38,12 @@ async def code_agent_node(
     """
 
     # Extract configuration data
-    base_url, api_key, system_prompt, devpod_address = get_config_values(
+    base_url, api_key, system_prompt = get_config_values(
         config,
         {
             "base_url": None,
             "api_key": None,
             "system_prompt": "",
-            "devpod_address": None,
         },
     )
 

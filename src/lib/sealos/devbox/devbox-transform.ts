@@ -112,7 +112,7 @@ export const transformTemplateList = (data: any) => {
  */
 export const transformDevboxAddresses = (
   data: unknown,
-  devpodPort = 3051,
+  devpodPort = 52_323,
   previewPort = 3000
 ): { devpod_address: string; preview_address: string } | { error: string } => {
   if (

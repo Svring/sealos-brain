@@ -7,18 +7,12 @@ import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
 import {
   ChatBubble,
   ChatBubbleMessage,
-  ChatBubbleStatus,
-  ChatBubbleTimestamp,
 } from "@/components/ai-chat/chat-bubble";
 import { ChatErrorBoundary } from "@/components/ai-chat/chat-error-boundary";
 import { ChatMessageList } from "@/components/ai-chat/chat-message-list";
+import { ChatPanelControl } from "@/components/opera/chat-panel-control";
 
-interface ChatPanelProps {
-  devboxName: string;
-  devpodAddress?: string;
-}
-
-export function ChatPanel({ devboxName }: ChatPanelProps) {
+export function ChatPanel() {
   const { visibleMessages, appendMessage } = useCopilotChat();
   const [failedMessages, setFailedMessages] = useState<Set<string>>(new Set());
   const [hiddenMessages] = useState<Set<string>>(new Set());
@@ -55,10 +49,8 @@ export function ChatPanel({ devboxName }: ChatPanelProps) {
 
   return (
     <div className="flex h-full flex-col rounded-lg border border-border bg-background">
-      {/* Devbox Info Header */}
-      <div className="border-border border-b p-3">
-        <div className="font-medium text-sm">Devbox: {devboxName}</div>
-      </div>
+      {/* Graph and Devbox Control */}
+      <ChatPanelControl />
 
       {/* Chat Messages */}
       <div className="flex min-h-0 flex-1 flex-col p-2">
@@ -95,15 +87,6 @@ export function ChatPanel({ devboxName }: ChatPanelProps) {
                       >
                         {textMessage.content}
                       </ChatBubbleMessage>
-
-                      <div className="flex items-center justify-start gap-2">
-                        <ChatBubbleTimestamp timestamp={message.createdAt} />
-                        {isUser && (
-                          <ChatBubbleStatus
-                            status={hasError ? "failed" : "sent"}
-                          />
-                        )}
-                      </div>
                     </div>
                   </ChatBubble>
                 </ChatErrorBoundary>

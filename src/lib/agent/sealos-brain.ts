@@ -217,13 +217,18 @@ export const sealosBrainConfig: SealosBrainAgentConfig = {
 };
 
 // Function to create configurable object for the agent
-export function createSealosBrainConfigurable(apiKey: string, baseUrl: string) {
+export function createSealosBrainConfigurable(
+  apiKey: string,
+  baseUrl: string,
+  kubeConfig: string
+) {
   return {
     recursion_limit: 50,
     configurable: {
       api_key: apiKey,
       base_url: baseUrl,
       system_prompt: sealosBrainConfig.systemPrompt,
+      kubeconfig: kubeConfig,
     },
   };
 }
