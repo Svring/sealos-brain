@@ -9,17 +9,72 @@ import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
 import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
 
-export function useGraph(specificGraphName?: string) {
-  const { currentUser } = useSealosStore();
+interface UseGraphSpecificReturn {
+  // ReactFlow nodes and edges
+  nodes: Node[];
+  setNodes: (nodes: Node[]) => void;
+  onNodesChange: (changes: NodeChange[]) => void;
+  enhancedNodes: Node[];
+  parsedEdges: any[];
 
-  // React Query client for cache operations
+  // Loading states
+  isLoading: boolean;
+
+  // Graph data
+  mergedGraphs: Record<string, Record<string, string[]>>;
+  deleteGraph: (graphName: string) => Promise<void>;
+  isDeletingGraph: boolean;
+
+  // Edge editing functionality
+  editMode: boolean;
+  setEditMode: (mode: boolean) => void;
+  selectedNodes: string[];
+  selectedEdges: string[];
+  pendingEdges: Array<{ source: string; target: string }>;
+  pendingEdgeDeletions: Array<{
+    edgeId: string;
+    sourceResourceType: ResourceType;
+    sourceResourceName: string;
+    targetResourceType: ResourceType;
+    targetResourceName: string;
+  }>;
+  handleNodeClick: (event: React.MouseEvent, nodeId: string) => void;
+  handleEdgeClick: (event: React.MouseEvent, edge: any) => void;
+  handleApplyConnections: () => Promise<void>;
+  handleQuitEditMode: () => void;
+  isApplyingConnections: boolean;
+  isLoadingEdges: boolean;
+
+  // Layout functionality
+  handleApplyLayout: (direction?: "TB" | "LR" | "BT" | "RL") => void;
+
+  // Graph management
+  renameGraph: (newName: string) => Promise<void>;
+}
+
+/**
+ * Hook for specific graph functionality
+ * Used in /graph/[graph-name] page for ReactFlow visualization
+ * Includes full ReactFlow nodes, edges, edit mode, and layout functionality
+ */
+export function useGraphSpecific(graphName: string): UseGraphSpecificReturn {
+  const { currentUser } = useSealosStore();
   const queryClient = useQueryClient();
 
-  // Core node-related logic
-  const nodeLogic = useGraphNode(specificGraphName);
+  // Core node-related logic for specific graph
+  const nodeLogic = useGraphNode(graphName);
 
-  // Node state management
+  // Mutation for graph operations
+  const addToGraphMutation = useAddResourceToGraphMutation();
+
+  // ReactFlow state management
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+
+  // Edge-related logic
+  const edgeLogic = useGraphEdge(currentUser, graphName);
+
+  // Layout logic
+  const { applyLayout } = useGraphLayout();
 
   // Track if nodes have been initialized to prevent unnecessary updates
   const nodesInitializedRef = useRef(false);
@@ -53,15 +108,6 @@ export function useGraph(specificGraphName?: string) {
       previousNodeCountRef.current = 0;
     }
   }, [nodeLogic.nodes, setNodes]);
-
-  // Edge-related logic
-  const edgeLogic = useGraphEdge(currentUser, specificGraphName);
-
-  // Layout logic
-  const { applyLayout } = useGraphLayout();
-
-  // Mutation to rename graph (patch annotations)
-  const addToGraphMutation = useAddResourceToGraphMutation();
 
   // Combine node data and edge-handling to create enhanced nodes
   const enhancedNodes = useMemo(() => {
@@ -151,7 +197,7 @@ export function useGraph(specificGraphName?: string) {
   // Mutation to rename graph (patch annotations)
   const renameGraph = useCallback(
     async (newName: string) => {
-      const resources = nodeLogic.mergedGraphs[specificGraphName ?? ""];
+      const resources = nodeLogic.mergedGraphs[graphName];
       if (!(resources && currentUser)) {
         return;
       }
@@ -178,7 +224,7 @@ export function useGraph(specificGraphName?: string) {
     },
     [
       nodeLogic.mergedGraphs,
-      specificGraphName,
+      graphName,
       currentUser,
       addToGraphMutation,
       queryClient,
@@ -186,24 +232,28 @@ export function useGraph(specificGraphName?: string) {
   );
 
   return {
-    // Node data
+    // ReactFlow nodes and edges
     nodes,
     setNodes,
     onNodesChange,
+    enhancedNodes,
+    parsedEdges: enhancedEdges,
+
+    // Loading states
     isLoading: nodeLogic.isLoading,
-    error: nodeLogic.error,
+
+    // Graph data
     mergedGraphs: nodeLogic.mergedGraphs,
     deleteGraph: nodeLogic.deleteGraph,
     isDeletingGraph: nodeLogic.isDeletingGraph,
 
-    // Edge data & functions
+    // Edge editing functionality
     editMode: edgeLogic.editMode,
     setEditMode: edgeLogic.setEditMode,
     selectedNodes: edgeLogic.selectedNodes,
     selectedEdges: edgeLogic.selectedEdges,
     pendingEdges: edgeLogic.pendingEdges,
     pendingEdgeDeletions: edgeLogic.pendingEdgeDeletions,
-    parsedEdges: enhancedEdges, // Use enhanced edges instead of raw ones
     handleNodeClick: edgeLogic.handleNodeClick,
     handleEdgeClick: edgeLogic.handleEdgeClick,
     handleApplyConnections,
@@ -211,13 +261,10 @@ export function useGraph(specificGraphName?: string) {
     isApplyingConnections: edgeLogic.isApplyingConnections,
     isLoadingEdges: edgeLogic.isLoadingEdges,
 
-    // Layout functions
+    // Layout functionality
     handleApplyLayout,
 
-    // Enhanced nodes for rendering
-    enhancedNodes,
-
-    // Mutation to rename graph (patch annotations)
+    // Graph management
     renameGraph,
   };
 }

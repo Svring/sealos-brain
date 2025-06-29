@@ -42,6 +42,7 @@ export function directResourceListOptions(
       return await listResourcesByType(kubeconfig, resourceType, namespace);
     },
     select: postprocess,
+    staleTime: 30_000,
   });
 }
 
@@ -81,5 +82,6 @@ export function directDevboxSecretOptions(
       return await readDevboxSecret(kubeconfig, devboxName, namespace);
     },
     select: postprocess,
+    staleTime: 30_000,
   });
 }

@@ -8,26 +8,22 @@ import type { User } from "@/payload-types";
 function groupResourcesByGraph(
   allResources: ExistingResource[]
 ): GraphResourceGroup {
-  const graphGroups: GraphResourceGroup = {};
-  for (const resource of allResources) {
+  return allResources.reduce((graphGroups, resource) => {
     const graphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
     if (graphName) {
-      if (!graphGroups[graphName]) {
-        graphGroups[graphName] = {};
-      }
-      if (!graphGroups[graphName][resource.type]) {
-        graphGroups[graphName][resource.type] = [];
-      }
+      graphGroups[graphName] ??= {};
+      graphGroups[graphName][resource.type] ??= [];
       graphGroups[graphName][resource.type].push(resource.name);
     }
-  }
-  return graphGroups;
+    return graphGroups;
+  }, {} as GraphResourceGroup);
 }
 
 // Hook to get all graphs with their resources
 export function useGraphsQuery(currentUser: User | null) {
-  const { allResources, isLoading: isLoadingResources } =
-    useResources(currentUser);
+  const { allResources, isLoading: isLoadingResources } = useResources(
+    currentUser as User
+  );
 
   return useQuery({
     queryKey: ["graphs", currentUser?.id],
@@ -44,7 +40,7 @@ export function useGraphsQuery(currentUser: User | null) {
 
 // Hook to get a specific graph's resources
 export function useGraphQuery(currentUser: User | null, graphName: string) {
-  const { data: allGraphs, isLoading, error } = useGraphsQuery(currentUser);
+  const { data: allGraphs } = useGraphsQuery(currentUser);
 
   return useQuery({
     queryKey: ["graph", currentUser?.id, graphName],

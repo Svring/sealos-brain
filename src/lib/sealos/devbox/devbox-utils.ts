@@ -449,8 +449,6 @@ export async function createDevboxFromTemplate(
     { headers }
   );
 
-  console.log("response of createDevboxFromTemplate", response.data);
-
   return { ...response.data, devboxName: devboxFormValues.name, templateName };
 }
 

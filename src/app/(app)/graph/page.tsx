@@ -8,32 +8,32 @@ import Link from "next/link";
 import { GraphCard } from "@/components/graph/graph-card";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
-import { useGraphNode } from "@/hooks/use-graph-node";
+import { useGraphOverview } from "@/hooks/use-graph-overview";
 import { generateGraphName } from "@/lib/utils";
 
 export default function GraphPage() {
   const { mergedGraphs, isLoading, deleteGraph, isDeletingGraph } =
-    useGraphNode();
+    useGraphOverview();
   const graphNames = Object.keys(mergedGraphs);
 
   const renderContent = () => (
     <div className="rounded-lg border p-6">
-      <Loading text="Fetching your infrastructure resources" />
+      <Loading text="Computing your infrastructure graph" />
     </div>
   );
 
-  const renderNoGraphs = () => (
-    <div className="flex-1 rounded-lg p-6">
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <h2 className="mb-2 font-semibold text-xl">No Graphs Found</h2>
-          <p className="mb-4 text-muted-foreground">
-            No resources with graphName annotations were found
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+  // const renderNoGraphs = () => (
+  //   <div className="flex-1 rounded-lg p-6">
+  //     <div className="flex h-full items-center justify-center">
+  //       <div className="text-center">
+  //         <h2 className="mb-2 font-semibold text-xl">No Graphs Found</h2>
+  //         <p className="mb-4 text-muted-foreground">
+  //           No resources with graphName annotations were found
+  //         </p>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
 
   const renderGraphs = () => (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -63,7 +63,7 @@ export default function GraphPage() {
       </div>
 
       {isLoading && renderContent()}
-      {!isLoading && graphNames.length === 0 && renderNoGraphs()}
+      {!isLoading && graphNames.length === 0 && renderContent()}
       {!isLoading && graphNames.length > 0 && renderGraphs()}
     </div>
   );

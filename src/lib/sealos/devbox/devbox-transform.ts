@@ -14,6 +14,35 @@ export interface DevboxNodeDisplayData extends Record<string, unknown> {
 }
 
 /**
+ * Helper function to determine devbox state from spec or status
+ */
+const getDevboxState = (
+  devbox: DevboxSchema
+): "Running" | "Stopped" | "Unknown" => {
+  if (devbox.spec?.state) {
+    if (devbox.spec.state === "Running") {
+      return "Running";
+    }
+    if (devbox.spec.state === "Stopped") {
+      return "Stopped";
+    }
+    return "Unknown";
+  }
+
+  if (devbox.status?.phase) {
+    if (devbox.status.phase === "Running") {
+      return "Running";
+    }
+    if (devbox.status.phase === "Stopped") {
+      return "Stopped";
+    }
+    return "Unknown";
+  }
+
+  return "Unknown";
+};
+
+/**
  * Transform devbox list into lightweight node display data
  * Only includes data needed for node rendering
  */
@@ -34,24 +63,7 @@ export const transformDevboxListIntoNode = (
       if (!devbox) return null;
 
       const devboxName = devbox.metadata.name;
-
-      // Determine state from devbox spec or status
-      let state: "Running" | "Stopped" | "Unknown" = "Unknown";
-      if (devbox.spec?.state) {
-        state =
-          devbox.spec.state === "Running"
-            ? "Running"
-            : devbox.spec.state === "Stopped"
-              ? "Stopped"
-              : "Unknown";
-      } else if (devbox.status?.phase) {
-        state =
-          devbox.status.phase === "Running"
-            ? "Running"
-            : devbox.status.phase === "Stopped"
-              ? "Stopped"
-              : "Unknown";
-      }
+      const state = getDevboxState(devbox);
 
       return {
         id: `devbox-${devboxName}`,

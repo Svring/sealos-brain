@@ -16,9 +16,7 @@ const runtime = new CopilotRuntime({
       agents: [
         {
           name: "sealos_brain",
-          description:
-            process.env.NEXT_PUBLIC_COPILOTKIT_AGENT_DESCRIPTION ||
-            "A helpful LLM agent.",
+          description: "A helpful LLM agent.",
         },
       ],
     }),

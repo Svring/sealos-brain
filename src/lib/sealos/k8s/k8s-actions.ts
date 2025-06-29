@@ -136,8 +136,7 @@ export async function listResourcesByType(
       throw new Error(`Unsupported resource type: ${resourceType}`);
     }
     return JSON.parse(JSON.stringify(res));
-  } catch (error) {
-    console.error(`Error listing ${resourceType}:`, error);
+  } catch {
     return { error: `Failed to list ${resourceType}` };
   }
 }

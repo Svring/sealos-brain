@@ -24,19 +24,18 @@ import { MenuBar, type MenuBarItem } from "@/components/ui/menu-bar";
 import { MessageSwiper } from "@/components/ui/message-swiper";
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
 import { usePanel } from "@/context/panel-provider";
-import { useGraph } from "@/hooks/use-graph";
 import {
   MessageRole,
   TextMessage,
   useGraphCopilotChat,
 } from "@/hooks/use-graph-copilot-chat";
+import { useGraphSpecific } from "@/hooks/use-graph-specific";
 import { sealosBrainConfig } from "@/lib/agent/sealos-brain";
 
 function GraphPageContent({ graphName }: { graphName: string }) {
   const {
     onNodesChange,
     isLoading,
-    error,
     editMode,
     setEditMode,
     selectedNodes,
@@ -50,7 +49,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     isApplyingConnections,
     handleApplyLayout,
     renameGraph,
-  } = useGraph(graphName);
+  } = useGraphSpecific(graphName);
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
 
@@ -76,7 +75,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
 
     // Detect if any node still needs layout (position remains at origin)
     const needsLayout = enhancedNodes.some(
-      (n) => n.position.x === 0 && n.position.y === 0
+      (node) => node.position.x === 0 && node.position.y === 0
     );
 
     // Only apply layout if needed and not already applied
@@ -186,7 +185,10 @@ function GraphPageContent({ graphName }: { graphName: string }) {
                         <span>
                           New:{" "}
                           {pendingEdges
-                            .map((edge) => `${edge.source} → ${edge.target}`)
+                            .map(
+                              (edge: { source: string; target: string }) =>
+                                `${edge.source} → ${edge.target}`
+                            )
                             .join(", ")}
                         </span>
                       )}
@@ -195,7 +197,12 @@ function GraphPageContent({ graphName }: { graphName: string }) {
                           Deleting:{" "}
                           {pendingEdgeDeletions
                             .map(
-                              (edge) =>
+                              (edge: {
+                                sourceResourceType: string;
+                                sourceResourceName: string;
+                                targetResourceType: string;
+                                targetResourceName: string;
+                              }) =>
                                 `${edge.sourceResourceType}-${edge.sourceResourceName} → ${edge.targetResourceType}-${edge.targetResourceName}`
                             )
                             .join(", ")}
@@ -258,11 +265,6 @@ function GraphPageContent({ graphName }: { graphName: string }) {
         {isLoading && (
           <div className="absolute top-20 left-4 z-10 rounded-md bg-blue-100 px-3 py-2 text-blue-800 shadow-md">
             Loading {graphName}...
-          </div>
-        )}
-        {error && (
-          <div className="absolute top-20 left-4 z-10 rounded-md bg-red-100 px-3 py-2 text-red-800 shadow-md">
-            Error: {error}
           </div>
         )}
       </ReactFlow>

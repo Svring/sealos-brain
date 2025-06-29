@@ -411,8 +411,9 @@ export function useGraphEdge(
   const addGraphEdgesMutation = useAddGraphEdgesAnnotationMutation();
 
   // Get resources to parse edges from
-  const { allResources, isLoading: isLoadingResources } =
-    useResources(currentUser);
+  const { allResources, isLoading: isLoadingResources } = useResources(
+    currentUser as User
+  );
 
   const queryClient = useQueryClient();
 

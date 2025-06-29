@@ -13,7 +13,6 @@ import { useSealosStore } from "@/store/sealos-store";
 interface UseGraphNodeReturn {
   nodes: Node[];
   isLoading: boolean;
-  error: string | null;
   mergedGraphs: GraphResourceGroup;
   deleteGraph: (graphName: string) => Promise<void>;
   isDeletingGraph: boolean;
@@ -102,7 +101,7 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
     useGraphQuery(currentUser, specificGraphName || "");
 
   // Use the simplified resources hook for node data
-  const { allResources } = useResources(currentUser);
+  const { allResources } = useResources(currentUser as User);
 
   // Check if edges exist for this graph
   const edgesExist = hasEdgesInGraph(allResources, specificGraphName);
@@ -111,9 +110,6 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
   const isLoading = specificGraphName
     ? isLoadingSpecificGraph
     : isLoadingGraphs;
-
-  // Combined error state (simplified since useResources handles individual query errors)
-  const error: string | null = null;
 
   // Compute nodes based on current view
   const nodes = useMemo(() => {
@@ -219,7 +215,6 @@ export function useGraphNode(specificGraphName?: string): UseGraphNodeReturn {
   return {
     nodes,
     isLoading,
-    error,
     mergedGraphs,
     deleteGraph,
     isDeletingGraph,

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
 import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
+import type { User } from "@/payload-types";
 
 interface ExistingResource {
   name: string;
@@ -13,7 +14,6 @@ interface ExistingResource {
 interface UseResourcesReturn {
   allResources: ExistingResource[];
   isLoading: boolean;
-  refetchAll: () => void;
   queries: {
     devboxQuery: any;
     clusterQuery: any;
@@ -23,7 +23,7 @@ interface UseResourcesReturn {
   };
 }
 
-export function useResources(currentUser: any): UseResourcesReturn {
+export function useResources(currentUser: User): UseResourcesReturn {
   // Fetch all resource types
   const devboxQuery = useQuery(
     directResourceListOptions(currentUser, "devbox")
@@ -46,64 +46,59 @@ export function useResources(currentUser: any): UseResourcesReturn {
     const resources: ExistingResource[] = [];
 
     // Add devboxes
-    const devboxItems =
-      devboxQuery.data?.body?.items || devboxQuery.data?.items || [];
-    devboxItems.forEach((item: any) => {
+    const devboxItems = devboxQuery.data?.items || [];
+    for (const item of devboxItems) {
       resources.push({
         name: item.metadata?.name || "",
         type: "devbox",
         status: item.status?.phase || "Unknown",
         annotations: item.metadata?.annotations || {},
       });
-    });
+    }
 
     // Add clusters
-    const clusterItems =
-      clusterQuery.data?.body?.items || clusterQuery.data?.items || [];
-    clusterItems.forEach((item: any) => {
+    const clusterItems = clusterQuery.data?.items || [];
+    for (const item of clusterItems) {
       resources.push({
         name: item.metadata?.name || "",
         type: "cluster",
         status: item.status?.phase || "Unknown",
         annotations: item.metadata?.annotations || {},
       });
-    });
+    }
 
     // Add deployments
-    const deploymentItems =
-      deploymentQuery.data?.body?.items || deploymentQuery.data?.items || [];
-    deploymentItems.forEach((item: any) => {
+    const deploymentItems = deploymentQuery.data?.items || [];
+    for (const item of deploymentItems) {
       resources.push({
         name: item.metadata?.name || "",
         type: "deployment",
         status: item.status?.conditions?.[0]?.type || "Unknown",
         annotations: item.metadata?.annotations || {},
       });
-    });
+    }
 
     // Add cronjobs
-    const cronjobItems =
-      cronjobQuery.data?.body?.items || cronjobQuery.data?.items || [];
-    cronjobItems.forEach((item: any) => {
+    const cronjobItems = cronjobQuery.data?.items || [];
+    for (const item of cronjobItems) {
       resources.push({
         name: item.metadata?.name || "",
         type: "cronjob",
         status: item.status?.active ? "Active" : "Inactive",
         annotations: item.metadata?.annotations || {},
       });
-    });
+    }
 
     // Add object storage buckets
-    const bucketItems =
-      bucketQuery.data?.body?.items || bucketQuery.data?.items || [];
-    bucketItems.forEach((item: any) => {
+    const bucketItems = bucketQuery.data?.items || [];
+    for (const item of bucketItems) {
       resources.push({
         name: item.metadata?.name || "",
         type: "objectstoragebucket",
         status: item.status?.phase || "Unknown",
         annotations: item.metadata?.annotations || {},
       });
-    });
+    }
 
     return resources;
   }, [
@@ -121,18 +116,9 @@ export function useResources(currentUser: any): UseResourcesReturn {
     cronjobQuery.isLoading ||
     bucketQuery.isLoading;
 
-  const refetchAll = () => {
-    devboxQuery.refetch();
-    clusterQuery.refetch();
-    deploymentQuery.refetch();
-    cronjobQuery.refetch();
-    bucketQuery.refetch();
-  };
-
   return {
     allResources,
     isLoading,
-    refetchAll,
     queries: {
       devboxQuery,
       clusterQuery,
