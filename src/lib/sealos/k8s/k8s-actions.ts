@@ -37,35 +37,45 @@ function createApiClients(kc: KubeConfig): ApiClients {
   };
 }
 
-async function getResource(
-  clients: ApiClients,
+export async function getResource(
+  kubeconfig: string,
   resourceType: ResourceType,
   resourceName: string,
-  namespace: string
+  namespace = "default"
 ) {
-  const resource = RESOURCES[resourceType];
-  if ("group" in resource && resource.group) {
-    return clients.customApi.getNamespacedCustomObject({
-      group: resource.group,
-      version: resource.version!,
-      namespace,
-      plural: resource.plural!,
-      name: resourceName,
-    });
+  try {
+    const kc = createKubeConfig(kubeconfig);
+    const clients = createApiClients(kc);
+    const resource = RESOURCES[resourceType];
+
+    if ("group" in resource && resource.group) {
+      const result = await clients.customApi.getNamespacedCustomObject({
+        group: resource.group,
+        version: resource.version || "v1",
+        namespace,
+        plural: resource.plural || "",
+        name: resourceName,
+      });
+      return JSON.parse(JSON.stringify(result));
+    }
+    if (resourceType === "deployment") {
+      const result = await clients.appsApi.readNamespacedDeployment({
+        name: resourceName,
+        namespace,
+      });
+      return JSON.parse(JSON.stringify(result));
+    }
+    if (resourceType === "cronjob") {
+      const result = await clients.batchApi.readNamespacedCronJob({
+        name: resourceName,
+        namespace,
+      });
+      return JSON.parse(JSON.stringify(result));
+    }
+    throw new Error(`Unsupported resource type: ${resourceType}`);
+  } catch {
+    return { error: `Failed to get ${resourceType} ${resourceName}` };
   }
-  if (resourceType === "deployment") {
-    return clients.appsApi.readNamespacedDeployment({
-      name: resourceName,
-      namespace,
-    });
-  }
-  if (resourceType === "cronjob") {
-    return clients.batchApi.readNamespacedCronJob({
-      name: resourceName,
-      namespace,
-    });
-  }
-  throw new Error(`Unsupported resource type: ${resourceType}`);
 }
 
 async function patchResource(
@@ -157,7 +167,7 @@ export async function patchResourceAnnotation(
 
   try {
     const currentResource = await getResource(
-      clients,
+      kubeconfig,
       resourceType,
       resourceName,
       namespace
@@ -193,14 +203,13 @@ export async function patchResourceAnnotation(
       resourceType,
       annotationKey,
     };
-  } catch (error: any) {
-    console.error(
-      `Error patching annotation on ${resourceType} ${resourceName}:`,
-      error
-    );
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error.message || `Failed to patch annotation on ${resourceType}`,
+      error:
+        error instanceof Error
+          ? error.message
+          : `Failed to patch annotation on ${resourceType}`,
       resourceName,
       resourceType,
       annotationKey,

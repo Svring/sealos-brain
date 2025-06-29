@@ -49,8 +49,8 @@ export function useSealosBrainAgent() {
 }
 
 // Hook for Code Agent
-export function useCodeAgent(projectAddress?: string, token?: string) {
-  const agentConfig = createCodeAgentConfigurable(projectAddress, token);
+export function useCodeAgent(devpod_address: string) {
+  const agentConfig = createCodeAgentConfigurable(devpod_address);
 
   const { state } = useCoAgent<CodeAgentState>({
     name: codeAgentConfig.name,

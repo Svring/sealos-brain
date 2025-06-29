@@ -1,21 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { BrowserBar } from "./browser-bar";
-import { PreviewContent } from "./preview-content";
 import { Console } from "./console";
-import { useState, useEffect } from "react";
+import { PreviewContent } from "./preview-content";
 
 interface PreviewPanelProps {
-  isDarkMode: boolean;
-  setIsDarkMode: (isDark: boolean) => void;
   previewUrl: string;
 }
 
-export function PreviewPanel({
-  isDarkMode,
-  setIsDarkMode,
-  previewUrl,
-}: PreviewPanelProps) {
+export function PreviewPanel({ previewUrl }: PreviewPanelProps) {
   const [url, setUrl] = useState(previewUrl);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -25,21 +19,16 @@ export function PreviewPanel({
   }, [previewUrl]);
 
   const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
   };
 
   return (
-    <div className="h-full flex flex-col bg-background border border-border rounded-lg">
+    <div className="flex h-full flex-col rounded-lg border border-border bg-background">
       {/* Browser Bar */}
-      <BrowserBar url={url} onUrlChange={() => {}} onRefresh={handleRefresh} readOnly />
+      <BrowserBar onRefresh={handleRefresh} readOnly url={url} />
 
       {/* Preview Content */}
-      <PreviewContent
-        isDarkMode={isDarkMode}
-        setIsDarkMode={setIsDarkMode}
-        url={url}
-        refreshKey={refreshKey}
-      />
+      <PreviewContent refreshKey={refreshKey} url={url} />
 
       {/* Console */}
       <Console />

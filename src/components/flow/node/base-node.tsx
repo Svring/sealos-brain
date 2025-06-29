@@ -1,6 +1,5 @@
 import { Handle, Position } from "@xyflow/react";
 import { type MouseEvent, memo } from "react";
-import { Glass } from "@/components/ui/glass-effect";
 import { usePanel } from "@/context/panel-provider";
 
 interface BaseNodeProps {
@@ -31,7 +30,7 @@ const BaseNode = ({
 
   return (
     <>
-      <Glass className="rounded-lg p-4" height="min-h-40" width="w-60">
+      <div className="flex h-40 w-60 flex-col rounded-lg border border-border bg-background p-4">
         <button
           className={`h-full w-full cursor-pointer border-border ${className}`}
           onClick={handleClick}
@@ -39,7 +38,7 @@ const BaseNode = ({
         >
           {children}
         </button>
-      </Glass>
+      </div>
       <Handle position={Position.Top} type="source" />
       <Handle position={Position.Bottom} type="target" />
     </>

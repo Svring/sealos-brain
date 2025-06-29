@@ -23,7 +23,7 @@ import { useSealosStore } from "@/store/sealos-store";
 interface DevboxOption {
   name: string;
   preview_address: string;
-  galatea_address: string;
+  devpod_address: string;
 }
 
 export const dynamic = "force-dynamic";

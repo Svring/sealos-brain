@@ -107,33 +107,45 @@ export const transformTemplateList = (data: any) => {
 };
 
 /**
- * Transform getDevboxByName response to extract preview and galatea addresses
- * Returns URLs for port 3000 (preview) and port 3051 (galatea)
+ * Transform getDevboxByName response to extract devpod and preview addresses
+ * Returns URLs for specified ports (default: 3051 for devpod, 3000 for preview)
  */
-export const transformDevboxAddresses = (data: any) => {
-  if (!(data?.networks && Array.isArray(data.networks))) {
+export const transformDevboxAddresses = (
+  data: unknown,
+  devpodPort = 3051,
+  previewPort = 3000
+): { devpod_address: string; preview_address: string } | { error: string } => {
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !("networks" in data) ||
+    !Array.isArray(data.networks)
+  ) {
     return {
       error: "Devbox is not controlled - no network information available",
     };
   }
 
-  const previewNetwork = data.networks.find(
-    (network: any) => network.port === 3000
-  );
-  const galateaNetwork = data.networks.find(
-    (network: any) => network.port === 3051
-  );
+  const networks = data.networks as Array<{
+    port: number;
+    publicDomain?: string;
+    [key: string]: unknown;
+  }>;
 
-  if (!(previewNetwork?.publicDomain && galateaNetwork?.publicDomain)) {
+  const previewNetwork = networks.find(
+    (network) => network.port === previewPort
+  );
+  const devpodNetwork = networks.find((network) => network.port === devpodPort);
+
+  if (!(previewNetwork?.publicDomain && devpodNetwork?.publicDomain)) {
     return {
-      error:
-        "Devbox is not controlled - required ports (3000, 3051) or their public domains are not available",
+      error: `Devbox is not controlled - required ports (${previewPort}, ${devpodPort}) or their public domains are not available`,
     };
   }
 
   return {
     preview_address: `https://${previewNetwork.publicDomain}`,
-    galatea_address: `https://${galateaNetwork.publicDomain}`,
+    devpod_address: `https://${devpodNetwork.publicDomain}`,
   };
 };
 

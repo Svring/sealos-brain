@@ -146,15 +146,7 @@ Output: Generate the complete app/dashboard/page.tsx file with a card-based layo
 Proceed with generating or modifying code based on the user's prompt, adhering strictly to these guidelines and leveraging the provided tools.
 `;
 
-export type CodeAgentState = {
-  project_address?: string;
-  project_context: {
-    framework?: string;
-    language?: string;
-    dependencies?: string[];
-  };
-  recent_operations: string[];
-};
+export type CodeAgentState = {};
 
 export interface CodeAgentConfig {
   name: string;
@@ -163,8 +155,6 @@ export interface CodeAgentConfig {
     runtimeUrl: string;
     agent: string;
   };
-  project_address: string;
-  token: string;
 }
 
 export const codeAgentConfig: CodeAgentConfig = {
@@ -174,8 +164,6 @@ export const codeAgentConfig: CodeAgentConfig = {
     runtimeUrl: "/api/agent/code",
     agent: "code",
   },
-  project_address: "https://uwjpoiybnpbq.sealosbja.site",
-  token: "",
 };
 
 // Function to get code agent configuration with optional config overrides
@@ -187,16 +175,12 @@ export function getCodeAgentConfig(config?: Partial<CodeAgentConfig>) {
 }
 
 // Function to create configurable object for the code agent
-export function createCodeAgentConfigurable(
-  project_address?: string,
-  token?: string
-) {
+export function createCodeAgentConfigurable(devpod_address: string) {
   return {
     recursion_limit: 50,
     configurable: {
-      project_address: project_address || codeAgentConfig.project_address,
-      token: token || codeAgentConfig.token,
       system_prompt: codeAgentConfig.systemPrompt,
+      devpod_address,
     },
   };
 }

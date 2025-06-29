@@ -1,35 +1,29 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Sun, Moon } from "lucide-react";
-
 interface PreviewContentProps {
-  isDarkMode: boolean;
-  setIsDarkMode: (isDark: boolean) => void;
   url: string;
   refreshKey: number;
 }
 
-export function PreviewContent({ isDarkMode, setIsDarkMode, url, refreshKey }: PreviewContentProps) {
-
+export function PreviewContent({ url, refreshKey }: PreviewContentProps) {
   return (
-    <div className="flex-1 relative">
-      <div className="h-full bg-background relative">
+    <div className="relative flex-1">
+      <div className="relative h-full bg-background">
         {/* Website Preview */}
         {url ? (
           <iframe
+            className="h-full w-full border-0"
             key={refreshKey}
-            src={url}
-            className="w-full h-full border-0"
-            title="Website Preview"
             sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation"
+            src={url}
+            title="Website Preview"
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-muted-foreground">
             Enter a URL in the address bar to preview a website
           </div>
         )}
       </div>
     </div>
   );
-} 
+}
