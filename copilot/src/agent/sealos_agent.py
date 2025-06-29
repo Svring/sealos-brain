@@ -18,6 +18,12 @@ from langgraph.types import Command
 from langgraph.prebuilt import ToolNode
 
 from src.provider.backbone_provider import get_sealos_model
+from src.utils.context_utils import (
+    get_config_values,
+    get_state_values,
+    get_copilot_actions,
+    has_copilot_actions,
+)
 
 
 class SealosBrainState(CopilotKitState):
@@ -28,24 +34,6 @@ class SealosBrainState(CopilotKitState):
     """
 
 
-def get_config_data(config: RunnableConfig) -> tuple[str | None, str | None, str]:
-    """Extract configuration data from config."""
-    configurable = config.get("configurable", {})
-    base_url = configurable.get("base_url", None)
-    api_key = configurable.get("api_key", None)
-    system_prompt = configurable.get("system_prompt", "")
-    return base_url, api_key, system_prompt
-
-
-def get_state_data(state: SealosBrainState) -> tuple[list, bool]:
-    """Extract state data and determine if tools should be bound."""
-    messages = state["messages"]
-    should_bind_tools = bool(
-        state.get("copilotkit") and state["copilotkit"].get("actions")
-    )
-    return messages, should_bind_tools
-
-
 async def sealos_brain_node(
     state: SealosBrainState, config: RunnableConfig
 ) -> Command[Literal["tool_node", "__end__"]]:
@@ -54,14 +42,22 @@ async def sealos_brain_node(
     Handles model binding, system prompts, Sealos context, and tool calls.
     """
 
-    base_url, api_key, system_prompt = get_config_data(config)
-    messages, should_bind_tools = get_state_data(state)
+    # Extract configuration data
+    base_url, api_key, system_prompt = get_config_values(
+        config, {"base_url": None, "api_key": None, "system_prompt": ""}
+    )
+
+    # Extract state data
+    (messages,) = get_state_values(state, {"messages": []})
+
+    # Determine if tools should be bound
+    should_bind_tools = has_copilot_actions(state)
 
     llm = get_sealos_model("gpt-4o", base_url, api_key)
 
     # Only bind tools when copilotkit and actions both exist
     if should_bind_tools:
-        copilotkit = state["copilotkit"]["actions"]
+        copilotkit = get_copilot_actions(state)
         # Bind tools to model
         model_with_tools = llm.bind_tools(copilotkit, parallel_tool_calls=False)
     else:
@@ -81,7 +77,7 @@ async def sealos_brain_node(
         and response.tool_calls
         and not any(
             action.get("name") == response.tool_calls[0].get("name")
-            for action in state["copilotkit"]["actions"]
+            for action in get_copilot_actions(state)
         )
     ):
         return Command(goto="tool_node", update={"messages": response})

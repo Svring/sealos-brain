@@ -166,21 +166,19 @@ export const codeAgentConfig: CodeAgentConfig = {
   },
 };
 
-// Function to get code agent configuration with optional config overrides
-export function getCodeAgentConfig(config?: Partial<CodeAgentConfig>) {
-  return {
-    ...codeAgentConfig,
-    ...config,
-  };
-}
-
 // Function to create configurable object for the code agent
-export function createCodeAgentConfigurable(devpod_address: string) {
+export function createCodeAgentConfigurable(
+  devpodAddress: string,
+  apiKey: string,
+  baseUrl: string
+) {
   return {
     recursion_limit: 50,
     configurable: {
       system_prompt: codeAgentConfig.systemPrompt,
-      devpod_address,
+      devpod_address: devpodAddress,
+      api_key: apiKey,
+      base_url: baseUrl,
     },
   };
 }
