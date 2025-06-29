@@ -1,7 +1,7 @@
 "use server";
 
-import { NodeSSH } from "node-ssh";
 import * as fs from "fs";
+import { NodeSSH } from "node-ssh";
 import * as path from "path";
 
 interface DevboxInfo {
@@ -25,13 +25,13 @@ interface SSHConfig {
 
 function formatPrivateKey(privateKey?: string): string | undefined {
   if (!privateKey) {
-    return undefined;
+    return;
   }
 
   let decodedKey = privateKey;
 
   // Try to decode base64 if it doesn't contain PEM markers
-  if (!privateKey.includes("-----BEGIN") && !privateKey.includes("-----END")) {
+  if (!(privateKey.includes("-----BEGIN") || privateKey.includes("-----END"))) {
     try {
       // Decode base64 in Node.js environment
       decodedKey = Buffer.from(privateKey, "base64").toString("utf-8");
@@ -56,8 +56,8 @@ function formatPrivateKey(privateKey?: string): string | undefined {
  */
 export async function activateGalateaForDevbox(
   devboxInfo: DevboxInfo,
-  mcpEnabled: boolean = false,
-  update: boolean = false
+  mcpEnabled = false,
+  update = false
 ): Promise<string> {
   try {
     console.log(
@@ -74,7 +74,7 @@ export async function activateGalateaForDevbox(
     const sshConfig: SSHConfig = {
       host: devboxInfo.ssh_credentials.host,
       port: devboxInfo.ssh_credentials.port
-        ? parseInt(devboxInfo.ssh_credentials.port.toString())
+        ? Number.parseInt(devboxInfo.ssh_credentials.port.toString())
         : 22,
       username: devboxInfo.ssh_credentials.username,
       password: devboxInfo.ssh_credentials.password,
@@ -232,7 +232,7 @@ export async function cleanupGalateaFilesOnDevbox(
     const sshConfig: SSHConfig = {
       host: devboxInfo.ssh_credentials.host,
       port: devboxInfo.ssh_credentials.port
-        ? parseInt(devboxInfo.ssh_credentials.port.toString())
+        ? Number.parseInt(devboxInfo.ssh_credentials.port.toString())
         : 22,
       username: sshUser,
       password: devboxInfo.ssh_credentials.password,

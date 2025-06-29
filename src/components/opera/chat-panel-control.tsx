@@ -1,6 +1,8 @@
 "use client";
 
+import { Key } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -8,8 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useCodeAgent } from "@/context/copilot-state-provider";
 import { useDevboxSelection } from "@/context/devbox-selection-provider";
+import { uploadDevpodReleaseFile } from "@/lib/devpod/devpod-action";
+import {
+  killDevboxPorts,
+  runDevboxNpmDev,
+  runDevpodBinary,
+  type SSHConfig,
+  useDevboxSSHCredentials,
+} from "@/lib/devpod/devpod-utils";
 import { useGraphsQuery } from "@/lib/graph/graph-query";
 import { useSealosStore } from "@/store/sealos-store";
 
@@ -30,6 +46,9 @@ export function ChatPanelControl({
   const { selectedDevbox, setSelectedDevbox, devpodUrl } = useDevboxSelection();
   const { state, setState } = useCodeAgent();
 
+  // Fetch SSH credentials for the selected devbox
+  const sshConfig = useDevboxSSHCredentials(selectedDevbox);
+
   // Update code agent state when devbox addresses change
   useEffect(() => {
     if (devpodUrl && devpodUrl !== state.devpod_address) {
@@ -48,6 +67,20 @@ export function ChatPanelControl({
     onDevboxChange?.(devboxName);
   };
 
+  const handleControlDevbox = async () => {
+    const uploadResult = await uploadDevpodReleaseFile(sshConfig as SSHConfig);
+    if (!uploadResult.success) return;
+
+    const killPortsResult = await killDevboxPorts(sshConfig as SSHConfig);
+    console.log("Kill ports result", killPortsResult);
+
+    const npmDevResult = await runDevboxNpmDev(sshConfig as SSHConfig);
+    console.log("NPM run dev result", npmDevResult);
+
+    const devpodResult = await runDevpodBinary(sshConfig as SSHConfig);
+    console.log("Devpod binary result", devpodResult);
+  };
+
   // Get devboxes from selected graph
   const selectedGraphDevboxes =
     selectedGraph && allGraphs ? allGraphs[selectedGraph]?.devbox || [] : [];
@@ -63,11 +96,11 @@ export function ChatPanelControl({
   const graphNames = allGraphs ? Object.keys(allGraphs) : [];
 
   return (
-    <div className="flex items-center gap-2 border-border border-b p-2">
+    <div className="flex items-center gap-1 border-border border-b p-1">
       {/* Graph Selection */}
       <div className="flex items-center gap-1">
         <Select onValueChange={handleGraphChange} value={selectedGraph}>
-          <SelectTrigger className="h-7 w-32 text-xs">
+          <SelectTrigger className="h-7 text-xs" size="sm">
             <SelectValue placeholder="Select graph" />
           </SelectTrigger>
           <SelectContent>
@@ -93,7 +126,7 @@ export function ChatPanelControl({
           onValueChange={handleDevboxChange}
           value={selectedDevbox}
         >
-          <SelectTrigger className="h-7 w-32 text-xs">
+          <SelectTrigger className="h-7 text-xs" size="sm">
             <SelectValue placeholder="Select devbox" />
           </SelectTrigger>
           <SelectContent>
@@ -112,14 +145,25 @@ export function ChatPanelControl({
         </Select>
       </div>
 
-      {/* Loading indicator for devbox address */}
-      {selectedDevbox && (
-        <div className="text-muted-foreground text-xs">
-          {devpodUrl
-            ? `Connected to ${selectedDevbox}`
-            : "Loading devbox address..."}
-        </div>
-      )}
+      {/* Show Devbox Secret Button */}
+      <div className="ml-auto">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="h-7 w-7"
+                disabled={!selectedDevbox}
+                onClick={handleControlDevbox}
+                size="icon"
+                variant="ghost"
+              >
+                <Key className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Show Devbox Secret</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   );
 }

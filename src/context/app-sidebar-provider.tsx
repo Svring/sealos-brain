@@ -1,17 +1,16 @@
 "use client";
 
-// React and third-party imports
-import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Boxes,
   DollarSign,
+  Drama,
   Home,
   PanelLeft,
   User2,
   Workflow,
 } from "lucide-react";
-
+// React and third-party imports
 // UI Components
 import {
   Sidebar,
@@ -21,18 +20,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail
+  SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { MainSection, NavigationItem } from "@/components/ui/sidebar-section";
-
-// Hooks and store
-import { useSealosStore } from "@/store/sealos-store";
-import { useSidebar } from "@/components/ui/sidebar";
+import {
+  MainSection,
+  type NavigationItem,
+} from "@/components/ui/sidebar-section";
 import { accountAmountOptions } from "@/lib/sealos/account/account-query";
-
 // Utils
 import { transformAccountAmountIntoBalance } from "@/lib/sealos/account/account-transform";
 import { cn } from "@/lib/utils";
+// Hooks and store
+import { useSealosStore } from "@/store/sealos-store";
 
 // Constants
 const NAVIGATION_ITEMS: NavigationItem[] = [
@@ -53,7 +53,13 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     icon: Workflow,
     group: "overview",
     path: "/graph",
-  }
+  },
+  {
+    title: "Opera",
+    icon: Drama,
+    group: "overview",
+    path: "/opera",
+  },
 ];
 
 // Main component
@@ -69,15 +75,15 @@ export default function AppSidebar() {
     )
   );
 
-  const { toggleSidebar, state } = useSidebar();
+  const { toggleSidebar } = useSidebar();
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
+    <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader className={cn("bg-background")}>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={toggleSidebar}>
-              <PanelLeft className="w-4 h-4" />
+              <PanelLeft className="h-4 w-4" />
               <span>Sealos Brain</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -90,15 +96,13 @@ export default function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton>
-              <DollarSign className="w-4 h-4" />
-              <span>
-                {accountLoading ? "Loading..." : accountAmountData}
-              </span>
+              <DollarSign className="h-4 w-4" />
+              <span>{accountLoading ? "Loading..." : accountAmountData}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton>
-              <User2 className="w-4 h-4" />
+              <User2 className="h-4 w-4" />
               <span>
                 {currentUser?.username || currentUser?.email || "User"}
               </span>

@@ -20,7 +20,12 @@ export function PreviewContent({ url, refreshKey }: PreviewContentProps) {
           />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">
-            Enter a URL in the address bar to preview a website
+            <div className="text-center">
+              <p className="font-medium text-lg">No Preview Available</p>
+              <p className="mt-2 text-sm">
+                Select a devbox from the chat panel to preview its website
+              </p>
+            </div>
           </div>
         )}
       </div>

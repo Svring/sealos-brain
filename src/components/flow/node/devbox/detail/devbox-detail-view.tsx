@@ -1,27 +1,8 @@
-import React from "react";
-import Image from "next/image";
-import { AnimatedTabs } from "@/components/ui/animated-tabs";
-import { useSealosStore } from "@/store/sealos-store";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Play, Power, RotateCcw, Trash2, Link, Link2Off } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  devboxByNameOptions,
-  sshConnectionInfoOptions,
-} from "@/lib/sealos/devbox/devbox-query";
-import { namespaceListOptions } from "@/lib/sealos/auth/auth-query";
-import { getFirstNamespaceId } from "@/lib/sealos/auth/auth-transform";
-import {
-  startDevboxMutation,
-  shutdownDevboxMutation,
-  restartDevboxMutation,
-  deleteDevboxMutation,
-} from "@/lib/sealos/devbox/devbox-mutation";
+import { Link, Link2Off, Play, Power, RotateCcw, Trash2 } from "lucide-react";
+import Image from "next/image";
+import React from "react";
 import { toast } from "sonner";
-import { usePanel } from "@/context/panel-provider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,11 +14,30 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { usePanel } from "@/context/panel-provider";
+import { namespaceListOptions } from "@/lib/sealos/auth/auth-query";
+import { getFirstNamespaceId } from "@/lib/sealos/auth/auth-transform";
+import {
+  deleteDevboxMutation,
+  restartDevboxMutation,
+  shutdownDevboxMutation,
+  startDevboxMutation,
+} from "@/lib/sealos/devbox/devbox-mutation";
+import {
+  devboxByNameOptions,
+  sshConnectionInfoOptions,
+} from "@/lib/sealos/devbox/devbox-query";
+import { useSealosStore } from "@/store/sealos-store";
 // import {
 //   activateGalateaForDevbox,
 //   cleanupGalateaFilesOnDevbox,
@@ -73,7 +73,7 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
 
   const handleOpenIDE = async () => {
     try {
-      if (!sshConnectionInfo || !devbox || !namespaceId) {
+      if (!(sshConnectionInfo && devbox && namespaceId)) {
         toast.error("Required connection information not available");
         return;
       }
@@ -115,7 +115,7 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
 
   const handleControl = async () => {
     try {
-      if (!sshConnectionInfo || !devbox) {
+      if (!(sshConnectionInfo && devbox)) {
         toast.error("Required SSH or devbox info not available");
         return;
       }
@@ -141,7 +141,7 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
 
   const handleControlUpdate = async () => {
     try {
-      if (!sshConnectionInfo || !devbox) {
+      if (!(sshConnectionInfo && devbox)) {
         toast.error("Required SSH or devbox info not available");
         return;
       }
@@ -168,8 +168,8 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   if (isLoading || !devbox) {
     return (
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Devbox Details</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-semibold text-lg">Devbox Details</h2>
         </div>
         <p>Loading devbox data for: {devboxName}</p>
       </div>
@@ -210,7 +210,7 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                   >
                     {devbox.status.label}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-muted-foreground text-xs">
                     ({devbox.status.value})
                   </span>
                 </span>
@@ -299,7 +299,7 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {devbox.networks.map((net: any, idx: number) => (
-                  <div key={idx} className="space-y-2">
+                  <div className="space-y-2" key={idx}>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Port Name</span>
                       <span className="font-mono text-xs">{net.portName}</span>
@@ -346,7 +346,7 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {templateConfig.ports.map((port: any, idx: number) => (
-                  <div key={idx} className="space-y-2">
+                  <div className="space-y-2" key={idx}>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Name</span>
                       <span className="font-mono text-xs">{port.name}</span>
@@ -374,7 +374,7 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {templateConfig.appPorts.map((port: any, idx: number) => (
-                    <div key={idx} className="space-y-2">
+                    <div className="space-y-2" key={idx}>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Name</span>
                         <span className="font-mono text-xs">{port.name}</span>
@@ -485,14 +485,14 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   ];
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Devbox Details</h2>
+    <div className="flex h-full flex-col">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-semibold text-lg">Devbox Details</h2>
         <div className="flex gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={handleControl}>
-                <Link className="w-4 h-4" />
+              <Button onClick={handleControl} size="icon" variant="outline">
+                <Link className="h-4 w-4" />
                 <span className="sr-only">Control</span>
               </Button>
             </TooltipTrigger>
@@ -503,11 +503,11 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
-                size="icon"
                 onClick={handleControlUpdate}
+                size="icon"
+                variant="outline"
               >
-                <Link2Off className="w-4 h-4" />
+                <Link2Off className="h-4 w-4" />
                 <span className="sr-only">Clean Up Control</span>
               </Button>
             </TooltipTrigger>
@@ -518,16 +518,16 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
-                size="icon"
-                onClick={handleOpenIDE}
                 disabled={!isRunning}
+                onClick={handleOpenIDE}
+                size="icon"
+                variant="outline"
               >
                 <Image
-                  src="https://www.cursor.com/favicon.ico"
                   alt="Cursor"
-                  width={32}
                   height={32}
+                  src="https://www.cursor.com/favicon.ico"
+                  width={32}
                 />
                 <span className="sr-only">Open IDE</span>
               </Button>
@@ -539,12 +539,12 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
-                size="icon"
-                onClick={() => startDevbox(devboxName)}
                 disabled={isRunning || isStarting}
+                onClick={() => startDevbox(devboxName)}
+                size="icon"
+                variant="outline"
               >
-                <Play className="w-4 h-4" />
+                <Play className="h-4 w-4" />
                 <span className="sr-only">
                   {isStarting ? "Starting..." : "Start"}
                 </span>
@@ -557,14 +557,14 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
-                size="icon"
+                disabled={!isRunning || isShuttingDown}
                 onClick={() =>
                   shutdownDevbox({ devboxName, shutdownMode: "Stopped" })
                 }
-                disabled={!isRunning || isShuttingDown}
+                size="icon"
+                variant="outline"
               >
-                <Power className="w-4 h-4" />
+                <Power className="h-4 w-4" />
                 <span className="sr-only">
                   {isShuttingDown ? "Shutting down..." : "Shutdown"}
                 </span>
@@ -577,12 +577,12 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
-                size="icon"
-                onClick={() => restartDevbox(devboxName)}
                 disabled={!isRunning || isRestarting}
+                onClick={() => restartDevbox(devboxName)}
+                size="icon"
+                variant="outline"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="h-4 w-4" />
                 <span className="sr-only">
                   {isRestarting ? "Restarting..." : "Restart"}
                 </span>
@@ -597,11 +597,11 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
               <TooltipTrigger asChild>
                 <AlertDialogTrigger asChild>
                   <Button
-                    variant="destructive"
-                    size="icon"
                     disabled={isDeleting}
+                    size="icon"
+                    variant="destructive"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="h-4 w-4" />
                     <span className="sr-only">
                       {isDeleting ? "Deleting..." : "Delete"}
                     </span>
@@ -624,8 +624,8 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={handleDelete}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={handleDelete}
                 >
                   Delete Devbox
                 </AlertDialogAction>
@@ -636,9 +636,9 @@ export default function DevboxDetail({ devboxName }: { devboxName: string }) {
       </div>
       <div className="flex-1 overflow-hidden">
         <AnimatedTabs
-          tabs={tabs}
+          className="h-full w-full"
           defaultTab="overview"
-          className="w-full h-full"
+          tabs={tabs}
         />
       </div>
     </div>

@@ -7,9 +7,7 @@ import {
   RotateCcw,
   Share,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface BrowserBarProps {
   url: string;
@@ -17,43 +15,13 @@ interface BrowserBarProps {
   readOnly?: boolean;
 }
 
-export function BrowserBar({
-  url,
-  onRefresh,
-  readOnly = false,
-}: BrowserBarProps) {
-  const [inputUrl, setInputUrl] = useState(url);
-
-  // Update local state when prop changes
-  useEffect(() => {
-    setInputUrl(url);
-  }, [url]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (readOnly) {
-      return; // Prevent changes when read-only
-    }
-    let finalUrl = inputUrl.trim();
-
-    // Add https:// if no protocol is specified
-    if (
-      finalUrl &&
-      !finalUrl.startsWith("http://") &&
-      !finalUrl.startsWith("https://")
-    ) {
-      finalUrl = `https://${finalUrl}`;
-    }
-
-    // onUrlChange(finalUrl);
-  };
-
+export function BrowserBar({ url, onRefresh }: BrowserBarProps) {
   const handleRefresh = () => {
     onRefresh();
   };
 
   return (
-    <div className="flex items-center gap-2 rounded-t-lg border-border border-b bg-background px-4 py-2">
+    <div className="relative flex items-center gap-2 rounded-t-lg border-border border-b bg-background px-4 py-2">
       <Button
         className="h-6 w-6 text-muted-foreground"
         size="icon"
@@ -76,16 +44,14 @@ export function BrowserBar({
       >
         <RotateCcw className="h-4 w-4" />
       </Button>
-      <form className="flex-1" onSubmit={handleSubmit}>
-        <Input
-          className="bg-background text-sm"
-          onBlur={handleSubmit}
-          onChange={(e) => setInputUrl(e.target.value)}
-          placeholder="Enter website URL..."
-          readOnly={readOnly}
-          value={inputUrl}
-        />
-      </form>
+      <div className="-translate-x-1/2 -translate-y-1/2 pointer-events-none absolute top-1/2 left-1/2 flex w-1/2 justify-center">
+        <div className="max-w-full overflow-x-auto rounded-md bg-background px-3 py-1">
+          <span className="whitespace-nowrap text-muted-foreground text-sm">
+            {url || "No preview URL available"}
+          </span>
+        </div>
+      </div>
+      <div className="flex-1" />
       <Button
         className="h-6 w-6 text-muted-foreground"
         size="icon"

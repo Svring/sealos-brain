@@ -8,34 +8,25 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { CopilotStateProvider } from "@/context/copilot-state-provider";
-import {
-  DevboxSelectionProvider,
-  useDevboxSelection,
-} from "@/context/devbox-selection-provider";
+import { DevboxSelectionProvider } from "@/context/devbox-selection-provider";
 import { codeAgentConfig } from "@/lib/agent/code-agent";
 
 function OperaPageContent() {
   return (
     <DevboxSelectionProvider>
-      <div className="flex h-screen w-screen flex-col p-2 text-foreground">
+      <div className="flex h-screen w-full flex-col p-2 text-foreground">
         <ResizablePanelGroup className="flex-1 gap-1" direction="horizontal">
           <ResizablePanel className="rounded-lg" defaultSize={25} minSize={25}>
             <ChatPanel />
           </ResizablePanel>
           <ResizableHandle className="bg-transparent" />
           <ResizablePanel className="rounded-lg" defaultSize={75}>
-            <PreviewPanelWithDevbox />
+            <PreviewPanel />
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
     </DevboxSelectionProvider>
   );
-}
-
-function PreviewPanelWithDevbox() {
-  const { previewUrl } = useDevboxSelection();
-
-  return <PreviewPanel previewUrl={previewUrl} />;
 }
 
 export default function OperaPage() {
