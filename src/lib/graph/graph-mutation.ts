@@ -6,10 +6,7 @@ import {
   GRAPH_EDGES_ANNOTATION_KEY,
   type ResourceType,
 } from "@/lib/sealos/k8s/k8s-constant";
-import {
-  useDeleteGraphMutation as useDeleteGraphMutationBase,
-  usePatchResourceAnnotationMutation,
-} from "@/lib/sealos/k8s/k8s-mutation";
+import { usePatchResourceAnnotationMutation } from "@/lib/sealos/k8s/k8s-mutation";
 import type { User } from "@/payload-types";
 
 // Add resource to graph by adding graphName annotation
@@ -74,7 +71,7 @@ export function useCreateGraphWithResourcesMutation() {
       const { currentUser, graphName, resources, namespaceOverride } = params;
 
       // Collect all annotation update promises
-      const annotationPromises: Promise<any>[] = [];
+      const annotationPromises: Promise<unknown>[] = [];
 
       // Iterate through each resource type and add annotations
       for (const [resourceType, resourceNames] of Object.entries(resources)) {
@@ -108,23 +105,5 @@ export function useCreateGraphWithResourcesMutation() {
   });
 }
 
-// Delete graph by removing graphName annotations from all resources
-export function useDeleteGraphMutation() {
-  const deleteGraphMutation = useDeleteGraphMutationBase();
-
-  return useMutation({
-    mutationFn: async (params: {
-      currentUser: User;
-      graphName: string;
-      graphResources: { [resourceKind: string]: string[] };
-      namespaceOverride?: string;
-    }) => {
-      return await deleteGraphMutation.mutateAsync({
-        currentUser: params.currentUser,
-        graphName: params.graphName,
-        graphResources: params.graphResources,
-        namespaceOverride: params.namespaceOverride,
-      });
-    },
-  });
-}
+// Re-export the delete graph mutation from k8s-mutation for convenience
+export { useDeleteGraphMutation } from "@/lib/sealos/k8s/k8s-mutation";

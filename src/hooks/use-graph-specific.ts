@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useGraphEdge } from "@/hooks/use-graph-edge";
 import { useGraphLayout } from "@/hooks/use-graph-layout";
 import { useGraphNode } from "@/hooks/use-graph-node";
+import { useGraphOverview } from "@/hooks/use-graph-overview";
 import { useAddResourceToGraphMutation } from "@/lib/graph/graph-mutation";
 import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
 import type { User } from "@/payload-types";
@@ -63,6 +64,9 @@ export function useGraphSpecific(graphName: string): UseGraphSpecificReturn {
 
   // Core node-related logic for specific graph
   const nodeLogic = useGraphNode(graphName);
+
+  // Get graph management functionality
+  const { mergedGraphs, deleteGraph, isDeletingGraph } = useGraphOverview();
 
   // Mutation for graph operations
   const addToGraphMutation = useAddResourceToGraphMutation();
@@ -197,14 +201,14 @@ export function useGraphSpecific(graphName: string): UseGraphSpecificReturn {
   // Mutation to rename graph (patch annotations)
   const renameGraph = useCallback(
     async (newName: string) => {
-      const resources = nodeLogic.mergedGraphs[graphName];
+      const resources = mergedGraphs[graphName];
       if (!(resources && currentUser)) {
         return;
       }
 
       const mutations: Promise<unknown>[] = [];
       for (const [kind, names] of Object.entries(resources)) {
-        for (const name of names) {
+        for (const name of names as string[]) {
           mutations.push(
             addToGraphMutation.mutateAsync({
               currentUser,
@@ -222,13 +226,7 @@ export function useGraphSpecific(graphName: string): UseGraphSpecificReturn {
       // Invalidate cached k8s data so UI reflects the renamed graph
       queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
     },
-    [
-      nodeLogic.mergedGraphs,
-      graphName,
-      currentUser,
-      addToGraphMutation,
-      queryClient,
-    ]
+    [mergedGraphs, graphName, currentUser, addToGraphMutation, queryClient]
   );
 
   return {
@@ -243,9 +241,9 @@ export function useGraphSpecific(graphName: string): UseGraphSpecificReturn {
     isLoading: nodeLogic.isLoading,
 
     // Graph data
-    mergedGraphs: nodeLogic.mergedGraphs,
-    deleteGraph: nodeLogic.deleteGraph,
-    isDeletingGraph: nodeLogic.isDeletingGraph,
+    mergedGraphs,
+    deleteGraph,
+    isDeletingGraph,
 
     // Edge editing functionality
     editMode: edgeLogic.editMode,

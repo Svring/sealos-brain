@@ -15,39 +15,7 @@ export default function GraphPage() {
   const { mergedGraphs, isLoading, deleteGraph, isDeletingGraph } =
     useGraphOverview();
   const graphNames = Object.keys(mergedGraphs);
-
-  const renderContent = () => (
-    <div className="rounded-lg border p-6">
-      <Loading text="Computing your infrastructure graph" />
-    </div>
-  );
-
-  // const renderNoGraphs = () => (
-  //   <div className="flex-1 rounded-lg p-6">
-  //     <div className="flex h-full items-center justify-center">
-  //       <div className="text-center">
-  //         <h2 className="mb-2 font-semibold text-xl">No Graphs Found</h2>
-  //         <p className="mb-4 text-muted-foreground">
-  //           No resources with graphName annotations were found
-  //         </p>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
-
-  const renderGraphs = () => (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {graphNames.map((graphName) => (
-        <GraphCard
-          graphName={graphName}
-          isDeleting={isDeletingGraph}
-          key={graphName}
-          onDelete={deleteGraph}
-          resources={mergedGraphs[graphName]}
-        />
-      ))}
-    </div>
-  );
+  const hasGraphs = graphNames.length > 0;
 
   return (
     <div className="container mx-auto flex h-full flex-col p-6">
@@ -62,9 +30,25 @@ export default function GraphPage() {
         </Link>
       </div>
 
-      {isLoading && renderContent()}
-      {!isLoading && graphNames.length === 0 && renderContent()}
-      {!isLoading && graphNames.length > 0 && renderGraphs()}
+      {(isLoading || !hasGraphs) && (
+        <div className="rounded-lg border p-6">
+          <Loading text="Computing your infrastructure graph" />
+        </div>
+      )}
+
+      {!isLoading && hasGraphs && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {graphNames.map((graphName) => (
+            <GraphCard
+              graphName={graphName}
+              isDeleting={isDeletingGraph}
+              key={graphName}
+              onDelete={deleteGraph}
+              resources={mergedGraphs[graphName]}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
 import { directResourceListOptions } from "@/lib/sealos/k8s/k8s-query";
@@ -11,121 +11,94 @@ interface ExistingResource {
   annotations?: Record<string, string>;
 }
 
+// Helper function to get status based on resource type
+function getResourceStatus(
+  item: Record<string, unknown>,
+  type: ResourceType
+): string {
+  if (type === "cronjob") {
+    return (item.status as { active?: boolean })?.active
+      ? "Active"
+      : "Inactive";
+  }
+  if (type === "deployment") {
+    return (
+      (item.status as { conditions?: Array<{ type?: string }> })
+        ?.conditions?.[0]?.type || "Unknown"
+    );
+  }
+  return (item.status as { phase?: string })?.phase || "Unknown";
+}
+
 interface UseResourcesReturn {
   allResources: ExistingResource[];
   isLoading: boolean;
   queries: {
-    devboxQuery: any;
-    clusterQuery: any;
-    deploymentQuery: any;
-    cronjobQuery: any;
-    bucketQuery: any;
+    devboxQuery: unknown;
+    clusterQuery: unknown;
+    deploymentQuery: unknown;
+    cronjobQuery: unknown;
+    bucketQuery: unknown;
   };
 }
 
 export function useResources(currentUser: User): UseResourcesReturn {
-  // Fetch all resource types
-  const devboxQuery = useQuery(
-    directResourceListOptions(currentUser, "devbox")
-  );
-  const clusterQuery = useQuery(
-    directResourceListOptions(currentUser, "cluster")
-  );
-  const deploymentQuery = useQuery(
-    directResourceListOptions(currentUser, "deployment")
-  );
-  const cronjobQuery = useQuery(
-    directResourceListOptions(currentUser, "cronjob")
-  );
-  const bucketQuery = useQuery(
-    directResourceListOptions(currentUser, "objectstoragebucket")
-  );
+  // Define resource types
+  const resourceTypes: ResourceType[] = [
+    "devbox",
+    "cluster",
+    "deployment",
+    "cronjob",
+    "objectstoragebucket",
+  ];
+
+  // Use useQueries to run queries in parallel
+  const queries = useQueries({
+    queries: resourceTypes.map((type) =>
+      directResourceListOptions(currentUser, type)
+    ),
+  });
 
   // Combine all resources into a single list
   const allResources: ExistingResource[] = useMemo(() => {
     const resources: ExistingResource[] = [];
 
-    // Add devboxes
-    const devboxItems = devboxQuery.data?.items || [];
-    for (const item of devboxItems) {
-      resources.push({
-        name: item.metadata?.name || "",
-        type: "devbox",
-        status: item.status?.phase || "Unknown",
-        annotations: item.metadata?.annotations || {},
-      });
-    }
+    // Process each query result
+    queries.forEach((query, index) => {
+      const type = resourceTypes[index];
+      const items = (query.data as { items?: unknown[] })?.items || [];
 
-    // Add clusters
-    const clusterItems = clusterQuery.data?.items || [];
-    for (const item of clusterItems) {
-      resources.push({
-        name: item.metadata?.name || "",
-        type: "cluster",
-        status: item.status?.phase || "Unknown",
-        annotations: item.metadata?.annotations || {},
-      });
-    }
-
-    // Add deployments
-    const deploymentItems = deploymentQuery.data?.items || [];
-    for (const item of deploymentItems) {
-      resources.push({
-        name: item.metadata?.name || "",
-        type: "deployment",
-        status: item.status?.conditions?.[0]?.type || "Unknown",
-        annotations: item.metadata?.annotations || {},
-      });
-    }
-
-    // Add cronjobs
-    const cronjobItems = cronjobQuery.data?.items || [];
-    for (const item of cronjobItems) {
-      resources.push({
-        name: item.metadata?.name || "",
-        type: "cronjob",
-        status: item.status?.active ? "Active" : "Inactive",
-        annotations: item.metadata?.annotations || {},
-      });
-    }
-
-    // Add object storage buckets
-    const bucketItems = bucketQuery.data?.items || [];
-    for (const item of bucketItems) {
-      resources.push({
-        name: item.metadata?.name || "",
-        type: "objectstoragebucket",
-        status: item.status?.phase || "Unknown",
-        annotations: item.metadata?.annotations || {},
-      });
-    }
+      for (const item of items) {
+        resources.push({
+          name: (item as { metadata?: { name?: string } }).metadata?.name || "",
+          type,
+          status: getResourceStatus(item as Record<string, unknown>, type),
+          annotations:
+            (item as { metadata?: { annotations?: Record<string, string> } })
+              .metadata?.annotations || {},
+        });
+      }
+    });
 
     return resources;
-  }, [
-    devboxQuery.data,
-    clusterQuery.data,
-    deploymentQuery.data,
-    cronjobQuery.data,
-    bucketQuery.data,
-  ]);
+  }, [queries]);
 
-  const isLoading =
-    devboxQuery.isLoading ||
-    clusterQuery.isLoading ||
-    deploymentQuery.isLoading ||
-    cronjobQuery.isLoading ||
-    bucketQuery.isLoading;
+  // Determine loading state
+  const isLoading = queries.some((query) => query.isLoading);
+
+  // Map queries to their respective types for return value
+  const queryMap = {
+    devboxQuery: queries[0],
+    clusterQuery: queries[1],
+    deploymentQuery: queries[2],
+    cronjobQuery: queries[3],
+    bucketQuery: queries[4],
+  };
 
   return {
     allResources,
     isLoading,
-    queries: {
-      devboxQuery,
-      clusterQuery,
-      deploymentQuery,
-      cronjobQuery,
-      bucketQuery,
-    },
+    queries: queryMap,
   };
 }
 

@@ -1,13 +1,505 @@
+import type { Edge, Node } from "@xyflow/react";
 import { customAlphabet } from "nanoid";
 import { createMultipleDBs } from "@/lib/sealos/dbprovider/dbprovider-mutation";
 import { generateDBFormFromType } from "@/lib/sealos/dbprovider/dbprovider-utils";
 import { createMultipleDevboxes } from "@/lib/sealos/devbox/devbox-mutation";
-import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
+import {
+  GRAPH_ANNOTATION_KEY,
+  GRAPH_EDGES_ANNOTATION_KEY,
+  type ResourceType,
+} from "@/lib/sealos/k8s/k8s-constant";
+import type { GraphResourceGroup } from "@/lib/sealos/k8s/k8s-transform";
 import { createMultipleObjectStorageBuckets } from "@/lib/sealos/objectstorage/objectstorage-mutation";
 import type { User } from "@/payload-types";
 
+// Type for resource data used in node creation
+interface ExistingResource {
+  name: string;
+  type: ResourceType;
+  status?: string;
+  annotations?: Record<string, string>;
+}
+
+// Edge-related interfaces
+export interface EdgeConnection {
+  name: string;
+  type: ResourceType;
+}
+
+export interface EdgeInfo {
+  in: EdgeConnection[];
+  out: EdgeConnection[];
+}
+
+export interface ParsedEdge extends Edge {
+  sourceResourceType: ResourceType;
+  sourceResourceName: string;
+  targetResourceType: ResourceType;
+  targetResourceName: string;
+  createdAt: string;
+}
+
 // Create a custom nanoid with lowercase alphabet and numbers for 4 characters
 const nanoid4 = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 4);
+
+// Helper function to group resources by graph
+export function groupResourcesByGraph(
+  allResources: ExistingResource[]
+): GraphResourceGroup {
+  return allResources.reduce((graphGroups, resource) => {
+    const graphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
+    if (graphName) {
+      graphGroups[graphName] ??= {};
+      graphGroups[graphName][resource.type] ??= [];
+      graphGroups[graphName][resource.type].push(resource.name);
+    }
+    return graphGroups;
+  }, {} as GraphResourceGroup);
+}
+
+// Edge utility functions
+
+/**
+ * Create edge from connection info
+ */
+export function createEdgeFromConnection(
+  sourceType: ResourceType,
+  sourceName: string,
+  targetType: ResourceType,
+  targetName: string
+): ParsedEdge {
+  return {
+    id: `${sourceType}-${sourceName}-to-${targetType}-${targetName}`,
+    source: `${sourceType}-${sourceName}`,
+    target: `${targetType}-${targetName}`,
+    type: "step-edge",
+    animated: true,
+    sourceResourceType: sourceType,
+    sourceResourceName: sourceName,
+    targetResourceType: targetType,
+    targetResourceName: targetName,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Process connections array into edges
+ */
+export function processConnections(
+  connections: EdgeConnection[],
+  resourceType: ResourceType,
+  resourceName: string,
+  isOutgoing: boolean
+): ParsedEdge[] {
+  const edges: ParsedEdge[] = [];
+
+  for (const connection of connections) {
+    if (connection.name && connection.type) {
+      if (isOutgoing) {
+        edges.push(
+          createEdgeFromConnection(
+            resourceType,
+            resourceName,
+            connection.type,
+            connection.name
+          )
+        );
+      } else {
+        edges.push(
+          createEdgeFromConnection(
+            connection.type,
+            connection.name,
+            resourceType,
+            resourceName
+          )
+        );
+      }
+    }
+  }
+
+  return edges;
+}
+
+/**
+ * Parse edge annotation into edges
+ */
+export function parseEdgeAnnotation(
+  edgesAnnotation: string,
+  resourceName: string,
+  resourceType: ResourceType
+): ParsedEdge[] {
+  try {
+    const edgeInfo: EdgeInfo = JSON.parse(edgesAnnotation);
+    if (!edgeInfo || typeof edgeInfo !== "object") {
+      return [];
+    }
+
+    const edges: ParsedEdge[] = [];
+
+    if (Array.isArray(edgeInfo.out)) {
+      edges.push(
+        ...processConnections(edgeInfo.out, resourceType, resourceName, true)
+      );
+    }
+
+    if (Array.isArray(edgeInfo.in)) {
+      edges.push(
+        ...processConnections(edgeInfo.in, resourceType, resourceName, false)
+      );
+    }
+
+    return edges;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Check if resource belongs to specific graph
+ */
+export function isResourceInGraph(
+  resource: ExistingResource,
+  specificGraphName?: string
+): boolean {
+  if (!specificGraphName) {
+    return true;
+  }
+  const resourceGraphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
+  return resourceGraphName === specificGraphName;
+}
+
+/**
+ * Process edges for a single resource
+ */
+export function processResourceEdges(resource: ExistingResource): ParsedEdge[] {
+  const edgesAnnotation = resource.annotations?.[GRAPH_EDGES_ANNOTATION_KEY];
+  if (!edgesAnnotation) {
+    return [];
+  }
+
+  return parseEdgeAnnotation(
+    edgesAnnotation,
+    resource.name,
+    resource.type as ResourceType
+  );
+}
+
+/**
+ * Check if any edges exist for resources in a specific graph
+ */
+export function hasEdgesInGraph(
+  allResources: ExistingResource[],
+  specificGraphName?: string
+): boolean {
+  if (!allResources.length) {
+    return false;
+  }
+
+  for (const resource of allResources) {
+    if (!isResourceInGraph(resource, specificGraphName)) {
+      continue;
+    }
+
+    const edgesAnnotation = resource.annotations?.[GRAPH_EDGES_ANNOTATION_KEY];
+    if (edgesAnnotation) {
+      try {
+        const edgeInfo: EdgeInfo = JSON.parse(edgesAnnotation);
+        if (
+          (Array.isArray(edgeInfo.in) && edgeInfo.in.length > 0) ||
+          (Array.isArray(edgeInfo.out) && edgeInfo.out.length > 0)
+        ) {
+          return true;
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Get existing edge info for a resource
+ */
+export function getExistingEdgeInfo(
+  resourceKey: string,
+  allResources: ExistingResource[]
+): EdgeInfo {
+  const [resourceType, ...nameParts] = resourceKey.split("-");
+  const resourceName = nameParts.join("-");
+
+  const resource = allResources.find(
+    (r) => r.type === resourceType && r.name === resourceName
+  );
+
+  if (resource?.annotations?.[GRAPH_EDGES_ANNOTATION_KEY]) {
+    try {
+      const existing = JSON.parse(
+        resource.annotations[GRAPH_EDGES_ANNOTATION_KEY]
+      );
+      return {
+        in: Array.isArray(existing.in) ? existing.in : [],
+        out: Array.isArray(existing.out) ? existing.out : [],
+      };
+    } catch {
+      return { in: [], out: [] };
+    }
+  }
+
+  return { in: [], out: [] };
+}
+
+/**
+ * Add connection if not exists
+ */
+export function addConnectionIfNotExists(
+  connections: EdgeConnection[],
+  newConnection: EdgeConnection
+): void {
+  const exists = connections.some(
+    (conn) =>
+      conn.name === newConnection.name && conn.type === newConnection.type
+  );
+  if (!exists) {
+    connections.push(newConnection);
+  }
+}
+
+/**
+ * Remove connection if exists
+ */
+export function removeConnectionIfExists(
+  connections: EdgeConnection[],
+  connectionToRemove: EdgeConnection
+): void {
+  const index = connections.findIndex(
+    (conn) =>
+      conn.name === connectionToRemove.name &&
+      conn.type === connectionToRemove.type
+  );
+  if (index !== -1) {
+    connections.splice(index, 1);
+  }
+}
+
+// Edge hook utility functions
+
+/**
+ * Generic toggle helper for arrays
+ */
+export function toggle<T>(item: T) {
+  return (list: T[]): T[] =>
+    list.includes(item) ? list.filter((i) => i !== item) : [...list, item];
+}
+
+/**
+ * Build display edges with styling for edit mode
+ */
+export function buildDisplayEdges(
+  allResources: ExistingResource[],
+  specificGraphName?: string,
+  editMode = false,
+  selectedEdges: string[] = []
+): ParsedEdge[] {
+  const allEdges: ParsedEdge[] = [];
+
+  // Process each resource's edges
+  for (const resource of allResources) {
+    if (!isResourceInGraph(resource, specificGraphName)) {
+      continue;
+    }
+    allEdges.push(...processResourceEdges(resource));
+  }
+
+  // Deduplicate edges
+  const uniqueEdges = Array.from(
+    new Map(allEdges.map((edge) => [edge.id, edge])).values()
+  );
+
+  // Apply edit mode styling
+  if (editMode) {
+    return uniqueEdges.map((edge) => ({
+      ...edge,
+      style: {
+        ...edge.style,
+        stroke: selectedEdges.includes(edge.id) ? "#ff6b6b" : undefined,
+        strokeWidth: selectedEdges.includes(edge.id) ? 3 : undefined,
+      },
+      animated: !selectedEdges.includes(edge.id),
+    }));
+  }
+
+  return uniqueEdges;
+}
+
+/**
+ * Process edge additions into resource updates map
+ */
+function processEdgeAdditions(
+  draftAdds: Array<{ source: string; target: string }>,
+  getInfo: (nodeId: string) => { type: ResourceType; name: string } | null,
+  allResources: ExistingResource[],
+  resourceUpdates: Map<string, EdgeInfo>
+): void {
+  for (const { source, target } of draftAdds) {
+    const sourceInfo = getInfo(source);
+    const targetInfo = getInfo(target);
+
+    if (!(sourceInfo && targetInfo)) {
+      continue;
+    }
+
+    const sourceKey = `${sourceInfo.type}-${sourceInfo.name}`;
+    const targetKey = `${targetInfo.type}-${targetInfo.name}`;
+
+    // Get or initialize edge info
+    if (!resourceUpdates.has(sourceKey)) {
+      resourceUpdates.set(
+        sourceKey,
+        getExistingEdgeInfo(sourceKey, allResources)
+      );
+    }
+    if (!resourceUpdates.has(targetKey)) {
+      resourceUpdates.set(
+        targetKey,
+        getExistingEdgeInfo(targetKey, allResources)
+      );
+    }
+
+    const sourceEdgeInfo = resourceUpdates.get(sourceKey);
+    const targetEdgeInfo = resourceUpdates.get(targetKey);
+
+    if (sourceEdgeInfo && targetEdgeInfo) {
+      // Add connections
+      addConnectionIfNotExists(sourceEdgeInfo.out, {
+        name: targetInfo.name,
+        type: targetInfo.type,
+      });
+      addConnectionIfNotExists(targetEdgeInfo.in, {
+        name: sourceInfo.name,
+        type: sourceInfo.type,
+      });
+    }
+  }
+}
+
+/**
+ * Process edge deletions into resource updates map
+ */
+function processEdgeDeletions(
+  draftDels: Array<{
+    edgeId: string;
+    sourceResourceType: ResourceType;
+    sourceResourceName: string;
+    targetResourceType: ResourceType;
+    targetResourceName: string;
+  }>,
+  allResources: ExistingResource[],
+  resourceUpdates: Map<string, EdgeInfo>
+): void {
+  for (const deletion of draftDels) {
+    const sourceKey = `${deletion.sourceResourceType}-${deletion.sourceResourceName}`;
+    const targetKey = `${deletion.targetResourceType}-${deletion.targetResourceName}`;
+
+    // Get or initialize edge info
+    if (!resourceUpdates.has(sourceKey)) {
+      resourceUpdates.set(
+        sourceKey,
+        getExistingEdgeInfo(sourceKey, allResources)
+      );
+    }
+    if (!resourceUpdates.has(targetKey)) {
+      resourceUpdates.set(
+        targetKey,
+        getExistingEdgeInfo(targetKey, allResources)
+      );
+    }
+
+    const sourceEdgeInfo = resourceUpdates.get(sourceKey);
+    const targetEdgeInfo = resourceUpdates.get(targetKey);
+
+    if (sourceEdgeInfo && targetEdgeInfo) {
+      // Remove connections
+      removeConnectionIfExists(sourceEdgeInfo.out, {
+        name: deletion.targetResourceName,
+        type: deletion.targetResourceType,
+      });
+      removeConnectionIfExists(targetEdgeInfo.in, {
+        name: deletion.sourceResourceName,
+        type: deletion.sourceResourceType,
+      });
+    }
+  }
+}
+
+/**
+ * Apply edge diff - handles all mutations and side effects
+ */
+export async function applyEdgeDiff(diffParams: {
+  draftAdds: Array<{ source: string; target: string }>;
+  draftDels: Array<{
+    edgeId: string;
+    sourceResourceType: ResourceType;
+    sourceResourceName: string;
+    targetResourceType: ResourceType;
+    targetResourceName: string;
+  }>;
+  user: User;
+  getInfo: (nodeId: string) => { type: ResourceType; name: string } | null;
+  allResources: ExistingResource[];
+  addGraphEdgesMutation: {
+    mutateAsync: (mutationParams: {
+      currentUser: User;
+      resourceType: ResourceType;
+      resourceName: string;
+      graphEdges: string;
+    }) => Promise<unknown>;
+  };
+  queryClient: {
+    invalidateQueries: (queryParams: { queryKey: string[] }) => void;
+  };
+}): Promise<void> {
+  const {
+    draftAdds,
+    draftDels,
+    user,
+    getInfo,
+    allResources,
+    addGraphEdgesMutation,
+    queryClient,
+  } = diffParams;
+
+  if (draftAdds.length === 0 && draftDels.length === 0) {
+    return;
+  }
+
+  const resourceUpdates = new Map<string, EdgeInfo>();
+
+  // Process additions and deletions
+  processEdgeAdditions(draftAdds, getInfo, allResources, resourceUpdates);
+  processEdgeDeletions(draftDels, allResources, resourceUpdates);
+
+  // Apply all mutations in parallel
+  const mutations = Array.from(resourceUpdates.entries()).map(
+    ([resourceKey, edgeInfo]) => {
+      const [resourceType, ...nameParts] = resourceKey.split("-");
+      const resourceName = nameParts.join("-");
+
+      return addGraphEdgesMutation.mutateAsync({
+        currentUser: user,
+        resourceType: resourceType as ResourceType,
+        resourceName,
+        graphEdges: JSON.stringify(edgeInfo),
+      });
+    }
+  );
+
+  await Promise.all(mutations);
+
+  // Invalidate cache
+  queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
+}
 
 // Interfaces
 export interface GraphCreationRequest {
@@ -533,4 +1025,187 @@ export function getOptimalLayoutType(
   }
 
   return "hierarchical";
+}
+
+// Node creation helper functions for ReactFlow
+
+/**
+ * Create an empty state node for when no resources are available
+ */
+export const createEmptyStateNode = (graphName: string): Node => ({
+  id: "empty-state",
+  type: "empty-state",
+  position: { x: 0, y: 0 },
+  data: { graphName },
+  draggable: false,
+  selectable: false,
+});
+
+/**
+ * Create a resource node for ReactFlow
+ */
+export const createResourceNode = (
+  resourceKind: string,
+  resourceName: string,
+  x: number,
+  y: number,
+  allResources: ExistingResource[]
+): Node => ({
+  id: `${resourceKind}-${resourceName}`,
+  type: resourceKind,
+  position: { x, y },
+  data: getNodeDataForResourceType(
+    resourceKind,
+    resourceName,
+    `${resourceKind}-${resourceName}`,
+    allResources
+  ),
+});
+
+/**
+ * Create a graph overview node
+ */
+export const createGraphNode = (
+  graphName: string,
+  graphResources: Record<string, string[]>,
+  graphIndex: number
+): Node => ({
+  id: `graph-${graphName}`,
+  type: "graph",
+  position: {
+    x: 300 + (graphIndex % 3) * 400,
+    y: 200 + Math.floor(graphIndex / 3) * 300,
+  },
+  data: {
+    id: `graph-${graphName}`,
+    graphName,
+    totalResources: Object.values(graphResources).reduce(
+      (acc, resourceList) => acc + resourceList.length,
+      0
+    ),
+    resourceTypes: Object.keys(graphResources),
+    resources: graphResources,
+  },
+});
+
+/**
+ * Create a resource type node for overview
+ */
+export const createResourceTypeNode = (
+  graphName: string,
+  resourceKind: string,
+  resourceNames: string[],
+  graphIndex: number,
+  resourceTypeIndex: number
+): Node => ({
+  id: `${graphName}-${resourceKind}`,
+  type: resourceKind,
+  position: {
+    x: 100 + (graphIndex % 3) * 400 + resourceTypeIndex * 100,
+    y: 350 + Math.floor(graphIndex / 3) * 300,
+  },
+  data: {
+    id: `${graphName}-${resourceKind}`,
+    resourceKind,
+    resourceNames,
+    graphName,
+    count: resourceNames.length,
+  },
+});
+
+/**
+ * Helper function to create proper node data structure for each resource type
+ */
+function getNodeDataForResourceType(
+  resourceKind: string,
+  resourceName: string,
+  nodeId: string,
+  allResources: ExistingResource[]
+) {
+  // Find the actual resource data
+  const resource = allResources.find(
+    (r) => r.name === resourceName && r.type === resourceKind
+  );
+
+  const baseData = {
+    id: nodeId,
+    state: mapResourceStatus(resource?.status || "Unknown"),
+  };
+
+  switch (resourceKind) {
+    case "devbox":
+      return {
+        ...baseData,
+        devboxName: resourceName,
+        iconId: "devbox",
+      };
+
+    case "cluster":
+      // Use DBProvider node data structure for clusters
+      return {
+        ...baseData,
+        dbName: resourceName,
+        dbType: "cluster",
+        dbVersion: "Unknown", // Would need full resource data to extract this
+        replicas: 1, // Would need full resource data to extract this
+      };
+
+    case "deployment":
+      // Use AppLaunchpad node data structure for deployments
+      return {
+        ...baseData,
+        deploymentName: resourceName,
+        replicas: 1, // Would need full resource data to extract this
+        availableReplicas: 0, // Would need full resource data to extract this
+        image: "Unknown", // Would need full resource data to extract this
+      };
+
+    case "cronjob":
+      return {
+        ...baseData,
+        cronJobName: resourceName,
+        schedule: "Unknown", // Would need full resource data to extract this
+        suspend: false, // Would need full resource data to extract this
+      };
+
+    case "objectstoragebucket":
+      return {
+        ...baseData,
+        bucketName: resourceName,
+        storageClassName: "Unknown", // Would need full resource data to extract this
+      };
+
+    default:
+      return {
+        ...baseData,
+        name: resourceName,
+        resourceKind,
+      };
+  }
+}
+
+/**
+ * Helper function to map resource status to node state
+ */
+function mapResourceStatus(status: string): string {
+  const statusLower = status.toLowerCase();
+
+  if (
+    statusLower.includes("running") ||
+    statusLower.includes("ready") ||
+    statusLower.includes("available")
+  ) {
+    return "Running";
+  }
+  if (statusLower.includes("stopped") || statusLower.includes("terminated")) {
+    return "Stopped";
+  }
+  if (statusLower.includes("creating") || statusLower.includes("pending")) {
+    return "Creating";
+  }
+  if (statusLower.includes("failed") || statusLower.includes("error")) {
+    return "Failed";
+  }
+
+  return "Unknown";
 }
