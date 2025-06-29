@@ -1,6 +1,5 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
   Select,
@@ -10,9 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCodeAgent } from "@/context/copilot-state-provider";
+import { useDevboxSelection } from "@/context/devbox-selection-provider";
 import { useGraphsQuery } from "@/lib/graph/graph-query";
-import { devboxByNameOptions } from "@/lib/sealos/devbox/devbox-query";
-import { transformDevboxAddresses } from "@/lib/sealos/devbox/devbox-transform";
 import { useSealosStore } from "@/store/sealos-store";
 
 interface ChatPanelControlProps {
@@ -24,37 +22,20 @@ export function ChatPanelControl({
   onGraphChange,
   onDevboxChange,
 }: ChatPanelControlProps) {
-  const { currentUser, regionUrl } = useSealosStore();
+  const { currentUser } = useSealosStore();
   const [selectedGraph, setSelectedGraph] = useState<string>("");
-  const [selectedDevbox, setSelectedDevbox] = useState<string>("");
 
   const { data: allGraphs, isLoading } = useGraphsQuery(currentUser);
 
-  // Query to get devbox addresses when a devbox is selected
-  const devboxAddressesQuery = useQuery(
-    devboxByNameOptions(
-      currentUser,
-      regionUrl,
-      selectedDevbox,
-      transformDevboxAddresses
-    )
-  );
-
+  const { selectedDevbox, setSelectedDevbox, devpodUrl } = useDevboxSelection();
   const { state, setState } = useCodeAgent();
 
   // Update code agent state when devbox addresses change
   useEffect(() => {
-    if (
-      devboxAddressesQuery.data?.devpod_address &&
-      devboxAddressesQuery.data.devpod_address !== state.devpod_address
-    ) {
-      setState({ devpod_address: devboxAddressesQuery.data.devpod_address });
+    if (devpodUrl && devpodUrl !== state.devpod_address) {
+      setState({ devpod_address: devpodUrl });
     }
-  }, [
-    devboxAddressesQuery.data?.devpod_address,
-    state.devpod_address,
-    setState,
-  ]);
+  }, [devpodUrl, state.devpod_address, setState]);
 
   const handleGraphChange = (graphName: string) => {
     setSelectedGraph(graphName);
@@ -132,16 +113,11 @@ export function ChatPanelControl({
       </div>
 
       {/* Loading indicator for devbox address */}
-      {selectedDevbox && devboxAddressesQuery.isLoading && (
+      {selectedDevbox && (
         <div className="text-muted-foreground text-xs">
-          Loading devbox address...
-        </div>
-      )}
-
-      {/* Error display */}
-      {selectedDevbox && devboxAddressesQuery.data?.error && (
-        <div className="ml-auto text-destructive text-xs">
-          Error: {devboxAddressesQuery.data.error}
+          {devpodUrl
+            ? `Connected to ${selectedDevbox}`
+            : "Loading devbox address..."}
         </div>
       )}
     </div>
