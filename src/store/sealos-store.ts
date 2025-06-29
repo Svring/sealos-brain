@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { User } from "@/payload-types";
+import type { User } from "@/payload-types";
 
 // Types for tokens
 interface UserTokens {
@@ -110,14 +110,16 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
     });
 
     switch (type) {
-      case "devbox":
+      case "devbox": {
         const hasDevboxTokens = !!(tokens.kubeconfig && tokens.customToken);
         console.log(`✅ Has devbox tokens: ${hasDevboxTokens}`);
         return hasDevboxTokens;
-      case "account":
+      }
+      case "account": {
         const hasAccountTokens = !!tokens.regionToken;
         console.log(`✅ Has account tokens: ${hasAccountTokens}`);
         return hasAccountTokens;
+      }
       default:
         return false;
     }

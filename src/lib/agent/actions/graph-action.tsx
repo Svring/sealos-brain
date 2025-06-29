@@ -247,6 +247,5 @@ export function createGraphWithNewResourcesAction() {
 
 export function useActivateGraphActions() {
   getGraphListAction();
-  // createGraphWithResourcesAction();
   createGraphWithNewResourcesAction();
 }

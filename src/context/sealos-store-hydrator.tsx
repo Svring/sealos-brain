@@ -1,28 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef } from "react";
+import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
-import { User } from "@/payload-types";
 
 interface SealosStoreHydratorProps {
   user: User;
 }
 
+// Hydrates the Zustand store with the authenticated user *before* any child
+// components read from the store. Because writing to an external store doesn't
+// affect React's render cycle, it's safe to do this during render.
 export function SealosStoreHydrator({ user }: SealosStoreHydratorProps) {
-  const [isClient, setIsClient] = useState(false);
   const setCurrentUser = useSealosStore((state) => state.setCurrentUser);
+  const isHydrated = useRef(false);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  // Set the user exactly once during the very first render on the client.
+  if (!isHydrated.current) {
+    setCurrentUser(user);
+    isHydrated.current = true;
+  }
 
-  useEffect(() => {
-    if (isClient) {
-      console.log("🔄 SealosStoreHydrator - Setting current user:", user);
-      setCurrentUser(user);
-    }
-  }, [user, setCurrentUser, isClient]);
-
-  // This component doesn't render anything - it just hydrates the store
+  // This component doesn't render anything – it only performs the hydration.
   return null;
 }

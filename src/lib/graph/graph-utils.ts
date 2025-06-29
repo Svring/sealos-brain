@@ -809,12 +809,19 @@ function validateDevboxConfig(devbox: unknown): {
   isValid: boolean;
   error?: string;
 } {
-  if (!Array.isArray(devbox) || devbox.length === 0) {
+  // Allow empty arrays or missing values
+  if (devbox === undefined || devbox === null) {
+    return { isValid: true };
+  }
+
+  if (!Array.isArray(devbox)) {
     return {
       isValid: false,
-      error: "Devbox must be a non-empty array of template names",
+      error: "Devbox must be an array of template names",
     };
   }
+
+  // Allow empty arrays
   return { isValid: true };
 }
 
@@ -825,12 +832,19 @@ function validateClusterConfig(cluster: unknown): {
   isValid: boolean;
   error?: string;
 } {
-  if (!Array.isArray(cluster) || cluster.length === 0) {
+  // Allow empty arrays or missing values
+  if (cluster === undefined || cluster === null) {
+    return { isValid: true };
+  }
+
+  if (!Array.isArray(cluster)) {
     return {
       isValid: false,
-      error: "Cluster must be a non-empty array of database types",
+      error: "Cluster must be an array of database types",
     };
   }
+
+  // Allow empty arrays
   return { isValid: true };
 }
 
@@ -841,19 +855,53 @@ function validateObjectStorageConfig(objectstoragebucket: unknown): {
   isValid: boolean;
   error?: string;
 } {
-  if (
-    typeof objectstoragebucket !== "object" ||
-    !objectstoragebucket ||
-    typeof (objectstoragebucket as { count?: unknown }).count !== "number" ||
-    (objectstoragebucket as { count: number }).count <= 0
-  ) {
+  // Allow missing values
+  if (objectstoragebucket === undefined || objectstoragebucket === null) {
+    return { isValid: true };
+  }
+
+  if (typeof objectstoragebucket !== "object") {
     return {
       isValid: false,
-      error:
-        "Object storage bucket must have a count property with a positive number",
+      error: "Object storage bucket must be an object with a count property",
     };
   }
+
+  const countValue = (objectstoragebucket as { count?: unknown }).count;
+
+  // Allow missing count (treated as 0)
+  if (countValue === undefined || countValue === null) {
+    return { isValid: true };
+  }
+
+  if (typeof countValue !== "number" || countValue < 0) {
+    return {
+      isValid: false,
+      error: "Object storage bucket count must be a non-negative number",
+    };
+  }
+
   return { isValid: true };
+}
+
+/**
+ * Check if a resource type has actual content
+ */
+function hasResourceContent(key: string, value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+
+  if (key === "devbox" || key === "cluster") {
+    return Array.isArray(value) && value.length > 0;
+  }
+
+  if (key === "objectstoragebucket") {
+    const count = (value as { count?: number }).count;
+    return typeof count === "number" && count > 0;
+  }
+
+  return false;
 }
 
 /**
@@ -886,16 +934,16 @@ function validateResourceConfig(resources: unknown): {
 
   for (const [key, validator] of Object.entries(validators)) {
     const value = (resources as Record<string, unknown>)[key];
-    if (value !== undefined) {
-      const result = validator(value);
-      if (!result.isValid && result.error) {
-        errors.push(result.error);
-      } else {
-        hasValidResource = true;
-      }
+    const result = validator(value);
+
+    if (!result.isValid && result.error) {
+      errors.push(result.error);
+    } else if (result.isValid && hasResourceContent(key, value)) {
+      hasValidResource = true;
     }
   }
 
+  // Allow configurations with no resources (all empty or missing)
   return { isValid: errors.length === 0, errors, hasValidResource };
 }
 
@@ -915,11 +963,8 @@ export function validateGraphCreationRequest(request: {
   const resourceValidation = validateResourceConfig(request.resources);
   errors.push(...resourceValidation.errors);
 
-  if (!resourceValidation.hasValidResource) {
-    errors.push(
-      "At least one resource type (devbox, cluster, or objectstoragebucket) must be specified"
-    );
-  }
+  // Remove the requirement for at least one resource type
+  // Allow creating graphs with no resources
 
   return { isValid: errors.length === 0, errors };
 }
