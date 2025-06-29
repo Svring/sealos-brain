@@ -3,6 +3,7 @@
 // Force dynamic rendering since the layout uses headers()
 export const dynamic = "force-dynamic";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Background,
   BackgroundVariant,
@@ -10,7 +11,7 @@ import {
   ReactFlow,
 } from "@xyflow/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Plus, Spline } from "lucide-react";
+import { ChevronDown, Plus, RefreshCw, Spline } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PromptInputBox } from "@/components/ai-chat/ai-prompt-box";
 import edgeTypes from "@/components/flow/edge/edge-types";
@@ -53,6 +54,8 @@ function GraphPageContent({ graphName }: { graphName: string }) {
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
 
+  const queryClient = useQueryClient();
+
   const {
     visibleMessages,
     appendMessage,
@@ -63,6 +66,15 @@ function GraphPageContent({ graphName }: { graphName: string }) {
 
   // Add refreshKey state
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Add refresh handler that invalidates all graph-related queries
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
+    queryClient.invalidateQueries({ queryKey: ["graphs"] });
+    queryClient.invalidateQueries({ queryKey: ["graph"] });
+    handleApplyLayout("BT");
+    setRefreshKey((k) => k + 1);
+  }, [queryClient, handleApplyLayout]);
 
   // Ref to track if we've already applied layout to prevent infinite loops
   const layoutAppliedRef = useRef(false);
@@ -103,6 +115,8 @@ function GraphPageContent({ graphName }: { graphName: string }) {
   // Wrap handleApplyConnections to increment refreshKey after applying
   const handleApplyConnectionsWithRefresh = async () => {
     await handleApplyConnections();
+    // Recalculate layout after applying new edges
+    handleApplyLayout("BT");
     setRefreshKey((k) => k + 1);
   };
 
@@ -128,6 +142,11 @@ function GraphPageContent({ graphName }: { graphName: string }) {
           "node-create",
           <NodeCreateView currentGraphName={graphName} />
         ),
+    },
+    {
+      icon: RefreshCw,
+      label: "Refresh",
+      onClick: handleRefresh,
     },
     {
       icon: Spline,

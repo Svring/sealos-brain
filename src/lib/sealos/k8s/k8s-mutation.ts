@@ -38,7 +38,9 @@ export function usePatchResourceAnnotationMutation() {
       );
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
       queryClient.invalidateQueries({ queryKey: ["graphs"] });
+      queryClient.invalidateQueries({ queryKey: ["graph"] });
       queryClient.invalidateQueries({ queryKey: ["nodes"] });
     },
   });
@@ -70,7 +72,9 @@ export function useRemoveResourceAnnotationMutation() {
       );
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
       queryClient.invalidateQueries({ queryKey: ["graphs"] });
+      queryClient.invalidateQueries({ queryKey: ["graph"] });
       queryClient.invalidateQueries({ queryKey: ["nodes"] });
     },
   });
@@ -100,7 +104,10 @@ export function useDeleteGraphMutation() {
       );
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
       queryClient.invalidateQueries({ queryKey: ["graphs"] });
+      queryClient.invalidateQueries({ queryKey: ["graph"] });
+      queryClient.invalidateQueries({ queryKey: ["nodes"] });
     },
   });
 }

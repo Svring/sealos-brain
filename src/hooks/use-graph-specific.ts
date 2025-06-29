@@ -6,6 +6,7 @@ import { useGraphLayout } from "@/hooks/use-graph-layout";
 import { useGraphNode } from "@/hooks/use-graph-node";
 import { useGraphOverview } from "@/hooks/use-graph-overview";
 import { useAddResourceToGraphMutation } from "@/lib/graph/graph-mutation";
+import type { ParsedEdge } from "@/lib/graph/graph-utils";
 import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
 import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
@@ -16,7 +17,7 @@ interface UseGraphSpecificReturn {
   setNodes: (nodes: Node[]) => void;
   onNodesChange: (changes: NodeChange[]) => void;
   enhancedNodes: Node[];
-  parsedEdges: any[];
+  parsedEdges: ParsedEdge[];
 
   // Loading states
   isLoading: boolean;
@@ -40,7 +41,7 @@ interface UseGraphSpecificReturn {
     targetResourceName: string;
   }>;
   handleNodeClick: (event: React.MouseEvent, nodeId: string) => void;
-  handleEdgeClick: (event: React.MouseEvent, edge: any) => void;
+  handleEdgeClick: (event: React.MouseEvent, edge: ParsedEdge) => void;
   handleApplyConnections: () => Promise<void>;
   handleQuitEditMode: () => void;
   isApplyingConnections: boolean;
@@ -82,34 +83,24 @@ export function useGraphSpecific(graphName: string): UseGraphSpecificReturn {
 
   // Track if nodes have been initialized to prevent unnecessary updates
   const nodesInitializedRef = useRef(false);
-  const previousNodeCountRef = useRef(0);
+  const previousNodesHashRef = useRef<string>("");
 
-  // Sync nodes from nodeLogic only when they actually change
+  // Sync nodes from nodeLogic when they actually change
   useEffect(() => {
-    const currentNodeCount = nodeLogic.nodes.length;
+    // Create a hash of the current nodes to detect changes
+    const currentNodesHash = JSON.stringify(nodeLogic.nodes);
+    const hasNodesChanged = currentNodesHash !== previousNodesHashRef.current;
 
-    // Initialize nodes if not done yet
-    if (!nodesInitializedRef.current && currentNodeCount > 0) {
+    // Initialize nodes if not done yet and we have nodes
+    if (!nodesInitializedRef.current && nodeLogic.nodes.length > 0) {
       setNodes(nodeLogic.nodes);
       nodesInitializedRef.current = true;
-      previousNodeCountRef.current = currentNodeCount;
+      previousNodesHashRef.current = currentNodesHash;
     }
-    // Update nodes only if count changes (indicating actual data change)
-    else if (
-      nodesInitializedRef.current &&
-      currentNodeCount !== previousNodeCountRef.current
-    ) {
+    // Update nodes if they have changed (content or count)
+    else if (nodesInitializedRef.current && hasNodesChanged) {
       setNodes(nodeLogic.nodes);
-      previousNodeCountRef.current = currentNodeCount;
-    }
-    // Special case: if we had nodes but now have none (e.g., all deleted)
-    else if (
-      nodesInitializedRef.current &&
-      currentNodeCount === 0 &&
-      previousNodeCountRef.current > 0
-    ) {
-      setNodes(nodeLogic.nodes);
-      previousNodeCountRef.current = 0;
+      previousNodesHashRef.current = currentNodesHash;
     }
   }, [nodeLogic.nodes, setNodes]);
 
