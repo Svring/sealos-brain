@@ -10,8 +10,8 @@ import {
   deleteMultipleDevboxes,
 } from "@/lib/sealos/devbox/devbox-mutation";
 import {
-  GRAPH_ANNOTATION_KEY,
   GRAPH_EDGES_ANNOTATION_KEY,
+  GRAPH_NAME_LABEL_KEY,
   type ResourceType,
 } from "@/lib/sealos/k8s/k8s-constant";
 import type { GraphResourceGroup } from "@/lib/sealos/k8s/k8s-transform";
@@ -27,6 +27,7 @@ interface ExistingResource {
   type: ResourceType;
   status?: string;
   annotations?: Record<string, string>;
+  labels?: Record<string, string>;
 }
 
 // Edge-related interfaces
@@ -56,7 +57,7 @@ export function groupResourcesByGraph(
   allResources: ExistingResource[]
 ): GraphResourceGroup {
   return allResources.reduce((graphGroups, resource) => {
-    const graphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
+    const graphName = resource.labels?.[GRAPH_NAME_LABEL_KEY];
     const groupKey = graphName || "nameless";
     graphGroups[groupKey] ??= {};
     graphGroups[groupKey][resource.type] ??= [];
@@ -172,7 +173,7 @@ export function isResourceInGraph(
   if (!specificGraphName) {
     return true;
   }
-  const resourceGraphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
+  const resourceGraphName = resource.labels?.[GRAPH_NAME_LABEL_KEY];
   return resourceGraphName === specificGraphName;
 }
 

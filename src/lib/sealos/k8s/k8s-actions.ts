@@ -8,9 +8,9 @@ import {
   KubeConfig,
 } from "@kubernetes/client-node";
 
-// Import the correct annotation keys from k8s-utils
+// Import the correct keys from k8s-constant
 import {
-  GRAPH_ANNOTATION_KEY,
+  GRAPH_NAME_LABEL_KEY,
   RESOURCES,
   type ResourceType,
 } from "./k8s-constant";
@@ -288,7 +288,7 @@ export async function deleteGraphByRemovingAnnotations(
         kubeconfig,
         resourceType,
         resourceName,
-        GRAPH_ANNOTATION_KEY,
+        GRAPH_NAME_LABEL_KEY,
         namespace
       );
       results.push(result);
@@ -359,4 +359,160 @@ export async function getCurrentContextWithNamespace(
 export async function getCurrentCluster(kubeconfig: string) {
   const kc = createKubeConfig(kubeconfig);
   return kc.getCurrentCluster();
+}
+
+export async function patchResourceLabel(
+  kubeconfig: string,
+  resourceType: ResourceType,
+  resourceName: string,
+  labelKey: string,
+  labelValue: string,
+  namespace: string
+) {
+  const kc = createKubeConfig(kubeconfig);
+  const clients = createApiClients(kc);
+
+  // Escape the key for JSON Patch path
+  const encodedLabelKey = escapeSlash(labelKey);
+
+  try {
+    const currentResource = await getResource(
+      kubeconfig,
+      resourceType,
+      resourceName,
+      namespace
+    );
+    const patchBody = currentResource.metadata?.labels
+      ? [
+          {
+            op: "add",
+            path: `/metadata/labels/${encodedLabelKey}`,
+            value: labelValue,
+          },
+        ]
+      : [
+          {
+            op: "add",
+            path: "/metadata/labels",
+            value: { [labelKey]: labelValue },
+          },
+        ];
+
+    const result = await patchResource(
+      clients,
+      resourceType,
+      resourceName,
+      namespace,
+      patchBody
+    );
+
+    return {
+      labels: result.metadata?.labels || {},
+      success: true,
+      resourceName,
+      resourceType,
+      labelKey,
+    };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : `Failed to patch label on ${resourceType}`,
+      resourceName,
+      resourceType,
+      labelKey,
+    };
+  }
+}
+
+export async function removeResourceLabel(
+  kubeconfig: string,
+  resourceType: ResourceType,
+  resourceName: string,
+  labelKey: string,
+  namespace: string
+) {
+  const kc = createKubeConfig(kubeconfig);
+  const clients = createApiClients(kc);
+
+  try {
+    // Escape the key for JSON Patch path
+    const encodedLabelKey = escapeSlash(labelKey);
+    const patchBody = [
+      { op: "remove", path: `/metadata/labels/${encodedLabelKey}` },
+    ];
+    const result = await patchResource(
+      clients,
+      resourceType,
+      resourceName,
+      namespace,
+      patchBody
+    );
+
+    return {
+      success: true,
+      resourceName,
+      resourceType,
+      labelKey,
+    };
+  } catch (error: any) {
+    console.error(
+      `Error removing label from ${resourceType} ${resourceName}:`,
+      error
+    );
+    return {
+      success: false,
+      error: error.message || `Failed to remove label from ${resourceType}`,
+      resourceName,
+      resourceType,
+      labelKey,
+    };
+  }
+}
+
+export async function deleteGraphByRemovingLabels(
+  kubeconfig: string,
+  graphName: string,
+  graphResources: { [resourceKind: string]: string[] },
+  namespace: string
+) {
+  const results: Array<{
+    success: boolean;
+    resourceName: string;
+    resourceType: string;
+    error?: string;
+  }> = [];
+
+  for (const [resourceKind, resourceNames] of Object.entries(graphResources)) {
+    const resourceType = resourceKind as ResourceType;
+    if (!RESOURCES[resourceType]) {
+      console.warn(`Unsupported resource type: ${resourceType}`);
+      continue;
+    }
+
+    for (const resourceName of resourceNames) {
+      const result = await removeResourceLabel(
+        kubeconfig,
+        resourceType,
+        resourceName,
+        GRAPH_NAME_LABEL_KEY,
+        namespace
+      );
+      results.push(result);
+    }
+  }
+
+  const successCount = results.filter((r) => r.success).length;
+  const failureCount = results.length - successCount;
+
+  return {
+    success: failureCount === 0,
+    graphName,
+    totalResources: results.length,
+    successCount,
+    failureCount,
+    results,
+  };
 }

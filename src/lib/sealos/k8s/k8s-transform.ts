@@ -1,9 +1,9 @@
 /**
- * Transform function to extract resources by graphName annotation
+ * Transform function to extract resources by graphName label
  * and group them by resource type
  */
 
-import { GRAPH_ANNOTATION_KEY } from "@/lib/sealos/k8s/k8s-constant";
+import { GRAPH_NAME_LABEL_KEY } from "@/lib/sealos/k8s/k8s-constant";
 
 export interface ResourceItem {
   apiVersion: string;
@@ -11,6 +11,9 @@ export interface ResourceItem {
   metadata: {
     name: string;
     annotations?: {
+      [key: string]: string;
+    };
+    labels?: {
       [key: string]: string;
     };
     creationTimestamp?: string;
@@ -34,7 +37,9 @@ export interface ResourceList {
   apiVersion: string;
   kind: string;
   items: ResourceItem[];
-  metadata?: Record<string, unknown>;
+  metadata?: {
+    [key: string]: unknown;
+  };
 }
 
 export interface GraphResourceGroup {
@@ -93,7 +98,7 @@ export function transformK8sDevboxesToTable(resourceList: ResourceList) {
 }
 
 /**
- * Transform a resource list into grouped resources by graphName annotation
+ * Transform a resource list into grouped resources by graphName label
  * @param resourceList - The Kubernetes resource list response
  * @returns Object with graphName as keys and resource kinds with their names as values
  */
@@ -111,8 +116,8 @@ export function transformResourcesByGraphName(
   const resourceKind = listKind.replace("List", "").toLowerCase();
 
   for (const item of resourceList.items) {
-    // Check if the resource has a graphName annotation
-    const graphName = item.metadata?.annotations?.[GRAPH_ANNOTATION_KEY];
+    // Check if the resource has a graphName label
+    const graphName = item.metadata?.labels?.[GRAPH_NAME_LABEL_KEY];
 
     if (graphName && item.metadata?.name) {
       // Initialize the graph entry if it doesn't exist

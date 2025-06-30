@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAddResourceToGraphMutation } from "@/lib/graph/graph-mutation";
 import {
-  GRAPH_ANNOTATION_KEY,
+  GRAPH_NAME_LABEL_KEY,
   type ResourceType,
 } from "@/lib/sealos/k8s/k8s-constant";
 import { useSealosStore } from "@/store/sealos-store";
@@ -13,6 +13,7 @@ export interface ExistingResource {
   type: ResourceType;
   name: string;
   annotations?: Record<string, string>;
+  labels?: Record<string, string>;
 }
 
 interface ResourceCardProps {
@@ -33,10 +34,8 @@ export function ResourceCard({
 
   // Constants
   const Icon = resourceIcons[resource.type];
-  const hasGraphAnnotation = Boolean(
-    resource.annotations?.[GRAPH_ANNOTATION_KEY]
-  );
-  const canQuickAdd = Boolean(currentGraphName && !hasGraphAnnotation);
+  const hasGraphLabel = Boolean(resource.labels?.[GRAPH_NAME_LABEL_KEY]);
+  const canQuickAdd = Boolean(currentGraphName && !hasGraphLabel);
 
   // Handlers
   const handleAddToGraph = async (e: React.MouseEvent) => {
@@ -60,7 +59,7 @@ export function ResourceCard({
   };
 
   let buttonLabel = "Add to Graph";
-  if (hasGraphAnnotation) {
+  if (hasGraphLabel) {
     buttonLabel = "Already in Graph";
   } else if (addResourceToGraphMutation.isPending) {
     buttonLabel = "Adding...";

@@ -2,17 +2,20 @@
 
 import { useMutation } from "@tanstack/react-query";
 import {
-  GRAPH_ANNOTATION_KEY,
   GRAPH_EDGES_ANNOTATION_KEY,
+  GRAPH_NAME_LABEL_KEY,
   type ResourceType,
 } from "@/lib/sealos/k8s/k8s-constant";
-import { usePatchResourceAnnotationMutation } from "@/lib/sealos/k8s/k8s-mutation";
+import {
+  usePatchResourceAnnotationMutation,
+  usePatchResourceLabelMutation,
+} from "@/lib/sealos/k8s/k8s-mutation";
 import type { User } from "@/payload-types";
 import { deleteAllResourcesInGraph } from "./graph-utils";
 
-// Add resource to graph by adding graphName annotation
+// Add resource to graph by adding graphName label
 export function useAddResourceToGraphMutation() {
-  const patchAnnotationMutation = usePatchResourceAnnotationMutation();
+  const patchLabelMutation = usePatchResourceLabelMutation();
 
   return useMutation({
     mutationFn: async (params: {
@@ -22,12 +25,12 @@ export function useAddResourceToGraphMutation() {
       graphName: string;
       namespaceOverride?: string;
     }) => {
-      return await patchAnnotationMutation.mutateAsync({
+      return await patchLabelMutation.mutateAsync({
         currentUser: params.currentUser,
         resourceType: params.resourceType,
         resourceName: params.resourceName,
-        annotationKey: GRAPH_ANNOTATION_KEY,
-        annotationValue: params.graphName,
+        labelKey: GRAPH_NAME_LABEL_KEY,
+        labelValue: params.graphName,
         namespaceOverride: params.namespaceOverride,
       });
     },
@@ -58,7 +61,7 @@ export function useAddGraphEdgesAnnotationMutation() {
   });
 }
 
-// Create graph with existing resources by adding graph annotations
+// Create graph with existing resources by adding graph labels
 export function useCreateGraphWithResourcesMutation() {
   const addResourceToGraphMutation = useAddResourceToGraphMutation();
 
@@ -71,14 +74,14 @@ export function useCreateGraphWithResourcesMutation() {
     }) => {
       const { currentUser, graphName, resources, namespaceOverride } = params;
 
-      // Collect all annotation update promises
-      const annotationPromises: Promise<unknown>[] = [];
+      // Collect all label update promises
+      const labelPromises: Promise<unknown>[] = [];
 
-      // Iterate through each resource type and add annotations
+      // Iterate through each resource type and add labels
       for (const [resourceType, resourceNames] of Object.entries(resources)) {
         if (Array.isArray(resourceNames)) {
           for (const resourceName of resourceNames) {
-            annotationPromises.push(
+            labelPromises.push(
               addResourceToGraphMutation.mutateAsync({
                 currentUser,
                 resourceType: resourceType as ResourceType,
@@ -91,8 +94,8 @@ export function useCreateGraphWithResourcesMutation() {
         }
       }
 
-      // Execute all annotation updates in parallel
-      await Promise.all(annotationPromises);
+      // Execute all label updates in parallel
+      await Promise.all(labelPromises);
 
       return {
         graphName,

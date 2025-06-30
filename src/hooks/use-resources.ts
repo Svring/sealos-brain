@@ -9,6 +9,7 @@ interface ExistingResource {
   type: ResourceType;
   status?: string;
   annotations?: Record<string, string>;
+  labels?: Record<string, string>;
 }
 
 // Helper function to get status based on resource type
@@ -76,6 +77,9 @@ export function useResources(currentUser: User): UseResourcesReturn {
           annotations:
             (item as { metadata?: { annotations?: Record<string, string> } })
               .metadata?.annotations || {},
+          labels:
+            (item as { metadata?: { labels?: Record<string, string> } })
+              .metadata?.labels || {},
         });
       }
     });

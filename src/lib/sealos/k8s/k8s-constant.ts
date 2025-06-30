@@ -27,6 +27,7 @@ export const RESOURCES = {
 
 export type ResourceType = keyof typeof RESOURCES;
 
-// Shared annotation keys for graph functionality
-export const GRAPH_ANNOTATION_KEY = "sealosBrain/graphName";
+// Shared keys for graph functionality
+// Changed from annotation to label for graphName, but keep edges as annotation
+export const GRAPH_NAME_LABEL_KEY = "sealosBrain.graphName";
 export const GRAPH_EDGES_ANNOTATION_KEY = "sealosBrain/graphEdges";
