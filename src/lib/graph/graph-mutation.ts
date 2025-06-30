@@ -8,6 +8,7 @@ import {
 } from "@/lib/sealos/k8s/k8s-constant";
 import { usePatchResourceAnnotationMutation } from "@/lib/sealos/k8s/k8s-mutation";
 import type { User } from "@/payload-types";
+import { deleteAllResourcesInGraph } from "./graph-utils";
 
 // Add resource to graph by adding graphName annotation
 export function useAddResourceToGraphMutation() {
@@ -101,6 +102,25 @@ export function useCreateGraphWithResourcesMutation() {
           0
         ),
       };
+    },
+  });
+}
+
+// Delete all resources in a graph
+export function useDeleteAllGraphResourcesMutation() {
+  return useMutation({
+    mutationFn: async (params: {
+      currentUser: User;
+      graphName: string;
+      graphResources: { [resourceKind: string]: string[] };
+      regionUrl: string;
+    }) => {
+      return await deleteAllResourcesInGraph(
+        params.graphName,
+        params.graphResources,
+        params.currentUser,
+        params.regionUrl
+      );
     },
   });
 }

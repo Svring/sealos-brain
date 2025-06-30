@@ -4,14 +4,8 @@ import BaseNode from "../base-node";
 
 export interface CronJobNodeData {
   id: string;
-  name: string;
-  schedule: string;
+  cronJobName: string;
   suspend?: boolean;
-  concurrencyPolicy?: string;
-  timeZone?: string;
-  image?: string;
-  lastScheduleTime?: string;
-  namespace?: string;
   onClick?: (event: React.MouseEvent) => void;
   isSelected?: boolean;
 }
@@ -19,17 +13,7 @@ export interface CronJobNodeData {
 export default function CronJobNode({ data }: { data: CronJobNodeData }) {
   const nodeId = useNodeId();
 
-  const {
-    name,
-    schedule,
-    suspend,
-    concurrencyPolicy,
-    timeZone,
-    image,
-    lastScheduleTime,
-    onClick,
-    isSelected,
-  } = data;
+  const { cronJobName, suspend, onClick, isSelected } = data;
 
   const statusColorMap = {
     active: "bg-green-100 text-green-800",
@@ -48,53 +32,24 @@ export default function CronJobNode({ data }: { data: CronJobNodeData }) {
         isSelected={isSelected}
         onClick={onClick}
       >
-        <div className="space-y-4">
+        <div className="flex h-full flex-col justify-between">
           {/* Name and Type */}
           <div className="flex items-center gap-2 truncate font-medium">
             <Image
               alt="CronJob"
               className="rounded-lg object-contain"
               height={40}
-              onError={(e) => {
-                // Fallback to a generic cron icon
-                (e.target as HTMLImageElement).src = "/cron-icon.svg";
-              }}
               src="https://objectstorageapi.hzh.sealos.run/cyhipdvv-logos/cronjob.svg"
               width={40}
             />
-            <div className="flex flex-col">
+            <div className="flex flex-col items-start">
               <span className="truncate text-muted-foreground text-sm">
                 CronJob
               </span>
-              <span className="font-bold text-foreground text-md">{name}</span>
+              <span className="font-bold text-foreground text-md">
+                {cronJobName}
+              </span>
             </div>
-          </div>
-
-          {/* CronJob details */}
-          <div className="space-y-1">
-            <div className="text-muted-foreground text-xs">
-              Schedule: {schedule}
-            </div>
-            {timeZone && (
-              <div className="text-muted-foreground text-xs">
-                Timezone: {timeZone}
-              </div>
-            )}
-            {concurrencyPolicy && (
-              <div className="text-muted-foreground text-xs">
-                Concurrency: {concurrencyPolicy}
-              </div>
-            )}
-            {image && (
-              <div className="truncate text-muted-foreground text-xs">
-                Image: {image}
-              </div>
-            )}
-            {lastScheduleTime && (
-              <div className="text-muted-foreground text-xs">
-                Last Run: {new Date(lastScheduleTime).toLocaleString()}
-              </div>
-            )}
           </div>
 
           {/* Status badge */}

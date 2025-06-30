@@ -12,8 +12,14 @@ import { useGraphOverview } from "@/hooks/use-graph-overview";
 import { generateGraphName } from "@/lib/utils";
 
 export default function GraphPage() {
-  const { mergedGraphs, isLoading, deleteGraph, isDeletingGraph } =
-    useGraphOverview();
+  const {
+    mergedGraphs,
+    isLoading,
+    deleteGraph,
+    deleteAllGraphResources,
+    isDeletingGraph,
+    isDeletingAllResources,
+  } = useGraphOverview();
   const graphNames = Object.keys(mergedGraphs);
   const hasGraphs = graphNames.length > 0;
 
@@ -41,9 +47,11 @@ export default function GraphPage() {
           {graphNames.map((graphName) => (
             <GraphCard
               graphName={graphName}
-              isDeleting={isDeletingGraph}
+              isDeletingAllResources={isDeletingAllResources}
+              isDeletingGraph={isDeletingGraph}
               key={graphName}
-              onDelete={deleteGraph}
+              onDeleteAllResources={deleteAllGraphResources}
+              onDeleteGraph={deleteGraph}
               resources={mergedGraphs[graphName]}
             />
           ))}

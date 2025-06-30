@@ -155,23 +155,23 @@ export function getDBTypeIcon(dbType: string): string {
 
   // You can customize these paths based on your icon assets
   if (lowerType.includes("postgresql") || lowerType.includes("postgres")) {
-    return "/icons/postgresql.svg";
+    return "https://dbprovider.cloud.sealos.io/icons/postgresql.svg";
   }
   if (lowerType.includes("mongodb") || lowerType.includes("mongo")) {
-    return "/icons/mongodb.svg";
+    return "https://dbprovider.cloud.sealos.io/icons/mongodb.svg";
   }
   if (lowerType.includes("mysql")) {
-    return "/icons/mysql.svg";
+    return "https://dbprovider.cloud.sealos.io/icons/mysql.svg";
   }
   if (lowerType.includes("redis")) {
-    return "/icons/redis.svg";
+    return "https://dbprovider.cloud.sealos.io/icons/redis.svg";
   }
   if (lowerType.includes("kafka")) {
-    return "/icons/kafka.svg";
+    return "https://dbprovider.cloud.sealos.io/icons/kafka.svg";
   }
 
   // Fallback to a generic database icon
-  return "/icons/database.svg";
+  return "https://dbprovider.cloud.sealos.io/icons/database.svg";
 }
 
 /**

@@ -26,7 +26,9 @@ function HomePageContent() {
 
 function Hydrated({ children }: { children: React.ReactNode }) {
   const user = useSealosStore((s) => s.currentUser);
-  if (!user) return <Loading />;
+  if (!user) {
+    return <Loading />;
+  }
   return <>{children}</>;
 }
 

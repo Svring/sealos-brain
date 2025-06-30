@@ -1,7 +1,6 @@
 import { useNodeId } from "@xyflow/react";
 import Image from "next/image";
 // import DBProviderDetails from "./detail/dbprovider-detail-view";
-import { getDBTypeIcon } from "@/lib/sealos/dbprovider/dbprovider-transform";
 import BaseNode from "../base-node";
 
 export interface DBProviderNodeData {
@@ -30,9 +29,6 @@ export default function DBProviderNode({ data }: { data: DBProviderNodeData }) {
 
   const stateColorClass = stateColorMap[state];
 
-  // Get appropriate icon for the database type
-  const dbIcon = getDBTypeIcon(dbType);
-
   return (
     <>
       <BaseNode
@@ -48,7 +44,7 @@ export default function DBProviderNode({ data }: { data: DBProviderNodeData }) {
               alt={dbType}
               className="rounded-lg object-contain"
               height={40}
-              src={dbIcon}
+              src={"https://dbprovider.bja.sealos.run/logo.svg"}
               width={40}
             />
             <div className="flex flex-col items-start">

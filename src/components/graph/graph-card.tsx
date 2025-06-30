@@ -4,7 +4,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -15,28 +14,26 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface GraphCardProps {
   graphName: string;
   resources: {
     [resourceKind: string]: string[];
   };
-  onDelete?: (graphName: string) => Promise<void>;
-  isDeleting?: boolean;
+  onDeleteGraph?: (graphName: string) => Promise<void>;
+  onDeleteAllResources?: (graphName: string) => Promise<void>;
+  isDeletingGraph?: boolean;
+  isDeletingAllResources?: boolean;
 }
 
 export function GraphCard({
   graphName,
   resources,
-  onDelete,
-  isDeleting,
+  onDeleteGraph,
+  onDeleteAllResources,
+  isDeletingGraph,
+  isDeletingAllResources,
 }: GraphCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -45,17 +42,14 @@ export function GraphCard({
     0
   );
 
-  const resourceTypes = Object.keys(resources);
+  const isDeleting = isDeletingGraph || isDeletingAllResources;
 
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (onDelete) {
+  const handleDeleteGraph = async () => {
+    if (onDeleteGraph) {
       const toastId = `delete-graph-${graphName}`;
       try {
         toast.loading(`Deleting graph "${graphName}"...`, { id: toastId });
-        await onDelete(graphName);
+        await onDeleteGraph(graphName);
         setShowDeleteDialog(false);
         toast.success(`Graph "${graphName}" deleted successfully!`, {
           id: toastId,
@@ -73,13 +67,38 @@ export function GraphCard({
     }
   };
 
+  const handleDeleteAllResources = async () => {
+    if (onDeleteAllResources) {
+      const toastId = `delete-all-resources-${graphName}`;
+      try {
+        toast.loading(`Deleting all resources in graph "${graphName}"...`, {
+          id: toastId,
+        });
+        await onDeleteAllResources(graphName);
+        setShowDeleteDialog(false);
+        toast.success(
+          `All resources in graph "${graphName}" deleted successfully!`,
+          {
+            id: toastId,
+          }
+        );
+      } catch (error: unknown) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : `Failed to delete resources in graph "${graphName}"`,
+          {
+            id: toastId,
+          }
+        );
+      }
+    }
+  };
+
   return (
     <Card className="group relative w-full max-w-sm overflow-hidden transition-all hover:shadow-lg">
-      {onDelete && (
-        <AlertDialog
-          onOpenChange={setShowDeleteDialog}
-          open={showDeleteDialog}
-        >
+      {(onDeleteGraph || onDeleteAllResources) && (
+        <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
           <AlertDialogTrigger asChild>
             <Button
               className="absolute top-2 right-2 h-7 w-7 p-0 opacity-0 transition-opacity group-hover:opacity-100"
@@ -99,34 +118,57 @@ export function GraphCard({
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Graph</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete the graph "{graphName}"?
-                This will remove the graphName annotation from all{" "}
-                {totalResources} resources in this graph. The resources
-                themselves will not be deleted, but they will no longer
-                be grouped in this graph.
+                Choose how you want to delete the graph "{graphName}" with{" "}
+                {totalResources} resource{totalResources === 1 ? "" : "s"}:
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <div className="space-y-3 py-4">
+              {onDeleteGraph && (
+                <Button
+                  className="w-full justify-start text-left"
+                  disabled={isDeleting}
+                  onClick={handleDeleteGraph}
+                  variant="outline"
+                >
+                  <div>
+                    <div className="font-medium">Delete Graph Only</div>
+                    <div className="text-muted-foreground text-sm">
+                      Remove graph grouping but keep all resources
+                    </div>
+                  </div>
+                </Button>
+              )}
+              {onDeleteAllResources && (
+                <Button
+                  className="w-full justify-start bg-destructive text-left text-destructive-foreground hover:bg-destructive/90"
+                  disabled={isDeleting}
+                  onClick={handleDeleteAllResources}
+                  variant="destructive"
+                >
+                  <div>
+                    <div className="font-medium">Delete All Resources</div>
+                    <div className="text-sm opacity-90">
+                      Permanently delete all {totalResources} resource
+                      {totalResources === 1 ? "" : "s"} in this graph
+                    </div>
+                  </div>
+                </Button>
+              )}
+            </div>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive hover:bg-destructive/90"
-                disabled={isDeleting}
-                onClick={handleDelete}
-              >
-                {isDeleting ? "Deleting..." : "Delete Graph"}
-              </AlertDialogAction>
+              <AlertDialogCancel disabled={isDeleting}>
+                Cancel
+              </AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       )}
-      <Link href={`/graph/${encodeURIComponent(graphName)}`} className="flex flex-col h-full">
+      <Link
+        className="flex h-full flex-col"
+        href={`/graph/${encodeURIComponent(graphName)}`}
+      >
         <CardHeader>
-          <CardTitle className="text-xl font-bold tracking-tight">
-            {graphName}
-          </CardTitle>
-          <CardDescription className="text-xs">
-            {totalResources} resources across {resourceTypes.length} types
-          </CardDescription>
+          <CardTitle className="text-xl tracking-tight">{graphName}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-1.5">
@@ -135,10 +177,10 @@ export function GraphCard({
                 className="flex items-center justify-between text-xs"
                 key={resourceKind}
               >
-                <span className="font-medium capitalize text-muted-foreground">
+                <span className="font-medium text-muted-foreground capitalize">
                   {resourceKind}
                 </span>
-                <Badge variant="secondary" className="font-mono text-xs">
+                <Badge className="font-mono text-xs" variant="secondary">
                   {resourceList.length}
                 </Badge>
               </div>

@@ -16,7 +16,7 @@ export interface DevboxNodeData {
 
 export default function DevboxNode({ data }: { data: DevboxNodeData }) {
   const nodeId = useNodeId();
-  const { state, iconId, devboxName, onClick, isSelected } = data;
+  const { state, devboxName, onClick, isSelected } = data;
 
   const stateColorMap: Record<DevboxNodeData["state"], string> = {
     Running: "bg-green-100 text-green-800",

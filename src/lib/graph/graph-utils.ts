@@ -1,15 +1,24 @@
 import type { Edge, Node } from "@xyflow/react";
 import { customAlphabet } from "nanoid";
-import { createMultipleDBs } from "@/lib/sealos/dbprovider/dbprovider-mutation";
+import {
+  createMultipleDBs,
+  deleteMultipleDBs,
+} from "@/lib/sealos/dbprovider/dbprovider-mutation";
 import { generateDBFormFromType } from "@/lib/sealos/dbprovider/dbprovider-utils";
-import { createMultipleDevboxes } from "@/lib/sealos/devbox/devbox-mutation";
+import {
+  createMultipleDevboxes,
+  deleteMultipleDevboxes,
+} from "@/lib/sealos/devbox/devbox-mutation";
 import {
   GRAPH_ANNOTATION_KEY,
   GRAPH_EDGES_ANNOTATION_KEY,
   type ResourceType,
 } from "@/lib/sealos/k8s/k8s-constant";
 import type { GraphResourceGroup } from "@/lib/sealos/k8s/k8s-transform";
-import { createMultipleObjectStorageBuckets } from "@/lib/sealos/objectstorage/objectstorage-mutation";
+import {
+  createMultipleObjectStorageBuckets,
+  deleteMultipleObjectStorageBuckets,
+} from "@/lib/sealos/objectstorage/objectstorage-mutation";
 import type { User } from "@/payload-types";
 
 // Type for resource data used in node creation
@@ -48,11 +57,10 @@ export function groupResourcesByGraph(
 ): GraphResourceGroup {
   return allResources.reduce((graphGroups, resource) => {
     const graphName = resource.annotations?.[GRAPH_ANNOTATION_KEY];
-    if (graphName) {
-      graphGroups[graphName] ??= {};
-      graphGroups[graphName][resource.type] ??= [];
-      graphGroups[graphName][resource.type].push(resource.name);
-    }
+    const groupKey = graphName || "nameless";
+    graphGroups[groupKey] ??= {};
+    graphGroups[groupKey][resource.type] ??= [];
+    graphGroups[groupKey][resource.type].push(resource.name);
     return graphGroups;
   }, {} as GraphResourceGroup);
 }
@@ -1253,4 +1261,210 @@ function mapResourceStatus(status: string): string {
   }
 
   return "Unknown";
+}
+
+export interface GraphDeletionResult {
+  graphName: string;
+  totalResourcesDeleted: number;
+  results: ResourceCreationResult[];
+  summary: string;
+}
+
+/**
+ * Delete devboxes from graph
+ */
+async function deleteDevboxesFromGraph(
+  devboxNames: string[],
+  currentUser: User,
+  regionUrl: string
+): Promise<ResourceCreationResult> {
+  try {
+    const devboxResult = await deleteMultipleDevboxes(
+      devboxNames,
+      currentUser,
+      regionUrl
+    );
+
+    return {
+      resourceType: "devbox",
+      successful: devboxResult.successful
+        .map((r) => r.result || r.item)
+        .filter((name): name is string => Boolean(name)),
+      failed: devboxResult.failed.map((r) => r.item),
+      summary: devboxResult.summary,
+    };
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    return {
+      resourceType: "devbox",
+      successful: [],
+      failed: devboxNames,
+      summary: `Failed to delete devboxes: ${errorMessage}`,
+    };
+  }
+}
+
+/**
+ * Delete database clusters from graph
+ */
+async function deleteClustersFromGraph(
+  clusterNames: string[],
+  currentUser: User,
+  regionUrl: string
+): Promise<ResourceCreationResult> {
+  try {
+    const clusterResult = await deleteMultipleDBs(
+      clusterNames,
+      currentUser,
+      regionUrl
+    );
+
+    return {
+      resourceType: "cluster",
+      successful: clusterResult.successful
+        .map((r) => r.result || r.item)
+        .filter((name): name is string => Boolean(name)),
+      failed: clusterResult.failed.map((r) => r.item),
+      summary: clusterResult.summary,
+    };
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    return {
+      resourceType: "cluster",
+      successful: [],
+      failed: clusterNames,
+      summary: `Failed to delete database clusters: ${errorMessage}`,
+    };
+  }
+}
+
+/**
+ * Delete object storage buckets from graph
+ */
+async function deleteObjectStorageFromGraph(
+  bucketNames: string[],
+  currentUser: User,
+  regionUrl: string
+): Promise<ResourceCreationResult> {
+  try {
+    const objectStorageResult = await deleteMultipleObjectStorageBuckets(
+      bucketNames,
+      currentUser,
+      regionUrl
+    );
+
+    return {
+      resourceType: "objectstoragebucket",
+      successful: objectStorageResult.successful
+        .map((r) => r.result || r.item)
+        .filter((name): name is string => Boolean(name)),
+      failed: objectStorageResult.failed.map((r) => r.item),
+      summary: objectStorageResult.summary,
+    };
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    return {
+      resourceType: "objectstoragebucket",
+      successful: [],
+      failed: bucketNames,
+      summary: `Failed to delete object storage buckets: ${errorMessage}`,
+    };
+  }
+}
+
+/**
+ * Delete all resources in a graph
+ */
+export async function deleteAllResourcesInGraph(
+  graphName: string,
+  graphResources: { [resourceKind: string]: string[] },
+  currentUser: User | null,
+  regionUrl: string | undefined
+): Promise<GraphDeletionResult> {
+  if (!currentUser) {
+    throw new Error("User not authenticated");
+  }
+
+  if (!regionUrl) {
+    throw new Error("Region URL is required");
+  }
+
+  const results: ResourceCreationResult[] = [];
+  let totalDeleted = 0;
+
+  // Delete devboxes if present
+  if (graphResources.devbox && graphResources.devbox.length > 0) {
+    const devboxResult = await deleteDevboxesFromGraph(
+      graphResources.devbox,
+      currentUser,
+      regionUrl
+    );
+    results.push(devboxResult);
+    totalDeleted += devboxResult.successful.length;
+  }
+
+  // Delete clusters (databases) if present
+  if (graphResources.cluster && graphResources.cluster.length > 0) {
+    const clusterResult = await deleteClustersFromGraph(
+      graphResources.cluster,
+      currentUser,
+      regionUrl
+    );
+    results.push(clusterResult);
+    totalDeleted += clusterResult.successful.length;
+  }
+
+  // Delete object storage buckets if present
+  if (
+    graphResources.objectstoragebucket &&
+    graphResources.objectstoragebucket.length > 0
+  ) {
+    const objectStorageResult = await deleteObjectStorageFromGraph(
+      graphResources.objectstoragebucket,
+      currentUser,
+      regionUrl
+    );
+    results.push(objectStorageResult);
+    totalDeleted += objectStorageResult.successful.length;
+  }
+
+  return {
+    graphName,
+    totalResourcesDeleted: totalDeleted,
+    results,
+    summary: generateGraphDeletionSummary(graphName, totalDeleted, results),
+  };
+}
+
+/**
+ * Generate summary for graph deletion results
+ */
+function generateGraphDeletionSummary(
+  graphName: string,
+  totalResourcesDeleted: number,
+  results: ResourceCreationResult[]
+): string {
+  const successfulResults = results.filter((r) => r.successful.length > 0);
+  const failedResults = results.filter((r) => r.failed.length > 0);
+
+  let summary = `Graph '${graphName}' resources deleted: ${totalResourcesDeleted} resources`;
+
+  if (successfulResults.length > 0) {
+    summary += "\n\nSuccessful deletions:";
+    for (const result of successfulResults) {
+      summary += `\n- ${result.resourceType}: ${result.successful.length} resources deleted`;
+    }
+  }
+
+  if (failedResults.length > 0) {
+    summary += "\n\nFailed deletions:";
+    for (const result of failedResults) {
+      summary += `\n- ${result.resourceType}: ${result.failed.length} resources failed to delete`;
+    }
+  }
+
+  return summary.trim();
 }
