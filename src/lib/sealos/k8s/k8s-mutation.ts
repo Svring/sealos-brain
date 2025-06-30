@@ -3,7 +3,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@/payload-types";
 import {
-  deleteGraphByRemovingLabels,
   patchResourceAnnotation,
   patchResourceLabel,
   removeResourceAnnotation,
@@ -140,38 +139,6 @@ export function useRemoveResourceLabelMutation() {
         params.resourceType,
         params.resourceName,
         params.labelKey,
-        namespace
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
-      queryClient.invalidateQueries({ queryKey: ["graphs"] });
-      queryClient.invalidateQueries({ queryKey: ["graph"] });
-      queryClient.invalidateQueries({ queryKey: ["nodes"] });
-    },
-  });
-}
-
-// Delete graph mutation (updated to use labels)
-export function useDeleteGraphMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (params: {
-      currentUser: User;
-      graphName: string;
-      graphResources: { [resourceKind: string]: string[] };
-      namespaceOverride?: string;
-    }) => {
-      const kubeconfig = getKubeconfig(params.currentUser);
-
-      const namespace =
-        params.namespaceOverride ||
-        (await getNamespaceFromKubeconfig(kubeconfig));
-
-      return await deleteGraphByRemovingLabels(
-        kubeconfig,
-        params.graphName,
-        params.graphResources,
         namespace
       );
     },

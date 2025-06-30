@@ -7,7 +7,7 @@ import {
   CustomObjectsApi,
   KubeConfig,
 } from "@kubernetes/client-node";
-
+import { createParallelAction } from "next-server-actions-parallel";
 // Import the correct keys from k8s-constant
 import {
   GRAPH_NAME_LABEL_KEY,
@@ -113,43 +113,45 @@ async function patchResource(
   throw new Error(`Unsupported resource type: ${resourceType}`);
 }
 
-export async function listResourcesByType(
-  kubeconfig: string,
-  resourceType: ResourceType,
-  namespace = "default"
-) {
-  try {
-    const kc = createKubeConfig(kubeconfig);
-    const clients = createApiClients(kc);
-    const resource = RESOURCES[resourceType];
+export const listResourcesByType = createParallelAction(
+  async (
+    kubeconfig: string,
+    resourceType: ResourceType,
+    namespace = "default"
+  ) => {
+    try {
+      const kc = createKubeConfig(kubeconfig);
+      const clients = createApiClients(kc);
+      const resource = RESOURCES[resourceType];
 
-    let res: unknown = null;
-    if (
-      "group" in resource &&
-      resource.group &&
-      resource.version &&
-      resource.plural
-    ) {
-      res = await clients.customApi.listNamespacedCustomObject({
-        group: resource.group,
-        version: resource.version,
-        namespace,
-        plural: resource.plural,
-      });
-    } else if (resourceType === "deployment") {
-      res = await clients.appsApi.listNamespacedDeployment({ namespace });
-    } else if (resourceType === "cronjob") {
-      res = await clients.batchApi.listNamespacedCronJob({ namespace });
-    }
+      let res: unknown = null;
+      if (
+        "group" in resource &&
+        resource.group &&
+        resource.version &&
+        resource.plural
+      ) {
+        res = await clients.customApi.listNamespacedCustomObject({
+          group: resource.group,
+          version: resource.version,
+          namespace,
+          plural: resource.plural,
+        });
+      } else if (resourceType === "deployment") {
+        res = await clients.appsApi.listNamespacedDeployment({ namespace });
+      } else if (resourceType === "cronjob") {
+        res = await clients.batchApi.listNamespacedCronJob({ namespace });
+      }
 
-    if (!res) {
-      throw new Error(`Unsupported resource type: ${resourceType}`);
+      if (!res) {
+        throw new Error(`Unsupported resource type: ${resourceType}`);
+      }
+      return JSON.parse(JSON.stringify(res));
+    } catch {
+      return { error: `Failed to list ${resourceType}` };
     }
-    return JSON.parse(JSON.stringify(res));
-  } catch {
-    return { error: `Failed to list ${resourceType}` };
   }
-}
+);
 
 export async function patchResourceAnnotation(
   kubeconfig: string,

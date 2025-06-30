@@ -1,6 +1,7 @@
 "use client";
 
 import { queryOptions } from "@tanstack/react-query";
+import { runParallelAction } from "next-server-actions-parallel";
 import { queryDebugLog } from "@/lib/query-debug-log";
 import type { User } from "@/payload-types";
 import {
@@ -43,7 +44,9 @@ export function directResourceListOptions(
         userId: currentUser?.id,
       });
 
-      return await listResourcesByType(kubeconfig, resourceType, namespace);
+      return runParallelAction(
+        listResourcesByType(kubeconfig, resourceType, namespace)
+      );
     },
     select: postprocess,
     staleTime: 5000,

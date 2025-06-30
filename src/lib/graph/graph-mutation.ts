@@ -1,6 +1,7 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteGraphByRemovingLabels as k8sDeleteGraphByRemovingLabels } from "@/lib/sealos/k8s/k8s-actions";
 import {
   GRAPH_EDGES_ANNOTATION_KEY,
   GRAPH_NAME_LABEL_KEY,
@@ -9,7 +10,13 @@ import {
 import {
   usePatchResourceAnnotationMutation,
   usePatchResourceLabelMutation,
+  useRemoveResourceAnnotationMutation,
+  useRemoveResourceLabelMutation,
 } from "@/lib/sealos/k8s/k8s-mutation";
+import {
+  getKubeconfig,
+  getNamespaceFromKubeconfig,
+} from "@/lib/sealos/k8s/k8s-utils";
 import type { User } from "@/payload-types";
 import { deleteAllResourcesInGraph } from "./graph-utils";
 
@@ -128,5 +135,64 @@ export function useDeleteAllGraphResourcesMutation() {
   });
 }
 
-// Re-export the delete graph mutation from k8s-mutation for convenience
-export { useDeleteGraphMutation } from "@/lib/sealos/k8s/k8s-mutation";
+// Erase graph edges annotation and graph name label from a resource
+export function useRemoveGraphResourceMutation() {
+  const removeAnnotationMutation = useRemoveResourceAnnotationMutation();
+  const removeLabelMutation = useRemoveResourceLabelMutation();
+
+  return useMutation({
+    mutationFn: async (params: {
+      currentUser: User;
+      resourceType: ResourceType;
+      resourceName: string;
+      namespaceOverride?: string;
+    }) => {
+      // Remove the graph edges annotation
+      await removeAnnotationMutation.mutateAsync({
+        currentUser: params.currentUser,
+        resourceType: params.resourceType,
+        resourceName: params.resourceName,
+        annotationKey: GRAPH_EDGES_ANNOTATION_KEY,
+        namespaceOverride: params.namespaceOverride,
+      });
+      // Remove the graph name label
+      await removeLabelMutation.mutateAsync({
+        currentUser: params.currentUser,
+        resourceType: params.resourceType,
+        resourceName: params.resourceName,
+        labelKey: GRAPH_NAME_LABEL_KEY,
+        namespaceOverride: params.namespaceOverride,
+      });
+      return { success: true };
+    },
+  });
+}
+
+export function useDeleteGraphMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      currentUser: User;
+      graphName: string;
+      graphResources: { [resourceKind: string]: string[] };
+      namespaceOverride?: string;
+    }) => {
+      const kubeconfig = getKubeconfig(params.currentUser);
+      const namespace =
+        params.namespaceOverride ||
+        (await getNamespaceFromKubeconfig(kubeconfig));
+      return await k8sDeleteGraphByRemovingLabels(
+        kubeconfig,
+        params.graphName,
+        params.graphResources,
+        namespace
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
+      queryClient.invalidateQueries({ queryKey: ["graphs"] });
+      queryClient.invalidateQueries({ queryKey: ["graph"] });
+      queryClient.invalidateQueries({ queryKey: ["nodes"] });
+    },
+  });
+}
