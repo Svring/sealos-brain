@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GRAPH_NAME_LABEL_KEY } from "@/lib/sealos/k8s/k8s-constant";
 
 export interface DBProviderNodeDisplayData extends Record<string, unknown> {
   id: string;
@@ -42,6 +43,8 @@ export interface DBProviderAPIItem {
     "clusterdefinition.kubeblocks.io/name": string;
     "clusterversion.kubeblocks.io/name": string;
     "sealos-db-provider-cr": string;
+    [GRAPH_NAME_LABEL_KEY]?: string;
+    [key: string]: string | undefined;
   };
   source: {
     hasSource: boolean;
@@ -204,6 +207,9 @@ export const transformDatabaseListToTable = (data: DBProviderAPIItem[]) => {
       const storage = database.storage || 0;
       const cost = `$${(cpu * 0.001 + memory * 0.0001 + storage * 0.01).toFixed(2)}/day`;
 
+      // Extract graph name from labels
+      const graph = database.labels?.[GRAPH_NAME_LABEL_KEY] || "none";
+
       return {
         id: `database-${dbName}`,
         name: dbName,
@@ -211,6 +217,7 @@ export const transformDatabaseListToTable = (data: DBProviderAPIItem[]) => {
         status,
         createdAt,
         cost,
+        graph,
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);

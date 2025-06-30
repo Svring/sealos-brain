@@ -86,12 +86,16 @@ export function transformK8sDevboxesToTable(resourceList: ResourceList) {
         Number.parseFloat(memory.replace(/[^0-9.]/g, "")) * 0.0001
       ).toFixed(2)}/day`;
 
+      // Extract graph name from labels
+      const graph = devbox.metadata?.labels?.[GRAPH_NAME_LABEL_KEY] || "none";
+
       return {
         id: `devbox-${devboxName}`,
         name: devboxName,
         status,
         createdAt,
         cost,
+        graph,
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);

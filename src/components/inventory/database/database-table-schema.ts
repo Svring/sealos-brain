@@ -6,6 +6,7 @@ export const databaseTableSchema = z.object({
   type: z.string(),
   createdAt: z.string(),
   cost: z.string(),
+  graph: z.string(),
 });
 
 export type DatabaseColumn = z.infer<typeof databaseTableSchema>;

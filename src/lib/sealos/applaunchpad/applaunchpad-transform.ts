@@ -1,15 +1,16 @@
 import { z } from "zod";
-import {
-  AppLaunchpadDeployment,
-  AppLaunchpadListData,
-  AppLaunchpadCondition,
-} from "./schemas/applaunchpad-list-schema";
-import {
+import { GRAPH_NAME_LABEL_KEY } from "@/lib/sealos/k8s/k8s-constant";
+import type {
   AppDetailData,
   AppDetailResponse,
-  Network,
   EnvVar,
+  Network,
 } from "./schemas/applaunchpad-detail-schema";
+import {
+  AppLaunchpadCondition,
+  type AppLaunchpadDeployment,
+  type AppLaunchpadListData,
+} from "./schemas/applaunchpad-list-schema";
 
 export interface AppLaunchpadNodeDisplayData extends Record<string, unknown> {
   id: string;
@@ -133,21 +134,25 @@ export const transformAppLaunchpadListToTable = (
 
         // Parse CPU (e.g., "200m" -> 0.2 cores)
         const cpuCores =
-          parseFloat(cpuRequest.replace(/[^0-9.]/g, "")) /
+          Number.parseFloat(cpuRequest.replace(/[^0-9.]/g, "")) /
           (cpuRequest.includes("m") ? 1000 : 1);
 
         // Parse memory (e.g., "409Mi" -> MB)
         const memoryMB =
-          parseFloat(memoryRequest.replace(/[^0-9.]/g, "")) *
+          Number.parseFloat(memoryRequest.replace(/[^0-9.]/g, "")) *
           (memoryRequest.includes("Gi")
             ? 1024
             : memoryRequest.includes("Mi")
               ? 1
               : 0.001);
 
-        const estimatedCost = cpuCores * 0.02 + memoryMB * 0.00001; // Rough estimate
+        const estimatedCost = cpuCores * 0.02 + memoryMB * 0.000_01; // Rough estimate
         cost = `$${estimatedCost.toFixed(2)}/day`;
       }
+
+      // Extract graph name from labels
+      const graph =
+        deployment.metadata.labels?.[GRAPH_NAME_LABEL_KEY] || "none";
 
       return {
         id: `applaunchpad-${appName}`,
@@ -156,6 +161,7 @@ export const transformAppLaunchpadListToTable = (
         createdAt,
         replicas,
         cost,
+        graph,
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);

@@ -1,18 +1,19 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { AppLaunchpadColumn } from "./applaunchpad-table-schema";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
-  MoreHorizontal,
-  Play,
-  Square,
-  RotateCcw,
-  Rocket,
   ExternalLink,
   Loader2,
+  MoreHorizontal,
+  Play,
+  Rocket,
+  RotateCcw,
+  Square,
 } from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,15 +22,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSealosStore } from "@/store/sealos-store";
 import {
-  startAppMutation,
-  restartAppMutation,
-  pauseAppMutation,
   delAppMutation,
+  pauseAppMutation,
+  restartAppMutation,
+  startAppMutation,
 } from "@/lib/sealos/applaunchpad/applaunchpad-mutation";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useSealosStore } from "@/store/sealos-store";
+import type { AppLaunchpadColumn } from "./applaunchpad-table-schema";
 
 export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
   {
@@ -51,8 +51,8 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
 
-      const getStatusVariant = (status: string) => {
-        switch (status.toLowerCase()) {
+      const getStatusVariant = (statusValue: string) => {
+        switch (statusValue.toLowerCase()) {
           case "running":
             return "default";
           case "stopped":
@@ -66,8 +66,8 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
         }
       };
 
-      const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+      const getStatusColor = (statusValue: string) => {
+        switch (statusValue.toLowerCase()) {
           case "running":
             return "text-green-600";
           case "stopped":
@@ -83,8 +83,8 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
 
       return (
         <Badge
-          variant={getStatusVariant(status)}
           className={getStatusColor(status)}
+          variant={getStatusVariant(status)}
         >
           {status}
         </Badge>
@@ -104,7 +104,7 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
     header: "Created At",
     cell: ({ row }) => {
       const createdAt = row.getValue("createdAt") as string;
-      return <div className="text-sm text-muted-foreground">{createdAt}</div>;
+      return <div className="text-muted-foreground text-sm">{createdAt}</div>;
     },
   },
   {
@@ -113,6 +113,18 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
     cell: ({ row }) => {
       const cost = row.getValue("cost") as string;
       return <div className="font-mono text-sm">{cost}</div>;
+    },
+  },
+  {
+    accessorKey: "graph",
+    header: "Graph",
+    cell: ({ row }) => {
+      const graph = row.getValue("graph") as string;
+      return (
+        <Badge variant={graph === "none" ? "secondary" : "outline"}>
+          {graph}
+        </Badge>
+      );
     },
   },
   {
@@ -182,9 +194,9 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="ghost"
               className="h-8 w-8 p-0"
               disabled={isLoading}
+              variant="ghost"
             >
               <span className="sr-only">Open menu</span>
               {isLoading ? (
@@ -210,18 +222,18 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
             )}
             <DropdownMenuSeparator />
             {isStopped && (
-              <DropdownMenuItem onClick={handleStart} disabled={isLoading}>
+              <DropdownMenuItem disabled={isLoading} onClick={handleStart}>
                 <Play className="mr-2 h-4 w-4" />
                 Start
               </DropdownMenuItem>
             )}
             {isRunning && (
               <>
-                <DropdownMenuItem onClick={handlePause} disabled={isLoading}>
+                <DropdownMenuItem disabled={isLoading} onClick={handlePause}>
                   <Square className="mr-2 h-4 w-4" />
                   Pause
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleRestart} disabled={isLoading}>
+                <DropdownMenuItem disabled={isLoading} onClick={handleRestart}>
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Restart
                 </DropdownMenuItem>
@@ -237,9 +249,9 @@ export const appLaunchpadColumns: ColumnDef<AppLaunchpadColumn>[] = [
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={handleDelete}
-              disabled={isLoading}
               className="text-red-600"
+              disabled={isLoading}
+              onClick={handleDelete}
             >
               Delete
             </DropdownMenuItem>

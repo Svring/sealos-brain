@@ -8,6 +8,7 @@ const aiproxyColumnSchema = z.object({
   count: z.string(),
   charged: z.string(),
   createdAt: z.string(),
+  graph: z.string(),
 });
 
 export type AiproxyColumn = z.infer<typeof aiproxyColumnSchema>;

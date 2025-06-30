@@ -1,33 +1,33 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { ObjectStorageColumn } from "./objectstorage-table-schema";
-import { Checkbox } from "@/components/ui/checkbox";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { ObjectStorageColumn } from "./objectstorage-table-schema";
 
 export const objectstorageColumns: ColumnDef<ObjectStorageColumn>[] = [
-    {
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Select all"
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-      },
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        aria-label="Select all"
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        aria-label="Select row"
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "name",
     header: "Name",
@@ -42,8 +42,8 @@ export const objectstorageColumns: ColumnDef<ObjectStorageColumn>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
 
-      const getStatusVariant = (status: string) => {
-        switch (status.toLowerCase()) {
+      const getStatusVariant = (statusValue: string) => {
+        switch (statusValue.toLowerCase()) {
           case "ready":
             return "default";
           case "pending":
@@ -53,8 +53,8 @@ export const objectstorageColumns: ColumnDef<ObjectStorageColumn>[] = [
         }
       };
 
-      const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+      const getStatusColor = (statusValue: string) => {
+        switch (statusValue.toLowerCase()) {
           case "ready":
             return "text-green-600";
           case "pending":
@@ -66,8 +66,8 @@ export const objectstorageColumns: ColumnDef<ObjectStorageColumn>[] = [
 
       return (
         <Badge
-          variant={getStatusVariant(status)}
           className={getStatusColor(status)}
+          variant={getStatusVariant(status)}
         >
           {status}
         </Badge>
@@ -79,7 +79,7 @@ export const objectstorageColumns: ColumnDef<ObjectStorageColumn>[] = [
     header: "Policy",
     cell: ({ row }) => {
       const type = row.getValue("type") as string;
-      
+
       const getPolicyColor = (policy: string) => {
         switch (policy.toLowerCase()) {
           case "publicreadwrite":
@@ -107,7 +107,7 @@ export const objectstorageColumns: ColumnDef<ObjectStorageColumn>[] = [
       };
 
       return (
-        <div className={`text-sm font-medium ${getPolicyColor(type)}`}>
+        <div className={`font-medium text-sm ${getPolicyColor(type)}`}>
           {formatPolicy(type)}
         </div>
       );
@@ -118,7 +118,19 @@ export const objectstorageColumns: ColumnDef<ObjectStorageColumn>[] = [
     header: "Created At",
     cell: ({ row }) => {
       const createdAt = row.getValue("createdAt") as string;
-      return <div className="text-sm text-muted-foreground">{createdAt}</div>;
+      return <div className="text-muted-foreground text-sm">{createdAt}</div>;
     },
   },
-]; 
+  {
+    accessorKey: "graph",
+    header: "Graph",
+    cell: ({ row }) => {
+      const graph = row.getValue("graph") as string;
+      return (
+        <Badge variant={graph === "none" ? "secondary" : "outline"}>
+          {graph}
+        </Badge>
+      );
+    },
+  },
+];

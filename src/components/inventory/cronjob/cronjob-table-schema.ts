@@ -8,6 +8,7 @@ const cronjobColumnSchema = z.object({
   nextRun: z.string(),
   lastRun: z.string(),
   createdAt: z.string(),
+  graph: z.string(),
 });
 
 export type CronjobColumn = z.infer<typeof cronjobColumnSchema>;

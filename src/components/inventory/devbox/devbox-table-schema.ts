@@ -5,6 +5,7 @@ export const devboxTableSchema = z.object({
   status: z.string(),
   createdAt: z.string(),
   cost: z.string(),
+  graph: z.string(),
 });
 
 export type DevboxColumn = z.infer<typeof devboxTableSchema>;

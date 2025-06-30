@@ -1,28 +1,28 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { DatabaseColumn } from "./database-table-schema";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { DatabaseColumn } from "./database-table-schema";
 
 export const databaseColumns: ColumnDef<DatabaseColumn>[] = [
   {
     id: "select",
     header: ({ table }) => (
       <Checkbox
+        aria-label="Select all"
         checked={
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && "indeterminate")
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
       />
     ),
     cell: ({ row }) => (
       <Checkbox
+        aria-label="Select row"
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
       />
     ),
     enableSorting: false,
@@ -42,8 +42,8 @@ export const databaseColumns: ColumnDef<DatabaseColumn>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
 
-      const getStatusVariant = (status: string) => {
-        switch (status.toLowerCase()) {
+      const getStatusVariant = (statusValue: string) => {
+        switch (statusValue.toLowerCase()) {
           case "running":
             return "default";
           case "paused":
@@ -55,8 +55,8 @@ export const databaseColumns: ColumnDef<DatabaseColumn>[] = [
         }
       };
 
-      const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+      const getStatusColor = (statusValue: string) => {
+        switch (statusValue.toLowerCase()) {
           case "running":
             return "text-green-600";
           case "paused":
@@ -70,8 +70,8 @@ export const databaseColumns: ColumnDef<DatabaseColumn>[] = [
 
       return (
         <Badge
-          variant={getStatusVariant(status)}
           className={getStatusColor(status)}
+          variant={getStatusVariant(status)}
         >
           {status}
         </Badge>
@@ -83,7 +83,7 @@ export const databaseColumns: ColumnDef<DatabaseColumn>[] = [
     header: "Type",
     cell: ({ row }) => {
       const type = row.getValue("type") as string;
-      return <div className="text-sm text-muted-foreground">{type}</div>;
+      return <div className="text-muted-foreground text-sm">{type}</div>;
     },
   },
   {
@@ -91,7 +91,7 @@ export const databaseColumns: ColumnDef<DatabaseColumn>[] = [
     header: "Created At",
     cell: ({ row }) => {
       const createdAt = row.getValue("createdAt") as string;
-      return <div className="text-sm text-muted-foreground">{createdAt}</div>;
+      return <div className="text-muted-foreground text-sm">{createdAt}</div>;
     },
   },
   {
@@ -100,6 +100,18 @@ export const databaseColumns: ColumnDef<DatabaseColumn>[] = [
     cell: ({ row }) => {
       const cost = row.getValue("cost") as string;
       return <div className="font-mono text-sm">{cost}</div>;
+    },
+  },
+  {
+    accessorKey: "graph",
+    header: "Graph",
+    cell: ({ row }) => {
+      const graph = row.getValue("graph") as string;
+      return (
+        <Badge variant={graph === "none" ? "secondary" : "outline"}>
+          {graph}
+        </Badge>
+      );
     },
   },
 ];

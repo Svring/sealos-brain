@@ -1,10 +1,10 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { AiproxyColumn } from "./aiproxy-table-schema";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Copy, MoreHorizontal, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Copy, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
+import type { AiproxyColumn } from "./aiproxy-table-schema";
 
 export const aiproxyColumns: ColumnDef<AiproxyColumn>[] = [
   {
@@ -30,8 +30,8 @@ export const aiproxyColumns: ColumnDef<AiproxyColumn>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
 
-      const getStatusVariant = (status: string) => {
-        switch (status.toLowerCase()) {
+      const getStatusVariant = (statusValue: string) => {
+        switch (statusValue.toLowerCase()) {
           case "active":
             return "default";
           case "inactive":
@@ -41,8 +41,8 @@ export const aiproxyColumns: ColumnDef<AiproxyColumn>[] = [
         }
       };
 
-      const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+      const getStatusColor = (statusValue: string) => {
+        switch (statusValue.toLowerCase()) {
           case "active":
             return "text-green-600";
           case "inactive":
@@ -54,8 +54,8 @@ export const aiproxyColumns: ColumnDef<AiproxyColumn>[] = [
 
       return (
         <Badge
-          variant={getStatusVariant(status)}
           className={getStatusColor(status)}
+          variant={getStatusVariant(status)}
         >
           {status}
         </Badge>
@@ -91,7 +91,19 @@ export const aiproxyColumns: ColumnDef<AiproxyColumn>[] = [
     header: "Created At",
     cell: ({ row }) => {
       const createdAt = row.getValue("createdAt") as string;
-      return <div className="text-sm text-muted-foreground">{createdAt}</div>;
+      return <div className="text-muted-foreground text-sm">{createdAt}</div>;
+    },
+  },
+  {
+    accessorKey: "graph",
+    header: "Graph",
+    cell: ({ row }) => {
+      const graph = row.getValue("graph") as string;
+      return (
+        <Badge variant={graph === "none" ? "secondary" : "outline"}>
+          {graph}
+        </Badge>
+      );
     },
   },
   {
@@ -113,7 +125,7 @@ export const aiproxyColumns: ColumnDef<AiproxyColumn>[] = [
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button className="h-8 w-8 p-0" variant="ghost">
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -130,7 +142,7 @@ export const aiproxyColumns: ColumnDef<AiproxyColumn>[] = [
               Copy name
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+            <DropdownMenuItem className="text-red-600" onClick={handleDelete}>
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>

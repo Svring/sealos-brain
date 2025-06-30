@@ -7,6 +7,7 @@ const appLaunchpadColumnSchema = z.object({
   createdAt: z.string(),
   replicas: z.string(),
   cost: z.string(),
+  graph: z.string(),
 });
 
 export type AppLaunchpadColumn = z.infer<typeof appLaunchpadColumnSchema>;

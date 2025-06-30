@@ -1,28 +1,28 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { DevboxColumn } from "./devbox-table-schema";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { DevboxColumn } from "./devbox-table-schema";
 
 export const devboxColumns: ColumnDef<DevboxColumn>[] = [
   {
     id: "select",
     header: ({ table }) => (
       <Checkbox
+        aria-label="Select all"
         checked={
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && "indeterminate")
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
       />
     ),
     cell: ({ row }) => (
       <Checkbox
+        aria-label="Select row"
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
       />
     ),
     enableSorting: false,
@@ -42,8 +42,8 @@ export const devboxColumns: ColumnDef<DevboxColumn>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
 
-      const getStatusVariant = (status: string) => {
-        switch (status.toLowerCase()) {
+      const getStatusVariant = (statusValue: string) => {
+        switch (statusValue.toLowerCase()) {
           case "running":
             return "default";
           case "stopped":
@@ -55,8 +55,8 @@ export const devboxColumns: ColumnDef<DevboxColumn>[] = [
         }
       };
 
-      const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+      const getStatusColor = (statusValue: string) => {
+        switch (statusValue.toLowerCase()) {
           case "running":
             return "text-green-600";
           case "stopped":
@@ -70,8 +70,8 @@ export const devboxColumns: ColumnDef<DevboxColumn>[] = [
 
       return (
         <Badge
-          variant={getStatusVariant(status)}
           className={getStatusColor(status)}
+          variant={getStatusVariant(status)}
         >
           {status}
         </Badge>
@@ -83,7 +83,7 @@ export const devboxColumns: ColumnDef<DevboxColumn>[] = [
     header: "Created At",
     cell: ({ row }) => {
       const createdAt = row.getValue("createdAt") as string;
-      return <div className="text-sm text-muted-foreground">{createdAt}</div>;
+      return <div className="text-muted-foreground text-sm">{createdAt}</div>;
     },
   },
   {
@@ -92,6 +92,18 @@ export const devboxColumns: ColumnDef<DevboxColumn>[] = [
     cell: ({ row }) => {
       const cost = row.getValue("cost") as string;
       return <div className="font-mono text-sm">{cost}</div>;
+    },
+  },
+  {
+    accessorKey: "graph",
+    header: "Graph",
+    cell: ({ row }) => {
+      const graph = row.getValue("graph") as string;
+      return (
+        <Badge variant={graph === "none" ? "secondary" : "outline"}>
+          {graph}
+        </Badge>
+      );
     },
   },
 ];
