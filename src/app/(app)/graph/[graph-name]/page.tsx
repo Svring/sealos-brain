@@ -3,6 +3,7 @@
 // Force dynamic rendering since the layout uses headers()
 export const dynamic = "force-dynamic";
 
+import { CopilotSidebar } from "@copilotkit/react-ui";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Background,
@@ -23,7 +24,10 @@ import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { MenuBar, type MenuBarItem } from "@/components/ui/menu-bar";
 import { MessageSwiper } from "@/components/ui/message-swiper";
-import { CopilotStateProvider } from "@/context/copilot-state-provider";
+import {
+  CopilotStateProvider,
+  useSealosBrainAgent,
+} from "@/context/copilot-state-provider";
 import { usePanel } from "@/context/panel-provider";
 import {
   MessageRole,
@@ -31,7 +35,10 @@ import {
   useGraphCopilotChat,
 } from "@/hooks/use-graph-copilot-chat";
 import { useGraphSpecific } from "@/hooks/use-graph-specific";
+import { useActivateClusterActions } from "@/lib/agent/actions/cluster-action";
+import { useActivateDevboxActions } from "@/lib/agent/actions/devbox-action";
 import { useActivateGraphActions } from "@/lib/agent/actions/graph-action";
+import { useActivateObjectStorageActions } from "@/lib/agent/actions/objectstorage-action";
 import { sealosBrainConfig } from "@/lib/agent/sealos-brain";
 import { useSealosStore } from "@/store/sealos-store";
 
@@ -122,7 +129,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     renameGraph,
   } = useGraphSpecific(graphName);
 
-  useActivateGraphActions();
+  useSealosBrainAgent();
 
   const { closePanel, openPanel, Id: panelId } = usePanel();
 
@@ -369,7 +376,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
         )}
       </ReactFlow>
 
-      <AnimatePresence>
+      {/* <AnimatePresence>
         <motion.div
           animate={boxAnimate}
           className="absolute bottom-2 z-40 max-w-xl"
@@ -420,7 +427,7 @@ function GraphPageContent({ graphName }: { graphName: string }) {
             )}
           </AnimatePresence>
         </motion.div>
-      </AnimatePresence>
+      </AnimatePresence> */}
     </div>
   );
 }
@@ -451,7 +458,16 @@ export default function GraphPage({
       }}
     >
       <Hydrated graphName={graphName}>
-        <GraphPageContent graphName={graphName} />
+        <CopilotSidebar
+          className="bg-background text-foreground"
+          defaultOpen={false}
+          labels={{
+            title: "Sidebar Assistant",
+            initial: "How can I help you today?",
+          }}
+        >
+          <GraphPageContent graphName={graphName} />
+        </CopilotSidebar>
       </Hydrated>
     </CopilotStateProvider>
   );

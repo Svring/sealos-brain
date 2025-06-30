@@ -39,7 +39,7 @@ export function useSealosBrainAgent() {
   });
 
   // Activate Sealos-specific actions
-  // useActivateDevboxActions();
+  useActivateDevboxActions();
   // useActivateClusterActions();
   // useActivateObjectStorageActions();
   useActivateGraphActions();

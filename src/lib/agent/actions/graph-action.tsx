@@ -2,12 +2,18 @@ import { useCopilotAction } from "@copilotkit/react-core";
 import {
   CreateGraphWithNewResourcesActionUI,
   CreateGraphWithResourcesActionUI,
+  DeleteDevboxesActionUI,
   GetGraphListActionUI,
 } from "@/components/agent/graph-action-ui";
 import { useCreateGraphWithResourcesMutation } from "@/lib/graph/graph-mutation";
 import { useGraphQuery, useGraphsQuery } from "@/lib/graph/graph-query";
-import { generateUniqueGraphName } from "@/lib/graph/graph-utils";
+import {
+  deleteClustersFromGraph,
+  deleteDevboxesFromGraph,
+  generateUniqueGraphName,
+} from "@/lib/graph/graph-utils";
 import { DB_TYPE_VERSION_MAP } from "@/lib/sealos/dbprovider/dbprovider-constant";
+import { validateDBNames } from "@/lib/sealos/dbprovider/dbprovider-utils";
 import { DEVBOX_TEMPLATES } from "@/lib/sealos/devbox/devbox-constant";
 import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
 import { useSealosStore } from "@/store/sealos-store";
@@ -251,8 +257,206 @@ export function createGraphWithNewResourcesAction() {
   });
 }
 
+export function deleteClustersFromGraphAction() {
+  const { currentUser, regionUrl } = useSealosStore();
+
+  useCopilotAction({
+    name: "deleteClustersFromGraph",
+    description:
+      "Delete one or more database clusters by name from the current graph",
+    available: "remote",
+    parameters: [
+      {
+        name: "clusterNames",
+        type: "string[]",
+        description:
+          "The name(s) of the database cluster(s) to delete. Can be a single cluster name or array of cluster names.",
+        required: true,
+      },
+    ],
+    renderAndWaitForResponse: ({ status, args, result, respond }) => {
+      const { clusterNames } = args;
+      const clusterNamesArray = Array.isArray(clusterNames)
+        ? clusterNames
+        : [clusterNames];
+      const validClusterNames = clusterNamesArray.filter(
+        (name): name is string =>
+          typeof name === "string" && name.trim().length > 0
+      );
+
+      // Validate cluster names
+      const { isValid, invalidNames } = validateDBNames(validClusterNames);
+      if (!isValid) {
+        respond?.(
+          `Invalid cluster name(s): ${invalidNames.join(", ")}. Names must be non-empty and contain only lowercase letters, numbers, and hyphens.`
+        );
+        return (
+          <div className="space-y-2">
+            <h2 className="font-semibold text-lg text-red-600">
+              Invalid Cluster Names
+            </h2>
+            <p>
+              Invalid cluster name(s):{" "}
+              <strong>{invalidNames.join(", ")}</strong>
+            </p>
+            <p className="text-gray-600 text-sm">
+              Names must be non-empty and contain only lowercase letters,
+              numbers, and hyphens.
+            </p>
+          </div>
+        );
+      }
+
+      // Create a simple UI component inline since we don't have the external one yet
+      const isMultiple = validClusterNames.length > 1;
+
+      if (status === "complete" && result) {
+        return <div className="space-y-2">{result as string}</div>;
+      }
+
+      if (status === "executing" || status === "inProgress") {
+        return (
+          <div className="space-y-2">
+            <h2 className="font-semibold text-lg text-red-600">
+              {isMultiple ? "Deleting Clusters..." : "Deleting Cluster..."}
+            </h2>
+            {isMultiple ? (
+              <div>
+                <p>Deleting {validClusterNames.length} clusters:</p>
+                <ul className="mt-2 space-y-1">
+                  {validClusterNames.map((name) => (
+                    <li className="flex items-center text-sm" key={name}>
+                      <span className="mr-2 h-2 w-2 rounded-full bg-red-500" />
+                      <strong>{name}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p>
+                Deleting cluster '<strong>{validClusterNames[0]}</strong>'
+              </p>
+            )}
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-red-600 border-b-2" />
+              <span className="text-gray-600 text-sm">Please wait...</span>
+            </div>
+          </div>
+        );
+      }
+
+      // Initial confirmation UI
+      return (
+        <div className="space-y-4">
+          <h2 className="font-semibold text-lg text-red-600">
+            {isMultiple
+              ? "Multiple Clusters Deletion Confirmation"
+              : "Cluster Deletion Confirmation"}
+          </h2>
+          <div className="rounded-lg border border-red-200 bg-background p-4">
+            {isMultiple ? (
+              <div>
+                <p className="text-red-800">
+                  <strong>Warning:</strong> Are you sure you want to delete{" "}
+                  <strong>{validClusterNames.length} database clusters</strong>?
+                </p>
+                <ul className="mt-2 space-y-1">
+                  {validClusterNames.map((name) => (
+                    <li className="flex items-center" key={name}>
+                      <span className="mr-2 h-2 w-2 rounded-full bg-red-500" />
+                      <strong>{name}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-red-800">
+                <strong>Warning:</strong> Are you sure you want to delete
+                cluster '<strong>{validClusterNames[0]}</strong>'?
+              </p>
+            )}
+            <p className="mt-2 text-red-600 text-sm">
+              This action cannot be undone and will permanently remove all data
+              associated with {isMultiple ? "these clusters" : "this cluster"}.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+              onClick={async () => {
+                try {
+                  if (!(currentUser && regionUrl)) {
+                    throw new Error(
+                      "User not authenticated or region URL missing"
+                    );
+                  }
+
+                  const result = await deleteClustersFromGraph(
+                    validClusterNames,
+                    currentUser,
+                    regionUrl
+                  );
+                  respond?.(result.summary);
+                } catch (error: unknown) {
+                  const errorMessage =
+                    error instanceof Error
+                      ? error.message
+                      : "Unknown error occurred";
+                  respond?.(`Failed to delete clusters: ${errorMessage}`);
+                }
+              }}
+            >
+              {isMultiple
+                ? `Delete ${validClusterNames.length} Clusters`
+                : "Delete Cluster"}
+            </button>
+            <button
+              className="rounded border border-gray-300 px-4 py-2 hover:bg-gray-50"
+              onClick={() => {
+                respond?.("User cancelled the cluster deletion operation");
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      );
+    },
+  });
+}
+
+export function deleteDevboxesFromGraphAction() {
+  useCopilotAction({
+    name: "deleteDevboxesFromGraph",
+    description: "Delete one or more devboxes by name from the current graph",
+    available: "remote",
+    parameters: [
+      {
+        name: "devboxNames",
+        type: "string[]",
+        description:
+          "The name(s) of the devbox(es) to delete. Can be a single devbox name or array of devbox names.",
+        required: true,
+      },
+    ],
+    renderAndWaitForResponse: ({ status, args, result, respond }) => {
+      return (
+        <DeleteDevboxesActionUI
+          args={args}
+          respond={respond}
+          result={result}
+          status={status}
+        />
+      );
+    },
+  });
+}
+
 export function useActivateGraphActions() {
   getGraphListAction();
   getCurrentGraphAction();
+  createGraphWithResourcesAction();
   createGraphWithNewResourcesAction();
+  // deleteClustersFromGraphAction();
+  // deleteDevboxesFromGraphAction();
 }

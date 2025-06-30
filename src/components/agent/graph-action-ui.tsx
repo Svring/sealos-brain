@@ -1,12 +1,6 @@
 /* eslint-disable complexity, sonarjs/cognitive-complexity */
 
-import {
-  ArrowRightIcon,
-  CheckIcon,
-  LinkIcon,
-  NetworkIcon,
-  PlusIcon,
-} from "lucide-react";
+import { CheckIcon, LinkIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useAddResourceToGraphMutation } from "@/lib/graph/graph-mutation";
@@ -473,6 +467,7 @@ export function CreateGraphWithResourcesActionUI({
   );
 }
 
+/* eslint-disable complexity, sonarjs/cognitive-complexity */
 export function CreateGraphWithNewResourcesActionUI({
   status,
   args,
@@ -480,7 +475,7 @@ export function CreateGraphWithNewResourcesActionUI({
   respond,
 }: {
   status: "complete" | "executing" | "inProgress";
-  args: any;
+  args: { graphName: string; resources: GraphCreationRequest["resources"] };
   result: CreateGraphWithNewResourcesResult | string | null;
   respond?: (message: string) => void;
 }) {
@@ -622,6 +617,211 @@ export function CreateGraphWithNewResourcesActionUI({
     <div className="space-y-2">
       <h2 className="font-semibold text-lg text-red-600">Creation Failed</h2>
       <p>Failed to create graph '{uniqueGraphName}' with new resources.</p>
+    </div>
+  );
+}
+
+interface DeleteDevboxesResult {
+  resourceType: string;
+  successful: string[];
+  failed: string[];
+  summary: string;
+}
+
+/* eslint-disable complexity, sonarjs/cognitive-complexity */
+export function DeleteDevboxesActionUI({
+  status,
+  args,
+  result,
+  respond,
+}: {
+  status: "complete" | "executing" | "inProgress";
+  args: { devboxNames: string[] };
+  result: DeleteDevboxesResult | string | null;
+  respond?: (message: string) => void;
+}) {
+  const { currentUser, regionUrl } = useSealosStore();
+  const [choice, setChoice] = useState<"pending" | "rejected" | "approved">(
+    "pending"
+  );
+
+  const { devboxNames } = args;
+  const devboxNamesArray = Array.isArray(devboxNames)
+    ? devboxNames
+    : [devboxNames];
+  const validDevboxNames = devboxNamesArray.filter(
+    (name): name is string => typeof name === "string" && name.trim().length > 0
+  );
+
+  const isMultiple = validDevboxNames.length > 1;
+
+  const handleApprove = async () => {
+    setChoice("approved");
+    try {
+      if (!(currentUser && regionUrl)) {
+        throw new Error("User not authenticated or region URL missing");
+      }
+
+      const { deleteDevboxesFromGraph } = await import(
+        "@/lib/graph/graph-utils"
+      );
+      const deleteResult = await deleteDevboxesFromGraph(
+        validDevboxNames,
+        currentUser,
+        regionUrl
+      );
+      respond?.(deleteResult.summary);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      respond?.(`Failed to delete devboxes: ${errorMessage}`);
+    }
+  };
+
+  const handleReject = () => {
+    setChoice("rejected");
+    respond?.("User cancelled the devbox deletion operation");
+  };
+
+  if (validDevboxNames.length === 0) {
+    return (
+      <div className="space-y-2">
+        <h2 className="font-semibold text-lg text-red-600">
+          Invalid Devbox Names
+        </h2>
+        <p>No valid devbox names provided.</p>
+      </div>
+    );
+  }
+
+  if (choice === "pending") {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border border-red-200 bg-background p-4">
+          <h2 className="font-semibold text-lg text-red-600">
+            {isMultiple
+              ? "Multiple Devboxes Deletion Confirmation"
+              : "Devbox Deletion Confirmation"}
+          </h2>
+          {isMultiple ? (
+            <div>
+              <p className="text-red-800">
+                <strong>Warning:</strong> Are you sure you want to delete{" "}
+                <strong>{validDevboxNames.length} devboxes</strong>?
+              </p>
+              <ul className="mt-2 space-y-1">
+                {validDevboxNames.map((name) => (
+                  <li className="flex items-center" key={name}>
+                    <span className="mr-2 h-2 w-2 rounded-full bg-red-500" />
+                    <strong>{name}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-red-800">
+              <strong>Warning:</strong> Are you sure you want to delete devbox '
+              <strong>{validDevboxNames[0]}</strong>'?
+            </p>
+          )}
+          <p className="mt-2 text-red-600 text-sm">
+            This action cannot be undone and will permanently remove all data
+            associated with {isMultiple ? "these devboxes" : "this devbox"}.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            className="bg-red-600 hover:bg-red-700"
+            onClick={handleApprove}
+            variant="default"
+          >
+            {isMultiple
+              ? `Delete ${validDevboxNames.length} Devboxes`
+              : "Delete Devbox"}
+          </Button>
+          <Button onClick={handleReject} variant="outline">
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (choice === "rejected") {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <h2 className="font-semibold text-lg text-red-600">
+            Action Cancelled
+          </h2>
+          <p className="text-foreground/80 text-sm">
+            Devbox deletion was cancelled.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // choice approved
+  if (status === "executing" || status === "inProgress") {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border border-red-200 bg-background p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-red-600 border-b-2" />
+            <h2 className="font-semibold text-lg text-red-600">
+              {isMultiple ? "Deleting Devboxes..." : "Deleting Devbox..."}
+            </h2>
+          </div>
+          {isMultiple ? (
+            <div>
+              <p>Deleting {validDevboxNames.length} devboxes:</p>
+              <ul className="mt-2 space-y-1">
+                {validDevboxNames.map((name) => (
+                  <li className="flex items-center text-sm" key={name}>
+                    <span className="mr-2 h-2 w-2 rounded-full bg-red-500" />
+                    <strong>{name}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p>
+              Deleting devbox '<strong>{validDevboxNames[0]}</strong>'
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "complete" && result) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <h2 className="mb-2 font-semibold text-green-600 text-lg">
+            Devboxes Deleted Successfully
+          </h2>
+          <div className="space-y-2 text-foreground text-sm">
+            {typeof result === "string" ? (
+              <p>{result}</p>
+            ) : (
+              <>
+                <p>Successful: {result.successful.length}</p>
+                <p>Failed: {result.failed.length}</p>
+                <p>{result.summary}</p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <h2 className="font-semibold text-lg text-red-600">Deletion Failed</h2>
+      <p>Failed to delete devboxes.</p>
     </div>
   );
 }

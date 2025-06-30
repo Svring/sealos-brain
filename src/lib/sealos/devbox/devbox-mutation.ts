@@ -1,3 +1,5 @@
+"use client";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { DevboxFormValues } from "@/components/flow/node/devbox/create/schema/devbox-create-schema";
@@ -20,7 +22,6 @@ export function startDevboxMutation(
   currentUser: User | null,
   regionUrl: string | undefined
 ) {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (devboxName: string) => {
       if (!regionUrl) {
@@ -29,7 +30,6 @@ export function startDevboxMutation(
       return startDevbox(devboxName, currentUser, regionUrl);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
       toast.success(`Devbox '${data.devboxName}' is successfully started`);
     },
     onError: (error: Error, devboxName: string) => {
@@ -244,6 +244,7 @@ export async function deleteMultipleDevboxes(
           throw new Error("Region URL is required");
         }
         const result = await deleteDevbox(name, currentUser, regionUrl);
+        // queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
         return {
           success: true,
           item: name,

@@ -1274,7 +1274,7 @@ export interface GraphDeletionResult {
 /**
  * Delete devboxes from graph
  */
-async function deleteDevboxesFromGraph(
+export async function deleteDevboxesFromGraph(
   devboxNames: string[],
   currentUser: User,
   regionUrl: string
@@ -1309,7 +1309,7 @@ async function deleteDevboxesFromGraph(
 /**
  * Delete database clusters from graph
  */
-async function deleteClustersFromGraph(
+export async function deleteClustersFromGraph(
   clusterNames: string[],
   currentUser: User,
   regionUrl: string

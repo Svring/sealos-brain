@@ -34,15 +34,15 @@ function Hydrated({ children }: { children: React.ReactNode }) {
 
 export default function Home() {
   return (
-    <CopilotStateProvider
-      providerConfig={{
-        runtimeUrl: sealosBrainConfig.providerConfig.runtimeUrl,
-        agent: sealosBrainConfig.providerConfig.agent,
-      }}
-    >
-      <Hydrated>
+    <Hydrated>
+      <CopilotStateProvider
+        providerConfig={{
+          runtimeUrl: sealosBrainConfig.providerConfig.runtimeUrl,
+          agent: sealosBrainConfig.providerConfig.agent,
+        }}
+      >
         <HomePageContent />
-      </Hydrated>
-    </CopilotStateProvider>
+      </CopilotStateProvider>
+    </Hydrated>
   );
 }
