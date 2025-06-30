@@ -5,7 +5,7 @@ import {
   GetGraphListActionUI,
 } from "@/components/agent/graph-action-ui";
 import { useCreateGraphWithResourcesMutation } from "@/lib/graph/graph-mutation";
-import { useGraphsQuery } from "@/lib/graph/graph-query";
+import { useGraphQuery, useGraphsQuery } from "@/lib/graph/graph-query";
 import { generateUniqueGraphName } from "@/lib/graph/graph-utils";
 import { DB_TYPE_VERSION_MAP } from "@/lib/sealos/dbprovider/dbprovider-constant";
 import { DEVBOX_TEMPLATES } from "@/lib/sealos/devbox/devbox-constant";
@@ -28,6 +28,51 @@ export function getGraphListAction() {
     },
     render: ({ status, result }) => {
       return <GetGraphListActionUI result={result} status={status} />;
+    },
+  });
+}
+
+export function getCurrentGraphAction() {
+  const { currentUser, currentGraphName } = useSealosStore();
+  const { data: currentGraph, isLoading } = useGraphQuery(
+    currentUser,
+    currentGraphName || ""
+  );
+
+  useCopilotAction({
+    name: "getCurrentGraph",
+    description: "Get the current graph's resources and details",
+    handler: () => {
+      if (!currentGraphName) {
+        return {
+          error: "No current graph selected",
+          currentGraphName: null,
+          resources: {},
+          totalResources: 0,
+        };
+      }
+
+      if (isLoading) {
+        return {
+          currentGraphName,
+          resources: {},
+          totalResources: 0,
+          loading: true,
+        };
+      }
+
+      const totalResources = Object.values(currentGraph || {}).reduce(
+        (acc, resourceList) =>
+          acc + (Array.isArray(resourceList) ? resourceList.length : 0),
+        0
+      );
+
+      return {
+        currentGraphName,
+        resources: currentGraph || {},
+        totalResources,
+        resourceTypes: Object.keys(currentGraph || {}),
+      };
     },
   });
 }
@@ -208,5 +253,6 @@ export function createGraphWithNewResourcesAction() {
 
 export function useActivateGraphActions() {
   getGraphListAction();
+  getCurrentGraphAction();
   createGraphWithNewResourcesAction();
 }

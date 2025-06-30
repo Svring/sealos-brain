@@ -31,6 +31,7 @@ import {
   useGraphCopilotChat,
 } from "@/hooks/use-graph-copilot-chat";
 import { useGraphSpecific } from "@/hooks/use-graph-specific";
+import { useActivateGraphActions } from "@/lib/agent/actions/graph-action";
 import { sealosBrainConfig } from "@/lib/agent/sealos-brain";
 import { useSealosStore } from "@/store/sealos-store";
 
@@ -103,6 +104,8 @@ function GraphPageContent({ graphName }: { graphName: string }) {
     handleApplyLayout,
     renameGraph,
   } = useGraphSpecific(graphName);
+
+  useActivateGraphActions();
 
   // Debug: Log graphName and initial states
   debugLog("[GraphPageContent] graphName:", graphName);

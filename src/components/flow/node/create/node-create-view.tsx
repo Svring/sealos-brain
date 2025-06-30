@@ -13,7 +13,7 @@ export default function NodeCreateView({
   currentGraphName,
 }: NodeCreateViewProps) {
   const { currentUser } = useSealosStore();
-  const { allResources, isLoading, refetch } = useResources(currentUser);
+  const { allResources, isLoading } = useResources(currentUser!);
 
   return (
     <div className="mx-auto w-full max-w-xl space-y-6 rounded-xl bg-background p-6">
@@ -42,7 +42,6 @@ export default function NodeCreateView({
             allResources={allResources}
             currentGraphName={currentGraphName}
             isLoading={isLoading}
-            onRefetch={refetch}
           />
         </TabsContent>
       </Tabs>
