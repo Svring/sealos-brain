@@ -14,12 +14,13 @@ interface SealosStore {
   regionUrl: string;
   currentUser: User | null;
   tokens: UserTokens;
+  currentGraphName: string | null;
 
   // Actions for region and user
   setRegionUrl: (regionUrl: string) => void;
   setCurrentUser: (user: User | null) => void;
   setTokens: (tokens: UserTokens) => void;
-
+  setCurrentGraphName: (graphName: string | null) => void;
   // Debug function to print store state
   debugPrintState: () => void;
 
@@ -33,6 +34,7 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
   regionUrl: "bja.sealos.run", // Set default region URL
   currentUser: null,
   tokens: {},
+  currentGraphName: null,
 
   // Region and user actions
   setRegionUrl: (regionUrl) => set({ regionUrl }),
@@ -45,6 +47,8 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
   },
 
   setTokens: (tokens) => set({ tokens }),
+
+  setCurrentGraphName: (graphName) => set({ currentGraphName: graphName }),
 
   // Debug function to print store state
   debugPrintState: () => {

@@ -7,45 +7,52 @@ import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePanel } from "@/context/panel-provider";
 import { useAddResourceToGraphMutation } from "@/lib/graph/graph-mutation";
-import { DEVBOX_TEMPLATES } from "@/lib/sealos/devbox/devbox-constant";
-import { createDevboxFromTemplateMutation } from "@/lib/sealos/devbox/devbox-mutation";
+import { createDBMutation } from "@/lib/sealos/dbprovider/dbprovider-mutation";
+import { generateDBFormFromType } from "@/lib/sealos/dbprovider/dbprovider-utils";
+import { DB_TYPE_LIST } from "@/lib/sealos/dbprovider/schema/dbprovider-schema";
 import { useSealosStore } from "@/store/sealos-store";
 
-export default function DevboxCreateView() {
+export default function DatabaseCreateView() {
   const { currentUser, regionUrl, currentGraphName } = useSealosStore();
   const { closePanel } = usePanel();
-  const { mutate: createDevbox, isPending } = createDevboxFromTemplateMutation(
+  const { mutate: createDatabase, isPending } = createDBMutation(
     currentUser,
     regionUrl
   );
   const addToGraphMutation = useAddResourceToGraphMutation();
 
-  const handleCreate = (templateName: string) => {
-    const toastId = `create-devbox-${templateName}`;
-    toast.loading(`Creating devbox from template "${templateName}"...`, {
-      id: toastId,
-    });
+  const handleCreate = (dbType: string) => {
+    const toastId = `create-db-${dbType}`;
+    toast.loading(`Creating ${dbType} database...`, { id: toastId });
 
-    createDevbox(templateName, {
-      onSuccess: async (data) => {
-        // First show success for devbox creation
-        toast.success(`Devbox "${data.devboxName}" created successfully!`, {
+    const dbFormData = generateDBFormFromType(dbType);
+
+    createDatabase(dbFormData, {
+      onSuccess: async (data: unknown) => {
+        // First show success for database creation
+        toast.success(`${data.dbType} database created successfully!`, {
           id: toastId,
         });
 
-        // If there's a current graph, add the devbox to it
-        if (currentGraphName && currentUser) {
+        // If there's a current graph, add the database to it
+        if (
+          currentGraphName &&
+          currentUser &&
+          data &&
+          typeof data === "object" &&
+          "dbName" in data
+        ) {
           try {
             await addToGraphMutation.mutateAsync({
               currentUser,
-              resourceType: "devbox",
-              resourceName: data.devboxName,
+              resourceType: "cluster",
+              resourceName: (data as { dbName: string }).dbName,
               graphName: currentGraphName,
             });
-            toast.success(`Devbox added to graph "${currentGraphName}"!`);
+            toast.success(`Database added to graph "${currentGraphName}"!`);
           } catch (error) {
             toast.error(
-              `Failed to add devbox to graph: ${error instanceof Error ? error.message : "Unknown error"}`
+              `Failed to add database to graph: ${error instanceof Error ? error.message : "Unknown error"}`
             );
           }
         }
@@ -55,7 +62,7 @@ export default function DevboxCreateView() {
       onError: (error: unknown) => {
         toast.error(
           (error instanceof Error ? error.message : undefined) ||
-            `Failed to create devbox from template "${templateName}"`,
+            `Failed to create ${dbType} database`,
           {
             id: toastId,
           }
@@ -67,9 +74,9 @@ export default function DevboxCreateView() {
   return (
     <div className="flex h-full flex-col">
       <CardHeader>
-        <CardTitle>Create a New Devbox</CardTitle>
+        <CardTitle>Create a New Database</CardTitle>
         <p className="text-muted-foreground">
-          Select a template to get started.
+          Select a database type to get started.
           {currentGraphName && (
             <span className="mt-1 block text-blue-600 text-sm">
               Will be added to graph: "{currentGraphName}"
@@ -80,18 +87,18 @@ export default function DevboxCreateView() {
       <ScrollArea className="flex-1">
         <CardContent>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {DEVBOX_TEMPLATES.map((template) => (
+            {DB_TYPE_LIST.map((db) => (
               <Button
                 className="h-20 text-base"
                 disabled={isPending || addToGraphMutation.isPending}
-                key={template}
-                onClick={() => handleCreate(template)}
+                key={db.id}
+                onClick={() => handleCreate(db.id)}
                 variant="outline"
               >
                 {isPending || addToGraphMutation.isPending ? (
                   <Loader2 className="h-6 w-6 animate-spin" />
                 ) : (
-                  template
+                  db.label
                 )}
               </Button>
             ))}

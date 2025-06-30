@@ -1,3 +1,4 @@
+import DatabaseCreateView from "@/components/flow/node/dbprovider/create/database-create-view";
 import DevboxCreateView from "@/components/flow/node/devbox/create/view/devbox-create-view";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePanel } from "@/context/panel-provider";
@@ -18,27 +19,29 @@ export function CreateNewResourcesTab() {
         const Icon = resourceIcons[resourceType];
         return (
           <Card
+            className="cursor-pointer border bg-background transition-shadow hover:border-primary/40"
             key={resourceType}
-            className="bg-background cursor-pointer border hover:border-primary/40 transition-shadow"
             onClick={() => {
               if (resourceType === "devbox") {
                 openPanel("devbox-create", <DevboxCreateView />);
+              } else if (resourceType === "cluster") {
+                openPanel("database-create", <DatabaseCreateView />);
               } else {
                 // No-op or add logic if needed in the future
               }
             }}
           >
-            <CardContent className="p-4 flex items-center gap-4">
+            <CardContent className="flex items-center gap-4 p-4">
               <div
-                className={`w-12 h-12 rounded-lg ${resourceColors[resourceType]} flex items-center justify-center text-white`}
+                className={`h-12 w-12 rounded-lg ${resourceColors[resourceType]} flex items-center justify-center text-white`}
               >
-                <Icon className="w-6 h-6" />
+                <Icon className="h-6 w-6" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-base mb-1">
+                <h3 className="mb-1 font-semibold text-base">
                   {resourceDisplayNames[resourceType]}
                 </h3>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {resourceDescriptions[resourceType]}
                 </p>
               </div>

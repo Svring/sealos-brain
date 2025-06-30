@@ -1,8 +1,7 @@
-import React from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Search } from "lucide-react";
-import { useSealosStore } from "@/store/sealos-store";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useResources } from "@/hooks/use-resources";
+import { useSealosStore } from "@/store/sealos-store";
 import { CreateNewResourcesTab } from "./components/create-new-resources-tab";
 import { ExistingResourcesTab } from "./components/existing-resources-tab";
 
@@ -10,27 +9,29 @@ interface NodeCreateViewProps {
   currentGraphName?: string;
 }
 
-export default function NodeCreateView({ currentGraphName }: NodeCreateViewProps) {
+export default function NodeCreateView({
+  currentGraphName,
+}: NodeCreateViewProps) {
   const { currentUser } = useSealosStore();
-  const { allResources, isLoading, refetchAll } = useResources(currentUser);
+  const { allResources, isLoading, refetch } = useResources(currentUser);
 
   return (
-    <div className="bg-background rounded-xl p-6 space-y-6 w-full max-w-xl mx-auto">
+    <div className="mx-auto w-full max-w-xl space-y-6 rounded-xl bg-background p-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold">Manage Graph Nodes</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <h2 className="font-bold text-2xl">Manage Graph Nodes</h2>
+        <p className="mt-1 text-muted-foreground text-sm">
           {currentGraphName
             ? `Create new resources or add existing ones to "${currentGraphName}"`
             : "Create new resources or add existing ones to your graph"}
         </p>
       </div>
-      <Tabs defaultValue="create" className="w-full">
-        <TabsList className="w-full grid grid-cols-2 mb-2">
-          <TabsTrigger value="create" className="flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Create New
+      <Tabs className="w-full" defaultValue="create">
+        <TabsList className="mb-2 grid w-full grid-cols-2">
+          <TabsTrigger className="flex items-center gap-2" value="create">
+            <Plus className="h-4 w-4" /> Create New
           </TabsTrigger>
-          <TabsTrigger value="existing" className="flex items-center gap-2">
-            <Search className="w-4 h-4" /> Add Existing
+          <TabsTrigger className="flex items-center gap-2" value="existing">
+            <Search className="h-4 w-4" /> Add Existing
           </TabsTrigger>
         </TabsList>
         <TabsContent value="create">
@@ -39,14 +40,14 @@ export default function NodeCreateView({ currentGraphName }: NodeCreateViewProps
         <TabsContent value="existing">
           <ExistingResourcesTab
             allResources={allResources}
-            isLoading={isLoading}
             currentGraphName={currentGraphName}
-            onRefetch={refetchAll}
+            isLoading={isLoading}
+            onRefetch={refetch}
           />
         </TabsContent>
       </Tabs>
-      <div className="text-center pt-4 border-t">
-        <p className="text-xs text-muted-foreground">
+      <div className="border-t pt-4 text-center">
+        <p className="text-muted-foreground text-xs">
           {currentGraphName
             ? `Resources will be added to "${currentGraphName}" • Resources already in graphs cannot be moved`
             : "Resources with graph annotations are already part of a graph"}

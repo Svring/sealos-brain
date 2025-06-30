@@ -32,6 +32,7 @@ import {
 } from "@/hooks/use-graph-copilot-chat";
 import { useGraphSpecific } from "@/hooks/use-graph-specific";
 import { sealosBrainConfig } from "@/lib/agent/sealos-brain";
+import { useSealosStore } from "@/store/sealos-store";
 
 // Debug utility (no-op in production, can be toggled for dev)
 const debugLog = (...args: unknown[]) => {
@@ -49,6 +50,17 @@ function Hydrated({
   graphName: string;
 }) {
   const { enhancedNodes, parsedEdges, isLoading } = useGraphSpecific(graphName);
+  const { setCurrentGraphName } = useSealosStore();
+
+  // Set the current graph name in the store
+  useEffect(() => {
+    setCurrentGraphName(graphName);
+    console.log("🔍 Setting current graph name:", graphName);
+    return () => {
+      // Clear the graph name when component unmounts
+      setCurrentGraphName(null);
+    };
+  }, [graphName, setCurrentGraphName]);
 
   debugLog(
     "[Hydrated] graphName:",

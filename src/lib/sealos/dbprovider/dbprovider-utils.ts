@@ -153,9 +153,11 @@ export function validateDBTypes(
 
 // Interfaces for database operations
 export interface DBFormData {
-  dbName?: string;
-  name?: string;
-  dbType?: string;
+  dbForm: {
+    dbName?: string;
+    name?: string;
+    dbType?: string;
+  };
   [key: string]: unknown;
 }
 
@@ -251,12 +253,14 @@ export async function createDatabase(
 
   const response = await axios.post(
     `/api/sealos/dbprovider/createDB?regionUrl=${regionUrl}`,
-    { dbForm: dbFormData },
+    { dbForm: dbFormData.dbForm },
     { headers }
   );
 
-  const dbName = dbFormData.dbName || dbFormData.name || "Unknown";
-  const dbType = dbFormData.dbType || "database";
+  const dbName = dbFormData.dbForm?.dbName;
+  const dbType = dbFormData.dbForm?.dbType;
+
+  console.log("🔍 Database created:");
 
   return { ...response.data, dbName, dbType };
 }

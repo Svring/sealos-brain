@@ -1,33 +1,33 @@
 "use client";
 
-import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSealosStore } from "@/store/sealos-store";
-import { dbProviderListOptions } from "@/lib/sealos/dbprovider/dbprovider-query";
-import { transformDatabaseListToTable } from "@/lib/sealos/dbprovider/dbprovider-transform";
-import { DataTable } from "@/components/ui/data-table";
-import { databaseColumns } from "./database-column";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
+  Database,
+  Loader2,
+  Play,
   Plus,
   RefreshCw,
-  Database,
-  Play,
   Square,
   Trash2,
-  Loader2,
 } from "lucide-react";
+import * as React from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DatabaseColumn } from "./database-table-schema";
-import {
-  startDBByNameMutation,
-  pauseDBByNameMutation,
-  delDBByNameMutation,
-} from "@/lib/sealos/dbprovider/dbprovider-mutation";
 import { usePanel } from "@/context/panel-provider";
-import DatabaseCreateView from "./database-create-view";
+import {
+  delDBByNameMutation,
+  pauseDBByNameMutation,
+  startDBByNameMutation,
+} from "@/lib/sealos/dbprovider/dbprovider-mutation";
+import { dbProviderListOptions } from "@/lib/sealos/dbprovider/dbprovider-query";
+import { transformDatabaseListToTable } from "@/lib/sealos/dbprovider/dbprovider-transform";
+import { useSealosStore } from "@/store/sealos-store";
+import DatabaseCreateView from "../../flow/node/dbprovider/create/database-create-view";
+import { databaseColumns } from "./database-column";
+import type { DatabaseColumn } from "./database-table-schema";
 
 export function DatabaseTable() {
   const { currentUser, regionUrl } = useSealosStore();
@@ -107,8 +107,7 @@ export function DatabaseTable() {
             {selectedRows.length > 0 && (
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
-                  size="sm"
+                  disabled={!canStart || isActionLoading}
                   onClick={() =>
                     handleBulkAction(
                       startMutation,
@@ -118,7 +117,8 @@ export function DatabaseTable() {
                       "start"
                     )
                   }
-                  disabled={!canStart || isActionLoading}
+                  size="sm"
+                  variant="outline"
                 >
                   {isActionLoading && startMutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -128,8 +128,7 @@ export function DatabaseTable() {
                   Start
                 </Button>
                 <Button
-                  variant="outline"
-                  size="sm"
+                  disabled={!canPause || isActionLoading}
                   onClick={() =>
                     handleBulkAction(
                       pauseMutation,
@@ -139,7 +138,8 @@ export function DatabaseTable() {
                       "pause"
                     )
                   }
-                  disabled={!canPause || isActionLoading}
+                  size="sm"
+                  variant="outline"
                 >
                   {isActionLoading && pauseMutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -149,12 +149,12 @@ export function DatabaseTable() {
                   Pause
                 </Button>
                 <Button
-                  variant="destructive"
-                  size="sm"
+                  disabled={!canDelete || isActionLoading}
                   onClick={() =>
                     handleBulkAction(deleteMutation, selectedRows, "delete")
                   }
-                  disabled={!canDelete || isActionLoading}
+                  size="sm"
+                  variant="destructive"
                 >
                   {isActionLoading && deleteMutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -166,11 +166,11 @@ export function DatabaseTable() {
               </div>
             )}
             <Button
-              variant="outline"
-              size="icon"
               onClick={() =>
                 openPanel("create-database", <DatabaseCreateView />)
               }
+              size="icon"
+              variant="outline"
             >
               <Plus className="h-4 w-4" />
             </Button>
