@@ -1,6 +1,8 @@
 import { useQueries } from "@tanstack/react-query";
 import type { Node } from "@xyflow/react";
 import { useMemo } from "react";
+import type { ParsedEdge } from "@/lib/graph/graph-utils";
+import { createEdgeFromConnection } from "@/lib/graph/graph-utils";
 import { devboxByNameOptions } from "@/lib/sealos/devbox/devbox-query";
 import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
@@ -21,12 +23,14 @@ interface DevboxDetailResponse {
 
 interface UseDevboxNetworksReturn {
   networkNodes: Node[];
+  networkEdges: ParsedEdge[];
   isLoading: boolean;
 }
 
 /**
  * Hook to fetch devbox details and create network nodes for public domains
  * Only creates network nodes for ports with openPublicDomain: true
+ * Also creates edges from devbox nodes to their network nodes
  */
 export function useDevboxNetworks(
   devboxNames: string[],
@@ -41,14 +45,15 @@ export function useDevboxNetworks(
     ),
   });
 
-  // Create network nodes from devbox network data
-  const networkNodes = useMemo(() => {
-    // Return empty array if no user
+  // Create network nodes and edges from devbox network data
+  const { networkNodes, networkEdges } = useMemo(() => {
+    // Return empty arrays if no user
     if (!currentUser || devboxNames.length === 0) {
-      return [];
+      return { networkNodes: [], networkEdges: [] };
     }
 
     const nodes: Node[] = [];
+    const edges: ParsedEdge[] = [];
     let globalNetworkIndex = 0;
 
     for (const [queryIndex, query] of devboxDetailQueries.entries()) {
@@ -61,7 +66,7 @@ export function useDevboxNetworks(
       const response = query.data as DevboxDetailResponse;
       const networks = response.networks || [];
 
-      // Filter networks with public domains and create nodes
+      // Filter networks with public domains and create nodes + edges
       const publicNetworks = networks.filter((net) => net.openPublicDomain);
 
       for (const network of publicNetworks) {
@@ -78,8 +83,11 @@ export function useDevboxNetworks(
         const x = baseOffsetX + col * networkSpacingX;
         const y = row * networkSpacingY;
 
+        const networkNodeId = `network-${devboxName}-${network.portName}`;
+
+        // Create network node
         nodes.push({
-          id: `network-${devboxName}-${network.portName}`,
+          id: networkNodeId,
           type: "network",
           position: { x, y },
           data: {
@@ -88,11 +96,21 @@ export function useDevboxNetworks(
           },
         });
 
+        // Create edge from devbox to network node
+        edges.push(
+          createEdgeFromConnection(
+            "devbox",
+            devboxName,
+            "network",
+            `${devboxName}-${network.portName}`
+          )
+        );
+
         globalNetworkIndex++;
       }
     }
 
-    return nodes;
+    return { networkNodes: nodes, networkEdges: edges };
   }, [devboxDetailQueries, devboxNames, currentUser]);
 
   // Determine loading state - only loading if we have a user and queries are running
@@ -102,6 +120,7 @@ export function useDevboxNetworks(
 
   return {
     networkNodes,
+    networkEdges,
     isLoading,
   };
 }

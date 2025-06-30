@@ -85,24 +85,44 @@ export function useGraphSpecific(graphName: string): UseGraphSpecificReturn {
   const nodesInitializedRef = useRef(false);
   const previousNodesHashRef = useRef<string>("");
 
-  // Sync nodes from nodeLogic when they actually change
+  // Combine regular parsed edges with network edges
+  const allParsedEdges = useMemo(() => {
+    // Combine regular graph edges with devbox-to-network edges
+    return [...edgeLogic.parsedEdges, ...nodeLogic.networkEdges];
+  }, [edgeLogic.parsedEdges, nodeLogic.networkEdges]);
+
+  // Sync nodes from nodeLogic when they actually change and apply layout
   useEffect(() => {
     // Create a hash of the current nodes to detect changes
-    const currentNodesHash = JSON.stringify(nodeLogic.nodes);
+    const currentNodesHash = JSON.stringify(
+      nodeLogic.nodes.map((n) => ({ id: n.id, type: n.type }))
+    );
     const hasNodesChanged = currentNodesHash !== previousNodesHashRef.current;
 
     // Initialize nodes if not done yet and we have nodes
     if (!nodesInitializedRef.current && nodeLogic.nodes.length > 0) {
-      setNodes(nodeLogic.nodes);
+      // Apply layout immediately when nodes are first loaded
+      const layoutedElements = applyLayout(
+        nodeLogic.nodes,
+        allParsedEdges,
+        "BT"
+      );
+      setNodes(layoutedElements.nodes);
       nodesInitializedRef.current = true;
       previousNodesHashRef.current = currentNodesHash;
     }
     // Update nodes if they have changed (content or count)
     else if (nodesInitializedRef.current && hasNodesChanged) {
-      setNodes(nodeLogic.nodes);
+      // Apply layout when nodes change
+      const layoutedElements = applyLayout(
+        nodeLogic.nodes,
+        allParsedEdges,
+        "BT"
+      );
+      setNodes(layoutedElements.nodes);
       previousNodesHashRef.current = currentNodesHash;
     }
-  }, [nodeLogic.nodes, setNodes]);
+  }, [nodeLogic.nodes, allParsedEdges, setNodes, applyLayout]);
 
   // Combine node data and edge-handling to create enhanced nodes
   const enhancedNodes = useMemo(() => {
@@ -143,10 +163,10 @@ export function useGraphSpecific(graphName: string): UseGraphSpecificReturn {
   // Create enhanced edges with click handlers in edit mode
   const enhancedEdges = useMemo(() => {
     if (!edgeLogic.editMode) {
-      return edgeLogic.parsedEdges;
+      return allParsedEdges;
     }
 
-    return edgeLogic.parsedEdges.map((edge) => ({
+    return allParsedEdges.map((edge) => ({
       ...edge,
       data: {
         ...edge.data,
@@ -154,7 +174,7 @@ export function useGraphSpecific(graphName: string): UseGraphSpecificReturn {
           edgeLogic.handleEdgeClick(event, edge),
       },
     }));
-  }, [edgeLogic.editMode, edgeLogic.parsedEdges, edgeLogic.handleEdgeClick]);
+  }, [edgeLogic.editMode, allParsedEdges, edgeLogic.handleEdgeClick]);
 
   // Helper to parse resource info from nodeId for edge annotations
   const getResourceInfo = useCallback((nodeId: string) => {
@@ -180,7 +200,7 @@ export function useGraphSpecific(graphName: string): UseGraphSpecificReturn {
 
   // Apply layout to nodes and edges
   const handleApplyLayout = useCallback(
-    (direction: "TB" | "LR" | "BT" | "RL" = "TB") => {
+    (direction: "TB" | "LR" | "BT" | "RL" = "BT") => {
       const layouted = applyLayout(enhancedNodes, enhancedEdges, direction);
 
       // Update node positions with the layouted positions

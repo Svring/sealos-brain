@@ -64,17 +64,21 @@ function Hydrated({
     const refreshInitialData = async () => {
       setIsRefreshing(true);
       // Invalidate and refetch all graph-related queries to ensure fresh data
-      await queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
-      await queryClient.invalidateQueries({ queryKey: ["graphs"] });
-      await queryClient.invalidateQueries({ queryKey: ["graph"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] }),
+        queryClient.invalidateQueries({ queryKey: ["graphs"] }),
+        queryClient.invalidateQueries({ queryKey: ["graph"] }),
+      ]);
 
-      // Refresh again after 3 seconds to catch any delayed data
+      // Refresh again after 1 second to catch any delayed data
       setTimeout(async () => {
-        await queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
-        await queryClient.invalidateQueries({ queryKey: ["graphs"] });
-        await queryClient.invalidateQueries({ queryKey: ["graph"] });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] }),
+          queryClient.invalidateQueries({ queryKey: ["graphs"] }),
+          queryClient.invalidateQueries({ queryKey: ["graph"] }),
+        ]);
         setIsRefreshing(false);
-      }, 3000);
+      }, 1000);
     };
 
     refreshInitialData();
@@ -136,10 +140,12 @@ function GraphPageContent({ graphName }: { graphName: string }) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Add refresh handler that invalidates all graph-related queries
-  const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
-    queryClient.invalidateQueries({ queryKey: ["graphs"] });
-    queryClient.invalidateQueries({ queryKey: ["graph"] });
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] }),
+      queryClient.invalidateQueries({ queryKey: ["graphs"] }),
+      queryClient.invalidateQueries({ queryKey: ["graph"] }),
+    ]);
     handleApplyLayout("BT");
     setRefreshKey((k) => k + 1);
   }, [queryClient, handleApplyLayout]);

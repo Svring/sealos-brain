@@ -1,9 +1,9 @@
 import type { Node } from "@xyflow/react";
 import { useMemo } from "react";
 import { useDevboxNetworks } from "@/hooks/use-devbox-networks";
-import { hasEdgesInGraph } from "@/hooks/use-graph-edge";
 import { useResources } from "@/hooks/use-resources";
 import { useGraphQuery } from "@/lib/graph/graph-query";
+import type { ParsedEdge } from "@/lib/graph/graph-utils";
 import {
   createEmptyStateNode,
   createResourceNode,
@@ -16,6 +16,7 @@ const NEWLY_CREATED_GRAPH_PATTERN = /^graph-[a-z0-9]{7}$/;
 
 interface UseGraphNodeReturn {
   nodes: Node[];
+  networkEdges: ParsedEdge[];
   isLoading: boolean;
 }
 
@@ -42,14 +43,12 @@ export function useGraphNode(graphName: string): UseGraphNodeReturn {
     return Array.isArray(devboxes) ? devboxes : [];
   }, [specificGraph]);
 
-  // Get network nodes for devboxes
-  const { networkNodes, isLoading: isNetworkLoading } = useDevboxNetworks(
-    devboxNames,
-    currentUser as User
-  );
-
-  // Check if edges exist for this graph
-  const edgesExist = hasEdgesInGraph(allResources, graphName);
+  // Get network nodes and edges for devboxes
+  const {
+    networkNodes,
+    networkEdges,
+    isLoading: isNetworkLoading,
+  } = useDevboxNetworks(devboxNames, currentUser as User);
 
   // Create ReactFlow nodes for the specific graph
   const nodes = useMemo(() => {
@@ -74,37 +73,25 @@ export function useGraphNode(graphName: string): UseGraphNodeReturn {
         }))
     );
 
-    const resourceNodes = flattenedResources.map((resource, index) => {
-      if (edgesExist) {
-        // If edges exist, position nodes at origin to let layout algorithm handle positioning
-        return createResourceNode(
-          resource.kind,
-          resource.name,
-          0,
-          0,
-          allResources
-        );
-      }
-      // If no edges exist, arrange nodes in a grid with four per line
-      const gridCols = 4;
-      const gridSpacingX = 250;
-      const gridSpacingY = 180;
-      const x = (index % gridCols) * gridSpacingX;
-      const y = Math.floor(index / gridCols) * gridSpacingY;
+    // Create resource nodes - let the layout system handle positioning
+    const resourceNodes = flattenedResources.map((resource) => {
+      // Always use (0, 0) position - layout system will handle proper positioning
       return createResourceNode(
         resource.kind,
         resource.name,
-        x,
-        y,
+        0,
+        0,
         allResources
       );
     });
+
     // Combine resource nodes with network nodes
     return [...resourceNodes, ...networkNodes];
-  }, [graphName, specificGraph, edgesExist, allResources, networkNodes]);
+  }, [graphName, specificGraph, allResources, networkNodes]);
 
   return {
     nodes,
+    networkEdges,
     isLoading: isLoading || isNetworkLoading,
   };
 }
