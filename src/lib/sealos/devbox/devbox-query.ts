@@ -1,21 +1,21 @@
 import { queryOptions } from "@tanstack/react-query";
 import axios from "axios";
 import { queryDebugLog } from "@/lib/query-debug-log";
+import type { User } from "@/payload-types";
 
-function getDevboxHeaders(currentUser: any) {
+function getDevboxHeaders(currentUser: User) {
   return {
     Authorization:
-      currentUser?.tokens?.find((t: any) => t.type === "kubeconfig")?.value ||
-      "",
+      currentUser?.tokens?.find((t) => t.type === "kubeconfig")?.value || "",
     "Authorization-Bearer":
-      currentUser?.tokens?.find((t: any) => t.type === "custom")?.value || "",
+      currentUser?.tokens?.find((t) => t.type === "custom")?.value || "",
   };
 }
 
 export function devboxListOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "list", regionUrl, currentUser?.id],
@@ -37,10 +37,10 @@ export function devboxListOptions(
 }
 
 export function devboxByNameOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
   devboxName: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "byName", devboxName, regionUrl, currentUser?.id],
@@ -63,10 +63,10 @@ export function devboxByNameOptions(
 }
 
 export function sshConnectionInfoOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
   devboxName: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "sshInfo", devboxName, regionUrl, currentUser?.id],
@@ -89,10 +89,10 @@ export function sshConnectionInfoOptions(
 }
 
 export function devboxReadyStatusOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
   devboxName: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "checkReady", devboxName, regionUrl, currentUser?.id],
@@ -115,10 +115,10 @@ export function devboxReadyStatusOptions(
 }
 
 export function appsByDevboxIdOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
   devboxId: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "getApps", devboxId, regionUrl, currentUser?.id],
@@ -141,10 +141,10 @@ export function appsByDevboxIdOptions(
 }
 
 export function devboxPodsByDevboxNameOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
   devboxName: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "getPods", devboxName, regionUrl, currentUser?.id],
@@ -167,11 +167,11 @@ export function devboxPodsByDevboxNameOptions(
 }
 
 export function devboxVersionListOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
   devboxName: string,
   devboxUid: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: [
@@ -202,10 +202,10 @@ export function devboxVersionListOptions(
 }
 
 export function devboxEnvOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
   devboxName: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "getEnv", devboxName, regionUrl, currentUser?.id],
@@ -228,10 +228,10 @@ export function devboxEnvOptions(
 }
 
 export function monitorDataOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
-  params: any,
-  postprocess: (data: any) => any = (d) => d
+  params: Record<string, string>,
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "monitor", params, regionUrl, currentUser?.id],
@@ -254,9 +254,9 @@ export function monitorDataOptions(
 }
 
 export function templateRepositoryListOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "templateRepo", "list", regionUrl, currentUser?.id],
@@ -278,9 +278,9 @@ export function templateRepositoryListOptions(
 }
 
 export function templateRepositoryListOfficialOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: [
@@ -308,9 +308,9 @@ export function templateRepositoryListOfficialOptions(
 }
 
 export function templateRepositoryListPrivateOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: [
@@ -338,10 +338,10 @@ export function templateRepositoryListPrivateOptions(
 }
 
 export function templateRepositoryTagListOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
-  params: any,
-  postprocess: (data: any) => any = (d) => d
+  params: Record<string, string>,
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: [
@@ -372,10 +372,10 @@ export function templateRepositoryTagListOptions(
 }
 
 export function templateRepositoryGetOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
   id: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "templateRepo", "get", id, regionUrl, currentUser?.id],
@@ -398,10 +398,10 @@ export function templateRepositoryGetOptions(
 }
 
 export function templateRepositoryTemplateGetConfigOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
   id: string,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: [
@@ -432,10 +432,10 @@ export function templateRepositoryTemplateGetConfigOptions(
 }
 
 export function templateRepositoryTemplateListOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
-  params: any,
-  postprocess: (data: any) => any = (d) => d
+  params: Record<string, string>,
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: [
@@ -466,9 +466,9 @@ export function templateRepositoryTemplateListOptions(
 }
 
 export function devboxQuotaOptions(
-  currentUser: any,
+  currentUser: User,
   regionUrl: string | undefined,
-  postprocess: (data: any) => any = (d) => d
+  postprocess: (data: unknown) => unknown = (d) => d
 ) {
   return queryOptions({
     queryKey: ["devbox", "quota", regionUrl, currentUser?.id],

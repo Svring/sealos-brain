@@ -43,16 +43,16 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     path: "/home",
   },
   {
-    title: "Inventory",
-    icon: Boxes,
-    group: "overview",
-    path: "/inventory",
-  },
-  {
     title: "Graph",
     icon: Workflow,
     group: "overview",
     path: "/graph",
+  },
+  {
+    title: "Inventory",
+    icon: Boxes,
+    group: "overview",
+    path: "/inventory",
   },
   // {
   //   title: "Opera",

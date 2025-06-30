@@ -1,5 +1,6 @@
 import type { Node } from "@xyflow/react";
 import { useMemo } from "react";
+import { useDevboxNetworks } from "@/hooks/use-devbox-networks";
 import { hasEdgesInGraph } from "@/hooks/use-graph-edge";
 import { useResources } from "@/hooks/use-resources";
 import { useGraphQuery } from "@/lib/graph/graph-query";
@@ -35,6 +36,18 @@ export function useGraphNode(graphName: string): UseGraphNodeReturn {
   // Get resources for node data
   const { allResources } = useResources(currentUser as User);
 
+  // Extract devbox names from the graph
+  const devboxNames = useMemo(() => {
+    const devboxes = specificGraph?.devbox || [];
+    return Array.isArray(devboxes) ? devboxes : [];
+  }, [specificGraph]);
+
+  // Get network nodes for devboxes
+  const { networkNodes, isLoading: isNetworkLoading } = useDevboxNetworks(
+    devboxNames,
+    currentUser as User
+  );
+
   // Check if edges exist for this graph
   const edgesExist = hasEdgesInGraph(allResources, graphName);
 
@@ -61,7 +74,7 @@ export function useGraphNode(graphName: string): UseGraphNodeReturn {
         }))
     );
 
-    return flattenedResources.map((resource, index) => {
+    const resourceNodes = flattenedResources.map((resource, index) => {
       if (edgesExist) {
         // If edges exist, position nodes at origin to let layout algorithm handle positioning
         return createResourceNode(
@@ -86,10 +99,12 @@ export function useGraphNode(graphName: string): UseGraphNodeReturn {
         allResources
       );
     });
-  }, [graphName, specificGraph, edgesExist, allResources]);
+    // Combine resource nodes with network nodes
+    return [...resourceNodes, ...networkNodes];
+  }, [graphName, specificGraph, edgesExist, allResources, networkNodes]);
 
   return {
     nodes,
-    isLoading,
+    isLoading: isLoading || isNetworkLoading,
   };
 }

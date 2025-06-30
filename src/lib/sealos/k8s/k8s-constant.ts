@@ -23,11 +23,23 @@ export const RESOURCES = {
     version: "v1",
     plural: "objectstoragebuckets",
   },
+  network: {
+    // Network is a virtual resource type derived from devbox networks
+    // It doesn't have direct Kubernetes resources but represents exposed services
+    virtual: true,
+    description: "Network endpoints from devbox services",
+  },
 };
 
-export type ResourceType = keyof typeof RESOURCES;
+// Define resource types
+export type ResourceType =
+  | "devbox"
+  | "cluster"
+  | "deployment"
+  | "cronjob"
+  | "objectstoragebucket"
+  | "network";
 
-// Shared keys for graph functionality
-// Changed from annotation to label for graphName, but keep edges as annotation
-export const GRAPH_NAME_LABEL_KEY = "sealosBrain.graphName";
-export const GRAPH_EDGES_ANNOTATION_KEY = "sealosBrain/graphEdges";
+// Graph-related annotations and labels
+export const GRAPH_NAME_LABEL_KEY = "sealos-brain.io/graph-name";
+export const GRAPH_EDGES_ANNOTATION_KEY = "sealos-brain.io/graph-edges";
