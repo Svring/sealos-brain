@@ -17,7 +17,7 @@ function HomePageContent() {
       <CopilotChat
         className="h-full w-4xl"
         labels={{
-          initial: "Hi! 👋 How can I assist you today?",
+          initial: "Hi! what app do you want to build today?",
         }}
       />
     </div>

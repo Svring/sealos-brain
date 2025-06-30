@@ -19,6 +19,7 @@ export function useGraphsQuery(currentUser: User | null) {
     },
     enabled: !!currentUser && !isLoadingResources,
     staleTime: 5000, // 5 seconds for better real-time updates
+    refetchInterval: 15_000, // Refetch every 15 seconds to keep graph data fresh
   });
 }
 
@@ -33,5 +34,6 @@ export function useGraphQuery(currentUser: User | null, graphName: string) {
     },
     enabled: !!currentUser && !!allGraphs,
     staleTime: 5000, // 5 seconds for better real-time updates
+    refetchInterval: 15_000, // Refetch every 15 seconds to keep specific graph data fresh
   });
 }

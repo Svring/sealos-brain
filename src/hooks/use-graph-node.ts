@@ -10,6 +10,9 @@ import {
 import type { User } from "@/payload-types";
 import { useSealosStore } from "@/store/sealos-store";
 
+// Regex to match newly created graph names (graph-{7chars})
+const NEWLY_CREATED_GRAPH_PATTERN = /^graph-[a-z0-9]{7}$/;
+
 interface UseGraphNodeReturn {
   nodes: Node[];
   isLoading: boolean;
@@ -40,7 +43,13 @@ export function useGraphNode(graphName: string): UseGraphNodeReturn {
     const graphResources = specificGraph;
 
     if (!graphResources || Object.keys(graphResources).length === 0) {
-      return [createEmptyStateNode(graphName)];
+      // Only show empty state for newly created graphs
+      const isNewlyCreatedGraph = NEWLY_CREATED_GRAPH_PATTERN.test(graphName);
+      if (isNewlyCreatedGraph) {
+        return [createEmptyStateNode(graphName)];
+      }
+      // For existing graphs with no resources, return empty array
+      return [];
     }
 
     // Flatten all resources into a single array with their types

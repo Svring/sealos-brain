@@ -593,7 +593,7 @@ async function createClusterResources(
   regionUrl: string | undefined
 ): Promise<ResourceCreationResult> {
   try {
-    const dbForms = dbTypes.map((type) => generateDBFormFromType(type).dbForm);
+    const dbForms = dbTypes.map((type) => generateDBFormFromType(type));
     const result = await createMultipleDBs(dbForms, currentUser, regionUrl);
 
     return {

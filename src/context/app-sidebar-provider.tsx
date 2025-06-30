@@ -54,12 +54,12 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     group: "overview",
     path: "/graph",
   },
-  {
-    title: "Opera",
-    icon: Drama,
-    group: "overview",
-    path: "/opera",
-  },
+  // {
+  //   title: "Opera",
+  //   icon: Drama,
+  //   group: "overview",
+  //   path: "/opera",
+  // },
 ];
 
 // Main component

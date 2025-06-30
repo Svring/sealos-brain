@@ -2,7 +2,11 @@ import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 import type { ExistingResource } from "@/hooks/use-resources";
-import { resourceDisplayNames, resourceIcons } from "./constants";
+import {
+  resourceDisplayNames,
+  resourceIcons,
+  type UIResourceType,
+} from "./constants";
 import { ResourceCard } from "./resource-card";
 
 interface ExistingResourcesTabProps {
@@ -19,7 +23,18 @@ export function ExistingResourcesTab({
   onRefetch,
 }: ExistingResourcesTabProps) {
   const [selectedTab, setSelectedTab] = useState<number | null>(0);
-  const resourceTypes = Array.from(new Set(allResources.map((r) => r.type)));
+  // Only allow devbox, cluster, and objectstoragebucket
+  const allowedTypes: UIResourceType[] = [
+    "devbox",
+    "cluster",
+    "objectstoragebucket",
+  ];
+  const filteredAllResources = allResources.filter((r) =>
+    allowedTypes.includes(r.type as UIResourceType)
+  );
+  const resourceTypes = Array.from(
+    new Set(filteredAllResources.map((r) => r.type as UIResourceType))
+  );
   const tabs = [
     {
       title: "All",
@@ -32,8 +47,10 @@ export function ExistingResourcesTab({
   ];
   const filteredResources =
     selectedTab === 0 || selectedTab === null
-      ? allResources
-      : allResources.filter((r) => r.type === resourceTypes[selectedTab - 1]);
+      ? filteredAllResources
+      : filteredAllResources.filter(
+          (r) => r.type === resourceTypes[selectedTab - 1]
+        );
 
   if (isLoading) {
     return (

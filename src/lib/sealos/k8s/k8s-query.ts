@@ -2,7 +2,6 @@
 
 import { queryOptions } from "@tanstack/react-query";
 import { runParallelAction } from "next-server-actions-parallel";
-import { queryDebugLog } from "@/lib/query-debug-log";
 import type { User } from "@/payload-types";
 import {
   getResource,
@@ -50,6 +49,7 @@ export function directResourceListOptions(
     },
     select: postprocess,
     staleTime: 5000,
+    refetchInterval: 10_000,
   });
 }
 
