@@ -41,7 +41,7 @@ export default function ObjectStorageNode({
               <span className="truncate text-muted-foreground text-sm">
                 Object Storage
               </span>
-              <span className="font-bold text-foreground text-md">
+              <span className="w-40 overflow-hidden text-ellipsis text-left font-bold text-foreground text-md">
                 {bucketName}
               </span>
             </div>

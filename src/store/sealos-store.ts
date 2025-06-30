@@ -49,18 +49,6 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
   // Debug function to print store state
   debugPrintState: () => {
     const state = get();
-    console.log("🔍 Sealos Store State:", {
-      regionUrl: state.regionUrl,
-      currentUser: state.currentUser
-        ? {
-            id: state.currentUser.id,
-            email: state.currentUser.email,
-            username: state.currentUser.username,
-            tokensCount: state.currentUser.tokens?.length || 0,
-          }
-        : null,
-      tokens: state.tokens,
-    });
     return state;
   },
 
@@ -69,10 +57,7 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
     const tokens: UserTokens = {};
 
     if (user.tokens) {
-      user.tokens.forEach((token) => {
-        console.log(
-          `🔑 Processing token: ${token.type} = ${token.value ? "present" : "missing"}`
-        );
+      for (const token of user.tokens) {
         switch (token.type) {
           case "kubeconfig":
             tokens.kubeconfig = token.value;
@@ -86,16 +71,11 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
           case "custom":
             tokens.customToken = token.value;
             break;
+          default:
+            break;
         }
-      });
+      }
     }
-
-    console.log("🔑 Final tokens object:", {
-      kubeconfig: tokens.kubeconfig ? "present" : "missing",
-      regionToken: tokens.regionToken ? "present" : "missing",
-      appToken: tokens.appToken ? "present" : "missing",
-      customToken: tokens.customToken ? "present" : "missing",
-    });
 
     set({ tokens });
   },
@@ -103,21 +83,13 @@ export const useSealosStore = create<SealosStore>((set, get) => ({
   hasRequiredTokens: (type) => {
     const { tokens } = get();
 
-    console.log(`🔍 Checking required tokens for ${type}:`, {
-      kubeconfig: tokens.kubeconfig ? "present" : "missing",
-      customToken: tokens.customToken ? "present" : "missing",
-      regionToken: tokens.regionToken ? "present" : "missing",
-    });
-
     switch (type) {
       case "devbox": {
         const hasDevboxTokens = !!(tokens.kubeconfig && tokens.customToken);
-        console.log(`✅ Has devbox tokens: ${hasDevboxTokens}`);
         return hasDevboxTokens;
       }
       case "account": {
         const hasAccountTokens = !!tokens.regionToken;
-        console.log(`✅ Has account tokens: ${hasAccountTokens}`);
         return hasAccountTokens;
       }
       default:

@@ -32,11 +32,13 @@ const BaseNode = ({
     <>
       <div className="flex h-40 w-60 flex-col rounded-lg border border-border bg-background p-4">
         <button
-          className={`h-full w-full cursor-pointer border-border ${className}`}
+          className={`h-full w-full cursor-pointer overflow-hidden border-border ${className}`}
           onClick={handleClick}
           type="button"
         >
-          {children}
+          <div className="h-full w-full overflow-hidden text-ellipsis whitespace-nowrap">
+            {children}
+          </div>
         </button>
       </div>
       <Handle position={Position.Top} type="source" />

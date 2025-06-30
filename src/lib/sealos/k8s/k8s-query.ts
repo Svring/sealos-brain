@@ -38,11 +38,11 @@ export function directResourceListOptions(
       const namespace =
         namespaceOverride || (await getNamespaceFromKubeconfig(kubeconfig));
 
-      queryDebugLog("directResourceListOptions", {
-        resourceType,
-        namespace,
-        userId: currentUser?.id,
-      });
+      // queryDebugLog("directResourceListOptions", {
+      //   resourceType,
+      //   namespace,
+      //   userId: currentUser?.id,
+      // });
 
       return runParallelAction(
         listResourcesByType(kubeconfig, resourceType, namespace)
@@ -81,12 +81,12 @@ export function directResourceByNameOptions(
       const namespace =
         namespaceOverride || (await getNamespaceFromKubeconfig(kubeconfig));
 
-      queryDebugLog("directResourceByNameOptions", {
-        resourceType,
-        resourceName,
-        namespace,
-        userId: currentUser?.id,
-      });
+      // queryDebugLog("directResourceByNameOptions", {
+      //   resourceType,
+      //   resourceName,
+      //   namespace,
+      //   userId: currentUser?.id,
+      // });
 
       return await getResource(
         kubeconfig,
@@ -127,11 +127,11 @@ export function directDevboxSecretOptions(
       const namespace =
         namespaceOverride || (await getNamespaceFromKubeconfig(kubeconfig));
 
-      queryDebugLog("directDevboxSecretOptions", {
-        devboxName,
-        namespace,
-        userId: currentUser?.id,
-      });
+      // queryDebugLog("directDevboxSecretOptions", {
+      //   devboxName,
+      //   namespace,
+      //   userId: currentUser?.id,
+      // });
 
       return await readDevboxSecret(kubeconfig, devboxName, namespace);
     },

@@ -49,7 +49,6 @@ export function useResources(currentUser: User): UseResourcesReturn {
     "devbox",
     "cluster",
     "deployment",
-    "cronjob",
     "objectstoragebucket",
   ];
 

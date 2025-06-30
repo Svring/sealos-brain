@@ -72,9 +72,9 @@ export function useGraphOverview(): UseGraphOverviewReturn {
 
     // Invalidate and refetch all resource queries to update the UI
     queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
-    queryClient.invalidateQueries({ queryKey: ["devbox", "list"] });
-    queryClient.invalidateQueries({ queryKey: ["dbprovider", "list"] });
-    queryClient.invalidateQueries({ queryKey: ["objectstorage", "list"] });
+    queryClient.invalidateQueries({ queryKey: ["graphs"] });
+    queryClient.invalidateQueries({ queryKey: ["graph"] });
+    queryClient.invalidateQueries({ queryKey: ["nodes"] });
   };
 
   return {

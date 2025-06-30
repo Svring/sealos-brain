@@ -53,7 +53,7 @@ async def sealos_brain_node(
     # Determine if tools should be bound
     should_bind_tools = has_copilot_actions(state)
 
-    llm = get_sealos_model("gpt-4o", base_url, api_key)
+    llm = get_sealos_model("grok-3-fast", base_url, api_key)
 
     # Only bind tools when copilotkit and actions both exist
     if should_bind_tools:

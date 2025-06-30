@@ -4,7 +4,9 @@ import { useSealosStore } from "@/store/sealos-store";
 
 export default function DevboxDetail({ devboxName }: { devboxName: string }) {
   const { currentUser, regionUrl } = useSealosStore();
-  useQuery(devboxByNameOptions(currentUser, regionUrl, devboxName));
+  const { data: devbox, isLoading } = useQuery(
+    devboxByNameOptions(currentUser, regionUrl, devboxName)
+  );
   // No UI or event handlers, just fetch the data for now
   return null;
 }

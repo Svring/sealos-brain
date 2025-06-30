@@ -49,9 +49,9 @@ export default function DBProviderNode({ data }: { data: DBProviderNodeData }) {
             />
             <div className="flex flex-col items-start">
               <span className="truncate text-muted-foreground text-sm">
-                DBProvider
+                Database
               </span>
-              <span className="font-bold text-foreground text-md">
+              <span className="w-40 overflow-hidden text-ellipsis text-left font-bold text-foreground text-md">
                 {dbName}
               </span>
             </div>

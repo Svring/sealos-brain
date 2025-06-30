@@ -21,15 +21,7 @@ export default function AppLaunchpadNode({
 }) {
   const nodeId = useNodeId();
 
-  const {
-    state,
-    deploymentName,
-    replicas,
-    availableReplicas,
-    image,
-    onClick,
-    isSelected,
-  } = data;
+  const { state, deploymentName, onClick, isSelected } = data;
 
   const stateColorMap: Record<AppLaunchpadNodeData["state"], string> = {
     Running: "bg-green-100 text-green-800",
@@ -41,6 +33,8 @@ export default function AppLaunchpadNode({
 
   const stateColorClass = stateColorMap[state];
 
+  console.log("data", data);
+
   return (
     <>
       <BaseNode
@@ -49,42 +43,24 @@ export default function AppLaunchpadNode({
         isSelected={isSelected}
         onClick={onClick}
       >
-        <div className="space-y-4">
+        <div className="flex h-full flex-col justify-between">
           {/* Name */}
-          <div className="flex items-center gap-2 truncate font-medium">
+          <div className="flex w-full items-center gap-2 truncate font-medium">
             <Image
               alt="AppLaunchpad"
               className="rounded-lg object-contain"
               height={40}
-              onError={(e) => {
-                // Fallback to a generic deployment icon
-                (e.target as HTMLImageElement).src = "/deployment-icon.svg";
-              }}
               src="https://applaunchpad.bja.sealos.run/logo.svg"
               width={40}
             />
-            <div className="flex flex-col">
+            <div className="flex w-full flex-col items-start">
               <span className="truncate text-muted-foreground text-sm">
-                AppLaunchpad · Deployment
+                Deployment
               </span>
-              <span className="font-bold text-foreground text-md">
+              <span className="w-40 overflow-hidden text-ellipsis text-left font-bold text-foreground text-md">
                 {deploymentName}
               </span>
             </div>
-          </div>
-
-          {/* Deployment details */}
-          <div className="space-y-1">
-            {replicas !== undefined && (
-              <div className="text-muted-foreground text-xs">
-                Replicas: {availableReplicas || 0}/{replicas}
-              </div>
-            )}
-            {image && (
-              <div className="truncate text-muted-foreground text-xs">
-                Image: {image}
-              </div>
-            )}
           </div>
 
           {/* State badge */}

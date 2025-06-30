@@ -49,7 +49,7 @@ export default function DevboxNode({ data }: { data: DevboxNodeData }) {
               <span className="truncate text-muted-foreground text-sm">
                 Devbox
               </span>
-              <span className="truncate font-bold text-foreground text-md">
+              <span className="w-40 overflow-hidden text-ellipsis text-left font-bold text-foreground text-md">
                 {devboxName}
               </span>
             </div>

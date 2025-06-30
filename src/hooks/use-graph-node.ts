@@ -4,7 +4,6 @@ import { hasEdgesInGraph } from "@/hooks/use-graph-edge";
 import { useResources } from "@/hooks/use-resources";
 import { useGraphQuery } from "@/lib/graph/graph-query";
 import {
-  calculateGridPosition,
   createEmptyStateNode,
   createResourceNode,
 } from "@/lib/graph/graph-utils";
@@ -64,13 +63,17 @@ export function useGraphNode(graphName: string): UseGraphNodeReturn {
           allResources
         );
       }
-      // If no edges exist, spread nodes evenly in a grid
-      const position = calculateGridPosition(index, flattenedResources.length);
+      // If no edges exist, arrange nodes in a grid with four per line
+      const gridCols = 4;
+      const gridSpacingX = 250;
+      const gridSpacingY = 180;
+      const x = (index % gridCols) * gridSpacingX;
+      const y = Math.floor(index / gridCols) * gridSpacingY;
       return createResourceNode(
         resource.kind,
         resource.name,
-        position.x,
-        position.y,
+        x,
+        y,
         allResources
       );
     });

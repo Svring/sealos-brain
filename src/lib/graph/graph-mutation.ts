@@ -118,6 +118,7 @@ export function useCreateGraphWithResourcesMutation() {
 
 // Delete all resources in a graph
 export function useDeleteAllGraphResourcesMutation() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (params: {
       currentUser: User;
@@ -131,6 +132,12 @@ export function useDeleteAllGraphResourcesMutation() {
         params.currentUser,
         params.regionUrl
       );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["k8s", "direct"] });
+      queryClient.invalidateQueries({ queryKey: ["graphs"] });
+      queryClient.invalidateQueries({ queryKey: ["graph"] });
+      queryClient.invalidateQueries({ queryKey: ["nodes"] });
     },
   });
 }
