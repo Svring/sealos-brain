@@ -39,9 +39,9 @@ export function useSealosBrainAgent() {
   });
 
   // Activate Sealos-specific actions
-  useActivateDevboxActions();
-  useActivateClusterActions();
-  useActivateObjectStorageActions();
+  // useActivateDevboxActions();
+  // useActivateClusterActions();
+  // useActivateObjectStorageActions();
   useActivateGraphActions();
 
   return {

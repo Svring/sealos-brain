@@ -1,3 +1,5 @@
+"use client";
+
 import { useNodeId } from "@xyflow/react";
 import Image from "next/image";
 import BaseNode from "../base-node";
@@ -14,7 +16,6 @@ export interface DevboxNodeData {
 
 export default function DevboxNode({ data }: { data: DevboxNodeData }) {
   const nodeId = useNodeId();
-
   const { state, iconId, devboxName, onClick, isSelected } = data;
 
   const stateColorMap: Record<DevboxNodeData["state"], string> = {
@@ -34,7 +35,7 @@ export default function DevboxNode({ data }: { data: DevboxNodeData }) {
         isSelected={isSelected}
         onClick={onClick}
       >
-        <div className="space-y-4">
+        <div className="flex h-full flex-col justify-between">
           {/* Name */}
           <div className="flex items-center gap-2 truncate font-medium">
             <Image
@@ -44,18 +45,18 @@ export default function DevboxNode({ data }: { data: DevboxNodeData }) {
               src="https://devbox.bja.sealos.run/logo.svg"
               width={40}
             />
-            <div className="flex flex-col">
+            <div className="flex flex-col items-start">
               <span className="truncate text-muted-foreground text-sm">
-                Devbox · {iconId}
+                Devbox
               </span>
-              <span className="font-bold text-foreground text-md">
+              <span className="truncate font-bold text-foreground text-md">
                 {devboxName}
               </span>
             </div>
           </div>
 
           {/* State badge */}
-          <div className="flex justify-start">
+          <div className="mt-auto flex justify-start">
             <span className={`rounded px-2 py-0.5 text-xs ${stateColorClass}`}>
               {state}
             </span>

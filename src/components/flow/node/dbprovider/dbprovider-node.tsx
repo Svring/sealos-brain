@@ -18,8 +18,7 @@ export interface DBProviderNodeData {
 export default function DBProviderNode({ data }: { data: DBProviderNodeData }) {
   const nodeId = useNodeId();
 
-  const { state, dbType, dbName, dbVersion, replicas, onClick, isSelected } =
-    data;
+  const { state, dbType, dbName, onClick, isSelected } = data;
 
   const stateColorMap: Record<DBProviderNodeData["state"], string> = {
     Running: "bg-green-100 text-green-800",
@@ -42,43 +41,24 @@ export default function DBProviderNode({ data }: { data: DBProviderNodeData }) {
         isSelected={isSelected}
         onClick={onClick}
       >
-        <div className="space-y-4">
+        <div className="flex h-full flex-col justify-between">
           {/* Name and Type */}
           <div className="flex items-center gap-2 truncate font-medium">
             <Image
               alt={dbType}
               className="rounded-lg object-contain"
               height={40}
-              onError={(e) => {
-                // Fallback to DBProvider logo if specific DB icon not found
-                (e.target as HTMLImageElement).src =
-                  "https://dbprovider.cloud.sealos.io/logo.svg";
-              }}
               src={dbIcon}
               width={40}
             />
-            <div className="flex flex-col">
+            <div className="flex flex-col items-start">
               <span className="truncate text-muted-foreground text-sm">
-                DBProvider · {dbType}
+                DBProvider
               </span>
               <span className="font-bold text-foreground text-md">
                 {dbName}
               </span>
             </div>
-          </div>
-
-          {/* Database details */}
-          <div className="space-y-1">
-            {dbVersion && (
-              <div className="text-muted-foreground text-xs">
-                Version: {dbVersion}
-              </div>
-            )}
-            {replicas && (
-              <div className="text-muted-foreground text-xs">
-                Replicas: {replicas}
-              </div>
-            )}
           </div>
 
           {/* State badge */}

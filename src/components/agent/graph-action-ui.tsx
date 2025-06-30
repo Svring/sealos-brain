@@ -1,6 +1,21 @@
+/* eslint-disable complexity, sonarjs/cognitive-complexity */
+
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  LinkIcon,
+  NetworkIcon,
+  PlusIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useAddResourceToGraphMutation } from "@/lib/graph/graph-mutation";
 import type { GraphCreationRequest } from "@/lib/graph/graph-utils";
+import {
+  createGraphWithNewResources,
+  generateUniqueGraphName,
+} from "@/lib/graph/graph-utils";
+import { useSealosStore } from "@/store/sealos-store";
 import { Button } from "../ui/button";
 
 interface GraphInfo {
@@ -47,58 +62,52 @@ function renderResourceList(
   );
 }
 
-// Helper function to render new resource list
-function renderNewResourceList(
+// Helper function to render new resource badges
+function renderNewResourceBadges(
   resources: GraphCreationRequest["resources"],
-  color: string
+  colorScheme: "green" | "blue" = "green"
 ) {
   return (
-    <div className="mt-2 space-y-2">
+    <div className="space-y-2">
       {resources.devbox && resources.devbox.length > 0 && (
-        <div>
-          <h5 className="font-medium text-sm">
-            Devboxes ({resources.devbox.length}):
-          </h5>
-          <ul className="ml-4 space-y-1">
-            {resources.devbox.map((template) => (
-              <li className="flex items-center text-sm" key={template}>
-                <span className={`mr-2 h-2 w-2 rounded-full bg-${color}-500`} />
-                <strong>{template}</strong>
-              </li>
-            ))}
-          </ul>
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-full bg-${colorScheme}-100 px-2 py-1 font-medium text-${colorScheme}-800 text-xs`}
+          >
+            Devboxes ({resources.devbox.length})
+          </span>
+          <span className={`text-${colorScheme}-700 text-sm`}>
+            {resources.devbox.join(", ")}
+          </span>
         </div>
       )}
       {resources.cluster && resources.cluster.length > 0 && (
-        <div>
-          <h5 className="font-medium text-sm">
-            Clusters ({resources.cluster.length}):
-          </h5>
-          <ul className="ml-4 space-y-1">
-            {resources.cluster.map((dbType) => (
-              <li className="flex items-center text-sm" key={dbType}>
-                <span className={`mr-2 h-2 w-2 rounded-full bg-${color}-500`} />
-                <strong>{dbType}</strong>
-              </li>
-            ))}
-          </ul>
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-full bg-${colorScheme}-100 px-2 py-1 font-medium text-${colorScheme}-800 text-xs`}
+          >
+            Clusters ({resources.cluster.length})
+          </span>
+          <span className={`text-${colorScheme}-700 text-sm`}>
+            {resources.cluster.join(", ")}
+          </span>
         </div>
       )}
-      {resources.objectstoragebucket && (
-        <div>
-          <h5 className="font-medium text-sm">
-            Object Storage Buckets ({resources.objectstoragebucket.count}):
-          </h5>
-          <div className="ml-4">
-            <span className="flex items-center text-sm">
-              <span className={`mr-2 h-2 w-2 rounded-full bg-${color}-500`} />
-              <strong>
-                {resources.objectstoragebucket.count} buckets will be created
-              </strong>
+      {resources.objectstoragebucket &&
+        resources.objectstoragebucket.count > 0 && (
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center rounded-full bg-${colorScheme}-100 px-2 py-1 font-medium text-${colorScheme}-800 text-xs`}
+            >
+              Storage Buckets ({resources.objectstoragebucket.count})
+            </span>
+            <span className={`text-${colorScheme}-700 text-sm`}>
+              {resources.objectstoragebucket.count} bucket
+              {resources.objectstoragebucket.count === 1 ? "" : "s"} will be
+              created
             </span>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
@@ -218,16 +227,33 @@ function GraphCreationConfirmation({
 }) {
   return (
     <div className="space-y-4">
-      <h2 className="font-semibold text-lg">Graph Creation Confirmation</h2>
-      <div>
-        <p>
-          Do you want to create a graph named '<strong>{graphName}</strong>' and
-          add <strong>{totalResources} resources</strong> to it?
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <h2 className="mb-2 font-semibold text-blue-900 text-lg">
+          Create Graph: {graphName}
+        </h2>
+        <p className="mb-3 text-blue-800 text-sm">
+          Add {totalResources} existing resource
+          {totalResources === 1 ? "" : "s"} to this graph
         </p>
-        {renderResourceList(resources, "blue")}
+
+        <div className="space-y-2">
+          {Object.entries(resources).map(([resourceType, names]) => (
+            <div className="flex items-center gap-2" key={resourceType}>
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 font-medium text-blue-800 text-xs capitalize">
+                {resourceType} ({names.length})
+              </span>
+              <span className="text-blue-700 text-sm">{names.join(", ")}</span>
+            </div>
+          ))}
+        </div>
       </div>
+
       <div className="flex gap-2">
-        <Button onClick={onApprove} variant="default">
+        <Button
+          className="bg-blue-600 hover:bg-blue-700"
+          onClick={onApprove}
+          variant="default"
+        >
           Create Graph
         </Button>
         <Button onClick={onReject} variant="outline">
@@ -248,16 +274,29 @@ function GraphCreationProgress({
   totalResources: number;
 }) {
   return (
-    <div className="space-y-2">
-      <h2 className="font-semibold text-blue-600 text-lg">Creating Graph...</h2>
-      <p>
-        Creating graph '<strong>{graphName}</strong>' and adding{" "}
-        {totalResources} resources
-      </p>
-      {renderResourceList(resources, "blue")}
-      <div className="flex items-center gap-2">
-        <div className="h-4 w-4 animate-spin rounded-full border-blue-600 border-b-2" />
-        <span className="text-gray-600 text-sm">Please wait...</span>
+    <div className="space-y-4">
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <div className="h-4 w-4 animate-spin rounded-full border-blue-600 border-b-2" />
+          <h2 className="font-semibold text-blue-900 text-lg">
+            Creating Graph...
+          </h2>
+        </div>
+        <p className="mb-3 text-blue-800 text-sm">
+          Creating '<strong>{graphName}</strong>' and adding {totalResources}{" "}
+          resource{totalResources === 1 ? "" : "s"}
+        </p>
+
+        <div className="space-y-2">
+          {Object.entries(resources).map(([resourceType, names]) => (
+            <div className="flex items-center gap-2" key={resourceType}>
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 font-medium text-blue-800 text-xs capitalize">
+                {resourceType} ({names.length})
+              </span>
+              <span className="text-blue-700 text-sm">{names.join(", ")}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -310,7 +349,6 @@ function GraphCreationApproved({
           <div className="mt-4">
             <Link
               href={`/graph/${encodeURIComponent(createdGraphName)}`}
-              legacyBehavior
               passHref
             >
               <a href={`/graph/${encodeURIComponent(createdGraphName)}`}>
@@ -351,6 +389,7 @@ function GraphCreationApproved({
 export function CreateGraphWithResourcesActionUI({
   graphName,
   resources,
+  totalResources,
   onSelect,
   onReject,
   status,
@@ -358,6 +397,7 @@ export function CreateGraphWithResourcesActionUI({
 }: {
   graphName: string;
   resources: Record<string, string[]>;
+  totalResources: number;
   onSelect: () => void;
   onReject: () => void;
   status: "complete" | "executing" | "inProgress";
@@ -376,11 +416,6 @@ export function CreateGraphWithResourcesActionUI({
     setUserChoice("rejected");
     onReject();
   };
-
-  const totalResources = Object.values(resources).reduce(
-    (acc, names) => acc + names.length,
-    0
-  );
 
   // Initial state - asking for confirmation
   if (userChoice === null) {
@@ -438,137 +473,77 @@ export function CreateGraphWithResourcesActionUI({
   );
 }
 
-function GraphWithNewResourcesSuccess({
-  result,
-}: {
-  result: CreateGraphWithNewResourcesResult | string;
-}) {
-  const graphName = extractGraphName(result);
-  return (
-    <div className="space-y-2">
-      <h2 className="font-semibold text-green-600 text-lg">
-        Graph and Resources Created Successfully
-      </h2>
-      <div className="text-sm">
-        {typeof result === "string" ? (
-          <p>{result}</p>
-        ) : (
-          <div className="space-y-1">
-            <p>
-              <strong>Graph:</strong> {result.graphName}
-            </p>
-            <p>
-              <strong>Resources Created:</strong> {result.resourcesCreated}
-            </p>
-            <p>
-              <strong>Resources Added to Graph:</strong>{" "}
-              {result.resourcesAddedToGraph}
-            </p>
-          </div>
-        )}
-        {graphName && (
-          <div className="mt-4">
-            <Link
-              href={`/graph/${encodeURIComponent(graphName)}`}
-              legacyBehavior
-              passHref
-            >
-              <a href={`/graph/${encodeURIComponent(graphName)}`}>
-                <button
-                  className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
-                  type="button"
-                >
-                  Go to graph: {graphName}
-                </button>
-              </a>
-            </Link>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function GraphWithNewResourcesProgress({
-  graphName,
-  resources,
-  totalResources,
-}: {
-  graphName: string;
-  resources: GraphCreationRequest["resources"];
-  totalResources: number;
-}) {
-  return (
-    <div className="space-y-2">
-      <h2 className="font-semibold text-blue-600 text-lg">
-        Creating Graph and Resources...
-      </h2>
-      <p>
-        Creating graph '<strong>{graphName}</strong>' and generating{" "}
-        {totalResources} new resources
-      </p>
-      {renderNewResourceList(resources, "blue")}
-      <div className="flex items-center gap-2">
-        <div className="h-4 w-4 animate-spin rounded-full border-blue-600 border-b-2" />
-        <span className="text-gray-600 text-sm">Please wait...</span>
-      </div>
-    </div>
-  );
-}
-
 export function CreateGraphWithNewResourcesActionUI({
-  graphName,
-  resources,
-  onSelect,
-  onReject,
   status,
+  args,
   result,
+  respond,
 }: {
-  graphName: string;
-  resources: GraphCreationRequest["resources"];
-  onSelect: () => void;
-  onReject: () => void;
   status: "complete" | "executing" | "inProgress";
+  args: any;
   result: CreateGraphWithNewResourcesResult | string | null;
+  respond?: (message: string) => void;
 }) {
-  const [userChoice, setUserChoice] = useState<"approved" | "rejected" | null>(
-    null
+  const { graphName, resources } = args;
+  const { currentUser, regionUrl } = useSealosStore();
+  const { mutateAsync: addResourceToGraph } = useAddResourceToGraphMutation();
+  const [choice, setChoice] = useState<"pending" | "rejected" | "approved">(
+    "pending"
+  );
+  const [uniqueGraphName] = useState(() =>
+    generateUniqueGraphName(graphName as string)
   );
 
-  const handleApprove = () => {
-    setUserChoice("approved");
-    onSelect();
+  const request: GraphCreationRequest = {
+    graphName: uniqueGraphName,
+    resources: resources as GraphCreationRequest["resources"],
+  };
+
+  const totalResources =
+    (request.resources.devbox?.length || 0) +
+    (request.resources.cluster?.length || 0) +
+    (request.resources.objectstoragebucket?.count || 0);
+
+  const handleApprove = async () => {
+    setChoice("approved");
+    try {
+      const createResult = await createGraphWithNewResources(
+        request,
+        currentUser,
+        regionUrl,
+        addResourceToGraph
+      );
+      respond?.(createResult.summary);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      respond?.(`Failed to create graph with new resources: ${errorMessage}`);
+    }
   };
 
   const handleReject = () => {
-    setUserChoice("rejected");
-    onReject();
+    setChoice("rejected");
+    respond?.(
+      "User cancelled the graph creation operation, step down and ask whether they have any other questions"
+    );
   };
 
-  // Calculate total resources to be created
-  const totalResources =
-    (resources.devbox?.length || 0) +
-    (resources.cluster?.length || 0) +
-    (resources.objectstoragebucket?.count || 0);
-
-  // Initial state - asking for confirmation
-  if (userChoice === null) {
+  if (choice === "pending") {
     return (
       <div className="space-y-4">
-        <h2 className="font-semibold text-lg">
-          Graph Creation with New Resources
-        </h2>
-        <div>
-          <p>
-            Do you want to create a graph named '<strong>{graphName}</strong>'
-            and create <strong>{totalResources} new resources</strong> to add to
-            it?
+        <div className="rounded-lg border border-border bg-card p-4">
+          <h2 className="font-semibold text-lg">
+            Create Graph: {uniqueGraphName}
+          </h2>
+          <p className="mb-3 text-foreground/80 text-sm">
+            Create {totalResources} new resource
+            {totalResources === 1 ? "" : "s"} and add them to this graph.
           </p>
-          {renderNewResourceList(resources, "blue")}
+          {renderNewResourceBadges(request.resources, "green")}
         </div>
         <div className="flex gap-2">
           <Button onClick={handleApprove} variant="default">
-            Create Graph & Resources
+            Create Graph
           </Button>
           <Button onClick={handleReject} variant="outline">
             Cancel
@@ -578,59 +553,75 @@ export function CreateGraphWithNewResourcesActionUI({
     );
   }
 
-  // User rejected the action
-  if (userChoice === "rejected") {
+  if (choice === "rejected") {
     return (
-      <div className="space-y-2">
-        <h2 className="font-semibold text-lg text-red-600">Action Cancelled</h2>
-        <p>Graph and resource creation was cancelled.</p>
+      <div className="space-y-4">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <h2 className="font-semibold text-lg text-red-600">
+            Action Cancelled
+          </h2>
+          <p className="text-foreground/80 text-sm">
+            Graph and resource creation was cancelled.
+          </p>
+        </div>
       </div>
     );
   }
 
-  // User approved - show status based on execution state
-  if (userChoice === "approved") {
-    // Action completed successfully
-    if (status === "complete" && result) {
-      return <GraphWithNewResourcesSuccess result={result} />;
-    }
-
-    // Action is in progress
-    if (status === "executing" || status === "inProgress") {
-      return (
-        <GraphWithNewResourcesProgress
-          graphName={graphName}
-          resources={resources}
-          totalResources={totalResources}
-        />
-      );
-    }
-
-    // Action completed but no result (error case)
+  // choice approved
+  if (status === "executing" || status === "inProgress") {
     return (
-      <div className="space-y-2">
-        <h2 className="font-semibold text-lg text-red-600">Creation Failed</h2>
-        <p>Failed to create graph '{graphName}' with new resources</p>
+      <div className="space-y-4">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-green-600 border-b-2" />
+            <h2 className="font-semibold text-green-900 text-lg">
+              Creating Graph and Resources...
+            </h2>
+          </div>
+          <p className="mb-3 text-foreground/80 text-sm">
+            Creating '{uniqueGraphName}' and generating {totalResources} new
+            resource{totalResources === 1 ? "" : "s"}
+          </p>
+          {renderNewResourceBadges(request.resources, "green")}
+        </div>
       </div>
     );
   }
 
-  // Fallback for unknown state
+  if (status === "complete" && result) {
+    const gName = extractGraphName(result) || uniqueGraphName;
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <h2 className="mb-2 font-semibold text-green-600 text-lg">
+            Graph and Resources Created Successfully
+          </h2>
+          <div className="space-y-2 text-foreground text-sm">
+            {typeof result === "string" ? (
+              <p>{result}</p>
+            ) : (
+              <>
+                <p className="font-medium">Graph: {result.graphName}</p>
+                <p>Resources Created: {result.resourcesCreated}</p>
+                <p>Resources Added: {result.resourcesAddedToGraph}</p>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="mt-2">
+          <Link href={`/graph/${encodeURIComponent(gName)}`} passHref>
+            <Button variant="default">Go to graph: {gName}</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
-      <h2 className="font-semibold text-lg">Graph and Resource Creation</h2>
-      <p>
-        Graph Name: <strong>{graphName}</strong>
-      </p>
-      <p>
-        Resources to Create: <strong>{totalResources}</strong>
-      </p>
-      <p>
-        Status: <strong>{status}</strong>
-      </p>
-      <p>
-        User Choice: <strong>{userChoice || "pending"}</strong>
-      </p>
+      <h2 className="font-semibold text-lg text-red-600">Creation Failed</h2>
+      <p>Failed to create graph '{uniqueGraphName}' with new resources.</p>
     </div>
   );
 }

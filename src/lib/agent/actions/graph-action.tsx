@@ -4,17 +4,9 @@ import {
   CreateGraphWithResourcesActionUI,
   GetGraphListActionUI,
 } from "@/components/agent/graph-action-ui";
-import {
-  useAddResourceToGraphMutation,
-  useCreateGraphWithResourcesMutation,
-} from "@/lib/graph/graph-mutation";
+import { useCreateGraphWithResourcesMutation } from "@/lib/graph/graph-mutation";
 import { useGraphsQuery } from "@/lib/graph/graph-query";
-import {
-  createGraphWithNewResources,
-  type GraphCreationRequest,
-  generateUniqueGraphName,
-  validateGraphCreationRequest,
-} from "@/lib/graph/graph-utils";
+import { generateUniqueGraphName } from "@/lib/graph/graph-utils";
 import { DB_TYPE_VERSION_MAP } from "@/lib/sealos/dbprovider/dbprovider-constant";
 import { DEVBOX_TEMPLATES } from "@/lib/sealos/devbox/devbox-constant";
 import type { ResourceType } from "@/lib/sealos/k8s/k8s-constant";
@@ -95,6 +87,13 @@ export function createGraphWithResourcesAction() {
       }
 
       const uniqueGraphName = generateUniqueGraphName(graphName);
+      const resourcesObj = resources as Record<string, string[]>;
+
+      // Calculate total resources
+      const totalResources = Object.values(resourcesObj).reduce(
+        (acc, names) => acc + (Array.isArray(names) ? names.length : 0),
+        0
+      );
 
       return (
         <CreateGraphWithResourcesActionUI
@@ -111,7 +110,7 @@ export function createGraphWithResourcesAction() {
               const createResult = await createGraphWithResources({
                 currentUser,
                 graphName: uniqueGraphName,
-                resources: resources as {
+                resources: resourcesObj as {
                   [resourceType in ResourceType]?: string[];
                 },
               });
@@ -127,9 +126,10 @@ export function createGraphWithResourcesAction() {
               respond?.(`Failed to create graph: ${errorMessage}`);
             }
           }}
-          resources={resources as Record<string, string[]>}
+          resources={resourcesObj}
           result={result}
           status={status}
+          totalResources={totalResources}
         />
       );
     },
@@ -137,9 +137,6 @@ export function createGraphWithResourcesAction() {
 }
 
 export function createGraphWithNewResourcesAction() {
-  const { currentUser, regionUrl } = useSealosStore();
-  const { mutateAsync: addResourceToGraph } = useAddResourceToGraphMutation();
-
   // Only allow dbTypes with non-empty versions
   const allowedDbTypes = Object.entries(DB_TYPE_VERSION_MAP)
     .filter(([_, versions]) => Array.isArray(versions) && versions.length > 0)
@@ -187,56 +184,20 @@ export function createGraphWithNewResourcesAction() {
       },
     ],
     renderAndWaitForResponse: ({ status, args, result, respond }) => {
-      const { graphName, resources } = args;
-
-      // Validate the request
-      const validation = validateGraphCreationRequest({ graphName, resources });
-      if (!validation.isValid) {
-        const errorMessage = validation.errors.join(", ");
-        respond?.(errorMessage);
+      if (!(args && args.graphName && args.resources)) {
         return (
-          <div className="space-y-2">
-            <h2 className="font-semibold text-lg text-red-600">
-              Invalid Parameters
-            </h2>
-            <p>{errorMessage}</p>
+          <div className="flex min-h-[120px] items-center justify-center">
+            <div className="h-4 w-4 animate-spin rounded-full border-green-600 border-b-2" />
+            <span className="ml-2 text-foreground/60 text-sm">
+              Waiting for input...
+            </span>
           </div>
         );
       }
-
-      const uniqueGraphName = generateUniqueGraphName(graphName as string);
-      const request: GraphCreationRequest = {
-        graphName: uniqueGraphName,
-        resources: resources as GraphCreationRequest["resources"],
-      };
-
       return (
         <CreateGraphWithNewResourcesActionUI
-          graphName={uniqueGraphName}
-          onReject={() => {
-            respond?.("User cancelled the graph creation operation");
-          }}
-          onSelect={async () => {
-            try {
-              const createResult = await createGraphWithNewResources(
-                request,
-                currentUser,
-                regionUrl,
-                addResourceToGraph
-              );
-
-              respond?.(createResult.summary);
-            } catch (error: unknown) {
-              const errorMessage =
-                error instanceof Error
-                  ? error.message
-                  : "Unknown error occurred";
-              respond?.(
-                `Failed to create graph with new resources: ${errorMessage}`
-              );
-            }
-          }}
-          resources={request.resources}
+          args={args}
+          respond={respond}
           result={result}
           status={status}
         />
