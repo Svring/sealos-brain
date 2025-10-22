@@ -1,0 +1,105 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "sealos-brain-frontend",
+  "homepage": "https://sealos-brain-frontend.com",
+  "items": [
+    {
+      "name": "k8s-models",
+      "type": "registry:item",
+      "title": "Kubernetes Models",
+      "description": "Complete set of Zod schemas for Kubernetes resources, including builtin resources, custom resources, API clients, and context models.",
+      "dependencies": ["zod"],
+      "files": [
+        {
+          "path": "src/registry/new-york/models/k8s/k8s-builtin.model.ts",
+          "type": "registry:item"
+        },
+        {
+          "path": "src/registry/new-york/models/k8s/k8s-clients.model.ts",
+          "type": "registry:item"
+        },
+        {
+          "path": "src/registry/new-york/models/k8s/k8s-context.model.ts",
+          "type": "registry:item"
+        },
+        {
+          "path": "src/registry/new-york/models/k8s/k8s-custom.model.ts",
+          "type": "registry:item"
+        },
+        {
+          "path": "src/registry/new-york/models/k8s/k8s-object.model.ts",
+          "type": "registry:item"
+        },
+        {
+          "path": "src/registry/new-york/models/k8s/k8s-resource.model.ts",
+          "type": "registry:item"
+        },
+        {
+          "path": "src/registry/new-york/models/k8s/k8s.model.ts",
+          "type": "registry:item"
+        }
+      ]
+    },
+    {
+      "name": "k8s-constants",
+      "type": "registry:item",
+      "title": "Kubernetes Constants",
+      "description": "Configuration constants for Kubernetes builtin and custom resources, including API methods and resource definitions.",
+      "dependencies": [],
+      "registryDependencies": ["k8s-models"],
+      "files": [
+        {
+          "path": "src/registry/new-york/constants/k8s/k8s-builtin.constant.ts",
+          "type": "registry:item"
+        },
+        {
+          "path": "src/registry/new-york/constants/k8s/k8s-custom.constant.ts",
+          "type": "registry:item"
+        },
+        {
+          "path": "src/registry/new-york/constants/k8s/k8s.constant.ts",
+          "type": "registry:item"
+        }
+      ]
+    },
+    {
+      "name": "k8s-lib",
+      "type": "registry:lib",
+      "title": "Kubernetes Library",
+      "description": "Complete Kubernetes library with API clients, query functions, mutation operations, and utility functions for server-side and client-side operations.",
+      "dependencies": [
+        "@kubernetes/client-node",
+        "fast-json-patch",
+        "js-yaml",
+        "lodash"
+      ],
+      "registryDependencies": ["k8s-models", "k8s-constants"],
+      "files": [
+        {
+          "path": "src/registry/new-york/lib/k8s/k8s-client.utils.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "src/registry/new-york/lib/k8s/k8s-mutation.api.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "src/registry/new-york/lib/k8s/k8s-query.api.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "src/registry/new-york/lib/k8s/k8s-server.utils.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "src/registry/new-york/lib/k8s/k8s-service.api.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "src/registry/new-york/lib/k8s/k8s.parser.ts",
+          "type": "registry:lib"
+        }
+      ]
+    }
+  ]
+}

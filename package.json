@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "sealos-brain",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -9,12 +9,13 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.2.6",
     "prettier": "^3.6.2",
     "turbo": "^2.5.8",
     "typescript": "5.9.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "packageManager": "bun@1.2.23",
   "workspaces": [
