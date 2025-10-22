@@ -12,6 +12,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { projectMachineContext } from "@/contexts/project/project.context";
 import { cn } from "@/lib/utils";
 
@@ -265,10 +266,7 @@ export const CardMenu = ({
 	return (
 		<Comp
 			data-slot="project-card-menu"
-			className={cn(
-				"flex flex-row items-start gap-2 flex-shrink-0",
-				className,
-			)}
+			className={cn("flex flex-row items-start gap-2 flex-shrink-0", className)}
 			{...props}
 		>
 			<DropdownMenu>
@@ -386,6 +384,32 @@ export const CardWidget = ({
 					disableLink
 				/>
 			)}
+		</Comp>
+	);
+};
+
+// Loading State
+export const Loading = ({
+	className,
+	asChild = false,
+	message = "Loading...",
+	...props
+}: ComponentProps<"div"> & {
+	asChild?: boolean;
+	message?: string;
+}) => {
+	const Comp = asChild ? Slot : "div";
+	return (
+		<Comp
+			data-slot="project-loading"
+			className={cn(
+				"flex flex-col items-center py-12 text-center",
+				className,
+			)}
+			{...props}
+		>
+			<Spinner className="h-8 w-8" />
+			<p className="text-sm text-muted-foreground mt-2">{message}</p>
 		</Comp>
 	);
 };

@@ -1,11 +1,11 @@
 {
-  "name": "doc",
+  "name": "@sealos-brain/doc",
   "version": "0.0.0",
   "private": true,
   "scripts": {
     "build": "next build --turbopack",
-    "dev": "next dev --turbopack",
-    "start": "next start",
+    "dev": "next dev --turbopack --port 3001",
+    "start": "next start -p 3001",
     "postinstall": "fumadocs-mdx",
     "lint": "biome check",
     "format": "biome format --write"

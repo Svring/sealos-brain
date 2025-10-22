@@ -55,12 +55,7 @@ export function ProjectBlock() {
 
 				<Project.DashboardContent>
 					{isLoading ? (
-						<div className="flex flex-col items-center py-12 text-center">
-							<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-							<p className="text-sm text-muted-foreground mt-2">
-								Loading projects...
-							</p>
-						</div>
+						<Project.Loading message="Loading projects..." />
 					) : filteredProjects.length === 0 ? (
 						searchTerm ? (
 							<Project.Empty type="search-empty" searchTerm={searchTerm} />

@@ -1,0 +1,14 @@
+{
+  "name": "@sealos-brain/models",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "exports": {
+    "./k8s": "./src/k8s/k8s.model.ts"
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
+  }
+}
