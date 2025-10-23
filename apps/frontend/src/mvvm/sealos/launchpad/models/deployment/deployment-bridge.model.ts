@@ -1,9 +1,9 @@
-import { z } from "zod";
-import { LAUNCHPAD_LABELS } from "@/constants/launchpad/launchpad-labels.constant";
 import {
 	getCurrentNamespace,
 	getRegionUrlFromKubeconfig,
-} from "@/lib/k8s/k8s-server.utils";
+} from "@sealos-brain/lib/k8s-server.utils";
+import { z } from "zod";
+import { LAUNCHPAD_LABELS } from "@/constants/launchpad/launchpad-labels.constant";
 import { composePortsFromResources } from "@/lib/network/network.utils";
 import {
 	determineLaunchpadStatus,

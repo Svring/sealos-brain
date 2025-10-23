@@ -1,16 +1,15 @@
 "use server";
 
-import { EVENT_FIELDS } from "@/constants/event/event.constant";
-import { addMissingFields } from "@/lib/k8s/k8s-client.utils";
+import { addMissingFields } from "@sealos-brain/lib/k8s-client.utils";
 import {
 	getBuiltinApiClient,
 	getCurrentNamespace,
 	invokeApiMethod,
-} from "@/lib/k8s/k8s-server.utils";
+} from "@sealos-brain/lib/k8s-server.utils";
+import type { K8sContext, ResourceTarget } from "@sealos-brain/models/k8s";
+import { EVENT_FIELDS } from "@/constants/event/event.constant";
 import { eventParser } from "@/lib/sealos/event/event.parser";
 import { getResourcePods } from "@/lib/sealos/pod/pod.api";
-import type { ResourceTarget } from "@/models/k8s/k8s.model";
-import type { K8sContext } from "@/models/k8s/k8s-context.model";
 
 /**
  * Get events for all pods associated with a resource.

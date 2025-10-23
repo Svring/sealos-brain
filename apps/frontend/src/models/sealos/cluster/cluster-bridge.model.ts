@@ -1,13 +1,13 @@
+import { standardizeUnit } from "@sealos-brain/lib/k8s-client.utils";
+import {
+	getCurrentNamespace,
+	getRegionUrlFromKubeconfig,
+} from "@sealos-brain/lib/k8s-server.utils";
 import { z } from "zod";
 import {
 	formatDurationToReadable,
 	formatIsoDateToReadable,
 } from "@/lib/date/date-utils";
-import { standardizeUnit } from "@/lib/k8s/k8s-client.utils";
-import {
-	getCurrentNamespace,
-	getRegionUrlFromKubeconfig,
-} from "@/lib/k8s/k8s-server.utils";
 import { transformRegionUrl } from "@/lib/network/network.utils";
 import type { K8sResource } from "@/mvvm/k8s/models/k8s-resource.model";
 import type {

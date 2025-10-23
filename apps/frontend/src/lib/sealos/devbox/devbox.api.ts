@@ -1,9 +1,9 @@
 "use server";
 
 import https from "node:https";
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/lib/k8s-server.utils";
 import axios from "axios";
 import { composeObjectFromTarget } from "@/lib/bridge/bridge-query.api";
-import { getRegionUrlFromKubeconfig } from "@/lib/k8s/k8s-server.utils";
 import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s.model";
 import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
 import { DevboxBridgeSchema } from "@/mvvm/sealos/devbox/models/devbox-bridge.model";

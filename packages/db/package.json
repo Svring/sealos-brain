@@ -1,10 +1,7 @@
 {
   "name": "@sealos-brain/db",
   "type": "module",
-  "scripts": {
-    "dev": "tsc --watch",
-    "build": "tsc"
-  },
+  "scripts": {},
   "exports": {
     "./mongodb": "./src/mongodb.api.ts",
     "./mysql": "./src/mysql.api.ts",

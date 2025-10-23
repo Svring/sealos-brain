@@ -187,9 +187,6 @@
     },
     "packages/devbox": {
       "name": "@sealos-brain/devbox",
-      "dependencies": {
-        "@aws-sdk/client-s3": "^3.914.0",
-      },
     },
     "packages/lib": {
       "name": "@sealos-brain/lib",

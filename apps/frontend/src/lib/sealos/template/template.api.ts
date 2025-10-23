@@ -1,8 +1,8 @@
 "use server";
 
 import https from "node:https";
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/lib/k8s-server.utils";
 import axios from "axios";
-import { getRegionUrlFromKubeconfig } from "@/lib/k8s/k8s-server.utils";
 import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
 import {
 	TemplateItemSchema,
@@ -49,15 +49,16 @@ async function createTemplateAxios(context: K8sContext, apiVersion?: string) {
 export const listTemplates = async (context: K8sContext) => {
 	const api = await createTemplateAxios(context, "v1/template");
 	const response = await api.get("/");
-	
+
 	// Parse the response structure: { code, message, data: { templates: [...], menuKeys: "..." } }
 	const { data } = response.data;
-	const templates = data.templates.map((template: unknown) =>
-		// TemplateItemSchema.parse(template),
-		template,
+	const templates = data.templates.map(
+		(template: unknown) =>
+			// TemplateItemSchema.parse(template),
+			template,
 	);
 	const menuKeys = data.menuKeys;
-	
+
 	return {
 		templates,
 		menuKeys,

@@ -1,5 +1,5 @@
+import { standardizeUnit } from "@sealos-brain/lib/k8s-client.utils";
 import { formatIsoDateToReadable } from "@/lib/date/date-utils";
-import { standardizeUnit } from "@/lib/k8s/k8s-client.utils";
 import type { ConfigMapResource } from "@/mvvm/sealos/configmap/models/configmap-resource.model";
 import type { Container as DeploymentContainer } from "@/mvvm/sealos/launchpad/models/deployment/deployment-resource.model";
 import type { Container as StatefulSetContainer } from "@/mvvm/sealos/launchpad/models/statefulset/statefulset-resource.model";
@@ -69,27 +69,25 @@ export const transformImage = (resources: unknown[]) => {
 	};
 };
 
-export const determineLaunchpadStatus = (
-  status: any | undefined
-): string => {
-  if (!status) return "Pending";
+export const determineLaunchpadStatus = (status: any | undefined): string => {
+	if (!status) return "Pending";
 
-  if (status.paused) {
-    return "Stopped";
-  }
+	if (status.paused) {
+		return "Stopped";
+	}
 
-  if (
-    status.unavailableReplicas !== undefined &&
-    status.unavailableReplicas > 0
-  ) {
-    return "Pending";
-  }
+	if (
+		status.unavailableReplicas !== undefined &&
+		status.unavailableReplicas > 0
+	) {
+		return "Pending";
+	}
 
-  if (status.readyReplicas === status.replicas) {
-    return "Running";
-  }
+	if (status.readyReplicas === status.replicas) {
+		return "Running";
+	}
 
-  return "Pending";
+	return "Pending";
 };
 
 /**
@@ -113,10 +111,7 @@ export const transformDeploymentResource = (spec: unknown) => {
 		// Convert Kubernetes resource strings to numeric values
 		const convertedResource = {
 			cpu: standardizeUnit(k8sResource.cpu || "0", "cpu"),
-			memory: standardizeUnit(
-				k8sResource.memory || "0",
-				"memory",
-			),
+			memory: standardizeUnit(k8sResource.memory || "0", "memory"),
 		};
 
 		const result: any = {
@@ -160,10 +155,7 @@ export const transformStatefulSetResource = (spec: unknown) => {
 		// Convert Kubernetes resource strings to numeric values
 		const convertedResource = {
 			cpu: standardizeUnit(k8sResource.cpu || "0", "cpu"),
-			memory: standardizeUnit(
-				k8sResource.memory || "0",
-				"memory",
-			),
+			memory: standardizeUnit(k8sResource.memory || "0", "memory"),
 		};
 
 		const result: any = {
@@ -174,10 +166,7 @@ export const transformStatefulSetResource = (spec: unknown) => {
 
 		// Add storage for StatefulSet
 		if (k8sResource.storage) {
-			const storage = standardizeUnit(
-				k8sResource.storage,
-				"storage",
-			);
+			const storage = standardizeUnit(k8sResource.storage, "storage");
 			return { ...result, storage };
 		}
 
@@ -190,10 +179,7 @@ export const transformStatefulSetResource = (spec: unknown) => {
 		Array.isArray(volumeClaimTemplates) && volumeClaimTemplates.length > 0
 			? volumeClaimTemplates[0].spec?.resources?.requests?.storage || ""
 			: "";
-	const convertedStorage = standardizeUnit(
-		storage,
-		"storage",
-	);
+	const convertedStorage = standardizeUnit(storage, "storage");
 	return {
 		replicas: Number(replicas),
 		storage: convertedStorage,

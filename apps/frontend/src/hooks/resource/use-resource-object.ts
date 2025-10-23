@@ -1,7 +1,7 @@
 "use client";
 
+import type { ResourceTarget } from "@sealos-brain/models/k8s";
 import { useQueries } from "@tanstack/react-query";
-import type { ResourceTarget } from "@/models/k8s/k8s.model";
 import { useTRPCClients } from "../trpc/use-trpc-clients";
 
 /**

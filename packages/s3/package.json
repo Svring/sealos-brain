@@ -1,10 +1,7 @@
 {
   "name": "@sealos-brain/s3",
   "type": "module",
-  "scripts": {
-    "dev": "tsc --watch",
-    "build": "tsc"
-  },
+  "scripts": {},
   "exports": {
     ".": "./src/s3.api.ts"
   },

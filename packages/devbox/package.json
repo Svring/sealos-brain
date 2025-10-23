@@ -1,10 +1,7 @@
 {
   "name": "@sealos-brain/devbox",
   "type": "module",
-  "scripts": {
-    "dev": "tsc --watch",
-    "build": "tsc"
-  },
+  "scripts": {},
   "exports": {
     ".": "./src/devbox.api.ts"
   },

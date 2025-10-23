@@ -1,9 +1,9 @@
 "use server";
 
+import { selectResources } from "@sealos-brain/lib/k8s-service";
 import { CLUSTER_LABELS } from "@/constants/cluster/cluster-labels.constant";
 import { BUILTIN_RESOURCES } from "@/constants/k8s/k8s-builtin.constant";
 import { CUSTOM_RESOURCES } from "@/constants/k8s/k8s-custom.constant";
-import { selectResources } from "@/lib/k8s/k8s-service.api";
 import { transformMonitorData } from "@/lib/resource/resource.utils";
 import type { ResourceTypeTarget } from "@/mvvm/k8s/models/k8s.model";
 import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";

@@ -1,9 +1,9 @@
 "use server";
 
+import { selectResources } from "@sealos-brain/lib/k8s-service";
 import { BUILTIN_RESOURCES } from "@/constants/k8s/k8s-builtin.constant";
 import { CUSTOM_RESOURCES } from "@/constants/k8s/k8s-custom.constant";
 import { LAUNCHPAD_LABELS } from "@/constants/launchpad/launchpad-labels.constant";
-import { selectResources } from "@/lib/k8s/k8s-service.api";
 import { checkPorts } from "@/lib/network/network.api";
 import { transformMonitorData } from "@/lib/resource/resource.utils";
 import type { ResourceTypeTarget } from "@/mvvm/k8s/models/k8s.model";

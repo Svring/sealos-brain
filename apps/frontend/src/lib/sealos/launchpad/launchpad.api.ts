@@ -1,9 +1,9 @@
 "use server";
 
 import https from "node:https";
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/lib/k8s-server.utils";
 import axios from "axios";
 import { composeObjectFromTarget } from "@/lib/bridge/bridge-query.api";
-import { getRegionUrlFromKubeconfig } from "@/lib/k8s/k8s-server.utils";
 import type { BuiltinResourceTarget } from "@/mvvm/k8s/models/k8s-builtin.model";
 import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
 import { DeploymentBridgeSchema } from "@/mvvm/sealos/launchpad/models/deployment/deployment-bridge.model";
@@ -84,7 +84,7 @@ export const getLaunchpad = async (
 		bridgeSchema,
 		objectSchema,
 	);
-	
+
 	return LaunchpadObjectSchema.parse(launchpadObject);
 };
 

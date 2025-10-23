@@ -1,7 +1,7 @@
 "use client";
 
+import { k8sParser } from "@sealos-brain/lib/k8s-parser";
 import { useInstanceResources } from "@/hooks/sealos/instance/use-instance-resources";
-import { k8sParser } from "@/lib/k8s/k8s.parser";
 import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s-custom.model";
 import type { InstanceObject } from "@/mvvm/sealos/instance/models/instance-object.model";
 import { ProjectCardView } from "../views/project-card.view";

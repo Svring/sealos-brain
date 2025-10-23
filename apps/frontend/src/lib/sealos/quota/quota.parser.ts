@@ -1,4 +1,4 @@
-import { standardizeUnit } from "@/lib/k8s/k8s-client.utils";
+import { standardizeUnit } from "@sealos-brain/lib/k8s-client.utils";
 import type {
 	QuotaObject,
 	ResourceValue,

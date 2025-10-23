@@ -4,13 +4,13 @@ import {
 	getApiClients,
 	getCurrentNamespace,
 	invokeApiMethod,
-} from "@/lib/k8s/k8s-server.utils";
-import { getResourcePods } from "@/lib/sealos/pod/pod.api";
+} from "@sealos-brain/lib/k8s-server.utils";
 import type {
 	BuiltinResourceTarget,
+	K8sContext,
 	ResourceTarget,
-} from "@/models/k8s/k8s.model";
-import type { K8sContext } from "@/models/k8s/k8s-context.model";
+} from "@sealos-brain/models/k8s";
+import { getResourcePods } from "@/lib/sealos/pod/pod.api";
 
 /**
  * Get logs for all pods associated with a resource.

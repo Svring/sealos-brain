@@ -2,7 +2,7 @@
   "name": "@sealos-brain/ai",
   "private": true,
   "scripts": {
-    "dev": "npx @langchain/langgraph-cli dev",
+    "dev": "npx @langchain/langgraph-cli dev --no-browser",
     "build": "npx @langchain/langgraph-cli build --platform linux/amd64 -t $TAG"
   },
   "dependencies": {

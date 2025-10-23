@@ -1,11 +1,17 @@
 "use server";
 
 import https from "node:https";
+import { k8sParser } from "@sealos-brain/lib/k8s-parser";
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/lib/k8s-server.utils";
+import {
+	getResource,
+	listResources,
+	selectResources,
+} from "@sealos-brain/lib/k8s-service";
 import axios from "axios";
 import _ from "lodash";
 import { INSTANCE_ANNOTATIONS } from "@/constants/instance/instance-annotations.constant";
 import { INSTANCE_LABELS } from "@/constants/instance/instance-labels.constant";
-import { k8sParser } from "@/lib/k8s/k8s.parser";
 import {
 	patchBuiltinResourceMetadata,
 	patchCustomResourceMetadata,
@@ -13,12 +19,6 @@ import {
 	removeCustomResourceMetadata,
 	upsertCustomResource,
 } from "@/lib/k8s/k8s-mutation.api";
-import { getRegionUrlFromKubeconfig } from "@/lib/k8s/k8s-server.utils";
-import {
-	getResource,
-	listResources,
-	selectResources,
-} from "@/lib/k8s/k8s-service.api";
 import { resourceParser } from "@/lib/resource/resource.parser";
 import { instanceParser } from "@/lib/sealos/instance/instance.parser";
 import type {
@@ -294,7 +294,11 @@ export const createInstance = async (
 		},
 	};
 
-	const instanceResource = await upsertCustomResource(context, target, resourceBody);
+	const instanceResource = await upsertCustomResource(
+		context,
+		target,
+		resourceBody,
+	);
 
 	// Convert to instance object using parser
 	return instanceParser.toObject(instanceResource);

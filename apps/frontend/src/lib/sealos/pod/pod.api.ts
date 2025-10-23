@@ -1,11 +1,10 @@
 "use server";
 
+import { k8sParser } from "@sealos-brain/lib/k8s-parser";
+import { listResources } from "@sealos-brain/lib/k8s-service";
+import type { K8sContext, ResourceTarget } from "@sealos-brain/models/k8s";
 import { POD_LABELS } from "@/constants/pod/pod-label.constant";
-import { k8sParser } from "@/lib/k8s/k8s.parser";
-import { listResources } from "@/lib/k8s/k8s-service.api";
 import { podParser } from "@/lib/sealos/pod/pod.parser";
-import type { ResourceTarget } from "@/models/k8s/k8s.model";
-import type { K8sContext } from "@/models/k8s/k8s-context.model";
 
 /**
  * Get pods associated with a resource.

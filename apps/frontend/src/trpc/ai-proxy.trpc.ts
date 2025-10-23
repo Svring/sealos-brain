@@ -1,13 +1,13 @@
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/lib/k8s-server.utils";
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
-import { getRegionUrlFromKubeconfig } from "@/lib/k8s/k8s-server.utils";
 import {
 	createAiProxyToken,
 	deleteAiProxyToken,
 	getAiProxyTokens,
 } from "@/lib/sealos/ai-proxy/ai-proxy.api";
 import { createErrorFormatter } from "@/lib/trpc/trpc.utils";
-import { AiProxyTokenSchema } from "@/mvvm/sealos/ai-proxy/models/ai-proxy-resource.model";
+import { AiProxyTokenSchema } from "@/models/sealos/ai-proxy/ai-proxy-resource.model";
 
 // ===== CONTEXT =====
 export async function createAiProxyContext(opts: { req: Request }) {
