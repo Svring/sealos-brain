@@ -1,4 +1,6 @@
-import { k8sParser } from "@sealos-brain/lib/k8s-parser";
+import { getResourceEvents } from "@sealos-brain/k8s/resources/event/api";
+import { getResourceLogs } from "@sealos-brain/k8s/resources/log/api";
+import { getResourcePods } from "@sealos-brain/k8s/resources/pod/api";
 import {
 	deleteResource,
 	getResource,
@@ -9,20 +11,18 @@ import {
 	selectResources,
 	strategicMergePatchResource,
 	upsertResource,
-} from "@sealos-brain/lib/k8s-service";
+} from "@sealos-brain/k8s/shared/api";
+import type { K8sContext } from "@sealos-brain/k8s/shared/models";
+import {
+	ResourceTargetSchema,
+	ResourceTypeTargetSchema,
+} from "@sealos-brain/k8s/shared/models";
+import { k8sParser } from "@sealos-brain/k8s/shared/utils";
 import { initTRPC } from "@trpc/server";
 import type { Operation } from "fast-json-patch";
 import { z } from "zod";
-import { getResourceEvents } from "@/lib/sealos/event/event.api";
-import { getResourceLogs } from "@/lib/sealos/log/log.api";
-import { getResourcePods } from "@/lib/sealos/pod/pod.api";
 import { quotaParser } from "@/lib/sealos/quota/quota.parser";
 import { createErrorFormatter } from "@/lib/trpc/trpc.utils";
-import {
-	resourceTargetSchema,
-	resourceTypeTargetSchema,
-} from "@/mvvm/k8s/models/k8s.model";
-import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
 import { QuotaResourceSchema } from "@/mvvm/sealos/quota/models/quota-resource.model";
 
 // Context creation function
@@ -48,17 +48,17 @@ export const k8sRouter = t.router({
 
 	// Resource Information
 	list: t.procedure
-		.input(resourceTypeTargetSchema)
+		.input(ResourceTypeTargetSchema)
 		.query(async ({ ctx, input }) => {
 			return await listResources(ctx, input);
 		}),
 
-	get: t.procedure.input(resourceTargetSchema).query(async ({ ctx, input }) => {
+	get: t.procedure.input(ResourceTargetSchema).query(async ({ ctx, input }) => {
 		return await getResource(ctx, input);
 	}),
 
 	select: t.procedure
-		.input(z.array(resourceTypeTargetSchema))
+		.input(z.array(ResourceTypeTargetSchema))
 		.output(z.array(z.any())) // K8sResource array
 		.query(async ({ ctx, input }) => {
 			return await selectResources(ctx, input);
@@ -87,21 +87,21 @@ export const k8sRouter = t.router({
 
 	// Pod Management
 	pods: t.procedure
-		.input(resourceTargetSchema)
+		.input(ResourceTargetSchema)
 		.query(async ({ ctx, input }) => {
 			return await getResourcePods(ctx, input);
 		}),
 
 	// Events Management
 	events: t.procedure
-		.input(resourceTargetSchema)
+		.input(ResourceTargetSchema)
 		.query(async ({ ctx, input }) => {
 			return await getResourceEvents(ctx, input);
 		}),
 
 	// Logs Management
 	logs: t.procedure
-		.input(resourceTargetSchema)
+		.input(ResourceTargetSchema)
 		.query(async ({ ctx, input }) => {
 			return await getResourceLogs(ctx, input);
 		}),
@@ -110,7 +110,7 @@ export const k8sRouter = t.router({
 
 	// Resource Lifecycle Management
 	delete: t.procedure
-		.input(z.union([resourceTargetSchema, z.array(resourceTargetSchema)]))
+		.input(z.union([ResourceTargetSchema, z.array(ResourceTargetSchema)]))
 		.mutation(async ({ ctx, input }) => {
 			const targets = Array.isArray(input) ? input : [input];
 			const results = await Promise.all(
@@ -122,7 +122,7 @@ export const k8sRouter = t.router({
 	upsert: t.procedure
 		.input(
 			z.object({
-				target: resourceTargetSchema,
+				target: ResourceTargetSchema,
 				resourceBody: z.record(z.unknown()),
 			}),
 		)
@@ -135,7 +135,7 @@ export const k8sRouter = t.router({
 	patch: t.procedure
 		.input(
 			z.object({
-				target: resourceTargetSchema,
+				target: ResourceTargetSchema,
 				patchBody: z.array(z.record(z.unknown())), // Operation[]
 			}),
 		)
@@ -152,7 +152,7 @@ export const k8sRouter = t.router({
 	merge: t.procedure
 		.input(
 			z.object({
-				target: resourceTargetSchema,
+				target: ResourceTargetSchema,
 				patchBody: z.record(z.unknown()),
 			}),
 		)
@@ -165,7 +165,7 @@ export const k8sRouter = t.router({
 	patchMeta: t.procedure
 		.input(
 			z.object({
-				target: z.union([resourceTargetSchema, z.array(resourceTargetSchema)]),
+				target: z.union([ResourceTargetSchema, z.array(ResourceTargetSchema)]),
 				metadataType: z.enum(["annotations", "labels"]),
 				key: z.string(),
 				value: z.string(),
@@ -185,7 +185,7 @@ export const k8sRouter = t.router({
 	removeMeta: t.procedure
 		.input(
 			z.object({
-				target: z.union([resourceTargetSchema, z.array(resourceTargetSchema)]),
+				target: z.union([ResourceTargetSchema, z.array(ResourceTargetSchema)]),
 				metadataType: z.enum(["annotations", "labels"]),
 				key: z.string(),
 			}),

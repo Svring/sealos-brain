@@ -1,10 +1,12 @@
 "use server";
 
 import { composeObjectFromTarget } from "@sealos-brain/bridge";
-import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s.model";
-import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
-import { OsbBridgeSchema } from "@/mvvm/sealos/osb/models/osb-bridge.model";
-import { OsbObjectSchema } from "@/mvvm/sealos/osb/models/osb-object.model";
+import type {
+	CustomResourceTarget,
+	K8sContext,
+} from "@sealos-brain/k8s/shared/models";
+import { OsbBridgeSchema } from "../models/osb-bridge.model";
+import { OsbObjectSchema } from "../models/osb-object.model";
 
 // ============================================================================
 // OSB API Functions

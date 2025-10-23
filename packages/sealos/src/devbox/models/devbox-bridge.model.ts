@@ -1,16 +1,16 @@
-import { standardizeUnit } from "@sealos-brain/lib/k8s-client.utils";
+import type { Env, K8sResource } from "@sealos-brain/k8s/shared/models";
 import {
 	getCurrentNamespace,
 	getRegionUrlFromKubeconfig,
-} from "@sealos-brain/lib/k8s-server.utils";
-import { z } from "zod";
-import { DEVBOX_LABELS } from "@/constants/devbox/devbox-labels.constant";
+	standardizeUnit,
+} from "@sealos-brain/k8s/shared/utils";
 import {
 	formatDurationToReadable,
 	formatIsoDateToReadable,
-} from "@/lib/date/date-utils";
-import { composePortsFromResources } from "@/lib/network/network.utils";
-import type { Env, K8sResource } from "@/mvvm/k8s/models/k8s-resource.model";
+} from "@sealos-brain/shared/date/utils";
+import { composePortsFromResources } from "@sealos-brain/shared/network/utils";
+import { z } from "zod";
+import { DEVBOX_LABELS } from "../constants/devbox-labels.constant";
 
 export const SshSchema = z.object({
 	host: z

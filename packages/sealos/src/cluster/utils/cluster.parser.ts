@@ -1,4 +1,4 @@
-import type { CustomResourceTarget } from "@sealos-brain/k8s/models";
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
 import type { ClusterResource } from "@/cluster/models/cluster-resource.model";
 
 export interface ClusterItem extends Record<string, unknown> {

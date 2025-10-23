@@ -1,22 +1,21 @@
 "use server";
 
+import { selectResources } from "@sealos-brain/k8s/shared/api";
 import {
 	BUILTIN_RESOURCES,
 	CUSTOM_RESOURCES,
-} from "@sealos-brain/constants/k8s";
-import { selectResources } from "@sealos-brain/lib/k8s-service";
-import { DEVBOX_LABELS } from "@/constants/devbox/devbox-labels.constant";
-import { checkPorts } from "@/lib/network/network.api";
-import { resourceParser } from "@/lib/resource/resource.parser";
-import { transformMonitorData } from "@/lib/resource/resource.utils";
-import type { ResourceTypeTarget } from "@/mvvm/k8s/models/k8s.model";
-import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
-import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s-custom.model";
+} from "@sealos-brain/k8s/shared/constants";
 import type {
+	CustomResourceTarget,
+	K8sContext,
 	K8sItem,
 	K8sResource,
-} from "@/mvvm/k8s/models/k8s-resource.model";
-import type { MonitorData } from "@/mvvm/resource/models/resource-monitor.model";
+	ResourceTypeTarget,
+} from "@sealos-brain/k8s/shared/models";
+import { checkPorts } from "@sealos-brain/shared/network/api";
+import type { MonitorData } from "@sealos-brain/shared/resource/models";
+import { transformMonitorData } from "@sealos-brain/shared/resource/utils";
+import { DEVBOX_LABELS } from "@/constants/devbox/devbox-labels.constant";
 import { getDevbox, getDevboxMonitorData } from "./devbox.api";
 
 // ============================================================================
@@ -228,6 +227,10 @@ export const getDevboxDeployments = async (
 
 	const selectedResources = await selectResources(context, targets);
 
-	// Convert resources to items using resourceParser
-	return resourceParser.toItems(selectedResources);
+	// Convert resources to items
+	return selectedResources.map((resource) => ({
+		name: resource.metadata?.name || "unknown",
+		uid: resource.metadata?.uid || "",
+		resourceType: resource.kind?.toLowerCase() || "unknown",
+	}));
 };

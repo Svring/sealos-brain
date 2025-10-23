@@ -1,10 +1,10 @@
-import { standardizeUnit } from "@sealos-brain/lib/k8s-client.utils";
-import { formatIsoDateToReadable } from "@/lib/date/date-utils";
-import type { ConfigMapResource } from "@/mvvm/sealos/configmap/models/configmap-resource.model";
-import type { Container as DeploymentContainer } from "@/mvvm/sealos/launchpad/models/deployment/deployment-resource.model";
-import type { Container as StatefulSetContainer } from "@/mvvm/sealos/launchpad/models/statefulset/statefulset-resource.model";
-import type { PodResource } from "@/mvvm/sealos/pod/models/pod-resource.model";
-import type { PVCResource } from "@/mvvm/sealos/pvc/models/pvc-resource.model";
+import type { ConfigMapResource } from "@sealos-brain/k8s/resources/configmap/models";
+import type { PodResource } from "@sealos-brain/k8s/resources/pod/models";
+import type { PVCResource } from "@sealos-brain/k8s/resources/pvc/models";
+import { standardizeUnit } from "@sealos-brain/k8s/shared/utils";
+import { formatIsoDateToReadable } from "@sealos-brain/shared/date/utils";
+import type { Container as DeploymentContainer } from "../models/deployment/deployment-resource.model";
+import type { Container as StatefulSetContainer } from "../models/statefulset/statefulset-resource.model";
 
 // Common transformation functions for launchpad resources
 

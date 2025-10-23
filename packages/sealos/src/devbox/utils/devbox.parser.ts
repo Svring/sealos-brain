@@ -1,5 +1,5 @@
-import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s-custom.model";
-import type { DevboxResource } from "@/mvvm/sealos/devbox/models/devbox-resource.model";
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
+import type { DevboxResource } from "../models/devbox-resource.model";
 
 export interface DevboxItem extends Record<string, unknown> {
 	name: string;

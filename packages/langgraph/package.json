@@ -3,7 +3,8 @@
   "type": "module",
   "scripts": {},
   "exports": {
-    ".": "./src/langgraph.api.ts"
+    "./api": "./src/api/langgraph.api.ts",
+    "./utils": "./src/utils/langgraph.utils.ts"
   },
   "dependencies": {
     "@langchain/core": "^0.3.78",

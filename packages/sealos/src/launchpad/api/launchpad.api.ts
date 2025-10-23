@@ -2,17 +2,19 @@
 
 import https from "node:https";
 import { composeObjectFromTarget } from "@sealos-brain/bridge";
-import { getRegionUrlFromKubeconfig } from "@sealos-brain/lib/k8s-server.utils";
+import type {
+	BuiltinResourceTarget,
+	K8sContext,
+} from "@sealos-brain/k8s/shared/models";
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import axios from "axios";
-import type { BuiltinResourceTarget } from "@/mvvm/k8s/models/k8s-builtin.model";
-import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
-import { DeploymentBridgeSchema } from "@/mvvm/sealos/launchpad/models/deployment/deployment-bridge.model";
-import { DeploymentObjectSchema } from "@/mvvm/sealos/launchpad/models/deployment/deployment-object.model";
-import type { LaunchpadCreateData } from "@/mvvm/sealos/launchpad/models/launchpad-create.model";
-import { LaunchpadObjectSchema } from "@/mvvm/sealos/launchpad/models/launchpad-object.model";
-import type { LaunchpadUpdateData } from "@/mvvm/sealos/launchpad/models/launchpad-update.model";
-import { StatefulsetBridgeSchema } from "@/mvvm/sealos/launchpad/models/statefulset/statefulset-bridge.model";
-import { StatefulsetObjectSchema } from "@/mvvm/sealos/launchpad/models/statefulset/statefulset-object.model";
+import { DeploymentBridgeSchema } from "../models/deployment/deployment-bridge.model";
+import { DeploymentObjectSchema } from "../models/deployment/deployment-object.model";
+import type { LaunchpadCreateData } from "../models/launchpad-create.model";
+import { LaunchpadObjectSchema } from "../models/launchpad-object.model";
+import type { LaunchpadUpdateData } from "../models/launchpad-update.model";
+import { StatefulsetBridgeSchema } from "../models/statefulset/statefulset-bridge.model";
+import { StatefulsetObjectSchema } from "../models/statefulset/statefulset-object.model";
 
 /**
  * Creates axios instance for launchpad API calls

@@ -1,8 +1,8 @@
 "use client";
 
+import { launchpadParser } from "@sealos-brain/sealos/launchpad/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
-import { launchpadParser } from "@/lib/sealos/launchpad/launchpad.parser";
 
 export const useLaunchpadLifecycle = () => {
 	const { launchpad } = useTRPCClients();

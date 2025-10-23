@@ -1,21 +1,20 @@
 import {
 	BUILTIN_RESOURCES,
 	CUSTOM_RESOURCES,
-} from "@sealos-brain/constants/k8s";
-import { clusterParser } from "@/lib/sealos/cluster/cluster.parser";
-import { devboxParser } from "@/lib/sealos/devbox/devbox.parser";
+} from "@sealos-brain/k8s/shared/constants";
+import type { K8sItem, ResourceTarget } from "@sealos-brain/k8s/shared/models";
+import { K8sResourceSchema } from "@sealos-brain/k8s/shared/models";
+import { ClusterResourceSchema } from "@sealos-brain/sealos/cluster/models";
+import { clusterParser } from "@sealos-brain/sealos/cluster/utils";
+import { DevboxResourceSchema } from "@sealos-brain/sealos/devbox/models";
+import { devboxParser } from "@sealos-brain/sealos/devbox/utils";
+import { launchpadParser } from "@sealos-brain/sealos/launchpad/utils";
+import { ObjectStorageBucketResourceSchema } from "@sealos-brain/sealos/osb/models";
+import { osbParser } from "@sealos-brain/sealos/osb/utils";
 import { instanceParser } from "@/lib/sealos/instance/instance.parser";
-import { launchpadParser } from "@/lib/sealos/launchpad/launchpad.parser";
-import { osbParser } from "@/lib/sealos/osb/osb.parser";
-import type { ResourceTarget } from "@/mvvm/k8s/models/k8s.model";
-import type { K8sItem } from "@/mvvm/k8s/models/k8s-resource.model";
-import { K8sResourceSchema } from "@/mvvm/k8s/models/k8s-resource.model";
-import { ClusterResourceSchema } from "@/mvvm/sealos/cluster/models/cluster-resource.model";
-import { DevboxResourceSchema } from "@/mvvm/sealos/devbox/models/devbox-resource.model";
 import { InstanceResourceSchema } from "@/mvvm/sealos/instance/models/instance-resource.model";
 import { DeploymentResourceSchema } from "@/mvvm/sealos/launchpad/models/deployment/deployment-resource.model";
 import { StatefulSetResourceSchema } from "@/mvvm/sealos/launchpad/models/statefulset/statefulset-resource.model";
-import { ObjectStorageBucketResourceSchema } from "@/mvvm/sealos/osb/models/osb-resource.model";
 
 const toTarget = (resource: unknown): ResourceTarget => {
 	if (typeof resource !== "object" || resource === null) {

@@ -118,9 +118,9 @@
         "@radix-ui/react-tooltip": "1.1.6",
         "@reactuses/core": "^6.1.0",
         "@sealos-brain/bridge": "workspace:*",
-        "@sealos-brain/constants": "workspace:*",
-        "@sealos-brain/lib": "workspace:*",
-        "@sealos-brain/models": "workspace:*",
+        "@sealos-brain/k8s": "workspace:*",
+        "@sealos-brain/sealos": "workspace:*",
+        "@sealos-brain/shared": "workspace:*",
         "@tailwindcss/cli": "^4.1.14",
         "@tanstack/react-devtools": "^0.7.6",
         "@tanstack/react-form": "^1.23.7",
@@ -197,14 +197,7 @@
     "packages/bridge": {
       "name": "@sealos-brain/bridge",
       "dependencies": {
-        "@sealos-brain/models": "workspace:*",
         "zod": "^4.1.12",
-      },
-    },
-    "packages/constants": {
-      "name": "@sealos-brain/constants",
-      "dependencies": {
-        "@sealos-brain/models": "workspace:*",
       },
     },
     "packages/db": {
@@ -218,14 +211,10 @@
         "zod": "^4.1.12",
       },
     },
-    "packages/devbox": {
-      "name": "@sealos-brain/devbox",
-    },
     "packages/k8s": {
       "name": "@sealos-brain/k8s",
       "dependencies": {
         "@kubernetes/client-node": "^1.4.0",
-        "@sealos-brain/models": "workspace:*",
         "fast-json-patch": "^3.1.1",
         "lodash": "^4.17.21",
         "zod": "^4.1.12",
@@ -238,20 +227,6 @@
         "@langchain/langgraph-sdk": "^0.1.9",
       },
     },
-    "packages/lib": {
-      "name": "@sealos-brain/lib",
-      "dependencies": {
-        "@sealos-brain/constants": "workspace:*",
-        "@sealos-brain/models": "workspace:*",
-        "zod": "^4.1.12",
-      },
-    },
-    "packages/models": {
-      "name": "@sealos-brain/models",
-      "dependencies": {
-        "zod": "^4.1.12",
-      },
-    },
     "packages/s3": {
       "name": "@sealos-brain/s3",
       "dependencies": {
@@ -259,9 +234,20 @@
       },
     },
     "packages/sealos": {
-      "name": "@sealos-brain/sealos-api",
+      "name": "@sealos-brain/sealos",
       "dependencies": {
-        "@sealos-brain/models": "workspace:*",
+        "@sealos-brain/bridge": "workspace:*",
+        "@sealos-brain/k8s": "workspace:*",
+        "@sealos-brain/shared": "workspace:*",
+        "date-fns": "^4.1.0",
+      },
+    },
+    "packages/shared": {
+      "name": "@sealos-brain/shared",
+      "dependencies": {
+        "date-fns": "^4.1.0",
+        "is-port-reachable": "^4.0.0",
+        "zod": "^4.1.12",
       },
     },
     "packages/typescript-config": {
@@ -1022,11 +1008,7 @@
 
     "@sealos-brain/bridge": ["@sealos-brain/bridge@workspace:packages/bridge"],
 
-    "@sealos-brain/constants": ["@sealos-brain/constants@workspace:packages/constants"],
-
     "@sealos-brain/db": ["@sealos-brain/db@workspace:packages/db"],
-
-    "@sealos-brain/devbox": ["@sealos-brain/devbox@workspace:packages/devbox"],
 
     "@sealos-brain/doc": ["@sealos-brain/doc@workspace:apps/doc"],
 
@@ -1036,13 +1018,11 @@
 
     "@sealos-brain/langgraph": ["@sealos-brain/langgraph@workspace:packages/langgraph"],
 
-    "@sealos-brain/lib": ["@sealos-brain/lib@workspace:packages/lib"],
-
-    "@sealos-brain/models": ["@sealos-brain/models@workspace:packages/models"],
-
     "@sealos-brain/s3": ["@sealos-brain/s3@workspace:packages/s3"],
 
-    "@sealos-brain/sealos-api": ["@sealos-brain/sealos-api@workspace:packages/sealos"],
+    "@sealos-brain/sealos": ["@sealos-brain/sealos@workspace:packages/sealos"],
+
+    "@sealos-brain/shared": ["@sealos-brain/shared@workspace:packages/shared"],
 
     "@sealos-brain/typescript-config": ["@sealos-brain/typescript-config@workspace:packages/typescript-config"],
 

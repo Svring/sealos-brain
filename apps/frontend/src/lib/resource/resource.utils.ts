@@ -1,9 +1,9 @@
-import { formatUnixTimeInLocalTimezone } from "@/lib/date/date-utils";
-import type { ResourceTarget } from "@/mvvm/k8s/models/k8s.model";
+import type { ResourceTarget } from "@sealos-brain/k8s/shared/models";
+import { formatUnixTimeInLocalTimezone } from "@sealos-brain/shared/date/utils";
 import type {
 	MonitorData,
 	MonitorDataPoint,
-} from "@/mvvm/resource/models/resource-monitor.model";
+} from "@sealos-brain/shared/resource/models";
 
 // ============================================================================
 // RESOURCE ICON UTILITIES

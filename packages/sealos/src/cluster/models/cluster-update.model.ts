@@ -1,12 +1,12 @@
+import { NameSchema } from "@sealos-brain/k8s/shared/models";
+import { createNumberUnionSchema } from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	CLUSTER_CPU_OPTIONS,
 	CLUSTER_MEMORY_OPTIONS,
 	CLUSTER_REPLICAS_OPTIONS,
 	CLUSTER_STORAGE_OPTIONS,
-} from "@/constants/cluster/cluster-resource.constant";
-import { createNumberUnionSchema } from "@/lib/utils";
-import { NameSchema } from "@/mvvm/k8s/models/k8s-resource.model";
+} from "../constants/cluster-resource.constant";
 
 // Cluster resource update schema (all fields optional for updates)
 export const ClusterResourceUpdateSchema = z.object({

@@ -10,7 +10,7 @@ import { useCopilotEvents } from "@/contexts/copilot/copilot.context";
 import { useFlowContext } from "@/contexts/flow/flow.context";
 import { useProjectState } from "@/contexts/project/project.context";
 import { useFlow } from "@/hooks/flow/use-flow";
-import { instanceParser } from "@/lib/sealos/instance/instance.parser";
+import { instanceParser } from "@/lib/sealos/instance/instance.parser"; // TODO: move to instance package
 import nodeTypes from "@/models/flow/nodes/node.types";
 import edgeTypes from "@/mvvm/flow/edges/models/edge.types";
 

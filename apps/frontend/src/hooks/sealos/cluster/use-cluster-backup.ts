@@ -1,15 +1,21 @@
 "use client";
 
+import { clusterParser } from "@sealos-brain/sealos/cluster/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
-import { clusterParser } from "@/lib/sealos/cluster/cluster.parser";
 
 export const useClusterBackup = () => {
 	const { cluster } = useTRPCClients();
 
-	const createBackupMutation = useMutation(cluster.createBackup.mutationOptions());
-	const deleteBackupMutation = useMutation(cluster.deleteBackup.mutationOptions());
-	const restoreBackupMutation = useMutation(cluster.restoreBackup.mutationOptions());
+	const createBackupMutation = useMutation(
+		cluster.createBackup.mutationOptions(),
+	);
+	const deleteBackupMutation = useMutation(
+		cluster.deleteBackup.mutationOptions(),
+	);
+	const restoreBackupMutation = useMutation(
+		cluster.restoreBackup.mutationOptions(),
+	);
 
 	const createBackup = async (databaseName: string, remark?: string) => {
 		return await createBackupMutation.mutateAsync({ databaseName, remark });
@@ -20,7 +26,10 @@ export const useClusterBackup = () => {
 	};
 
 	const restoreBackup = async (databaseName: string, backupName: string) => {
-		return await restoreBackupMutation.mutateAsync({ databaseName, backupName });
+		return await restoreBackupMutation.mutateAsync({
+			databaseName,
+			backupName,
+		});
 	};
 
 	return {

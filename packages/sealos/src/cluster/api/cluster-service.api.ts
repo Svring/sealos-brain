@@ -1,19 +1,19 @@
 "use server";
 
-import { selectResources } from "@sealos-brain/k8s/api";
+import { selectResources } from "@sealos-brain/k8s/shared/api";
 import {
 	BUILTIN_RESOURCES,
 	CUSTOM_RESOURCES,
-} from "@sealos-brain/k8s/constants";
+} from "@sealos-brain/k8s/shared/constants";
 import type {
 	CustomResourceTarget,
 	K8sContext,
 	K8sResource,
 	ResourceTypeTarget,
-} from "@sealos-brain/k8s/models";
+} from "@sealos-brain/k8s/shared/models";
+import type { MonitorData } from "@sealos-brain/shared/resource/models";
+import { transformMonitorData } from "@sealos-brain/shared/resource/utils";
 import { CLUSTER_LABELS } from "@/cluster/constants/cluster-labels.constant";
-import type { MonitorData } from "@/resource/models/resource-monitor.model";
-import { transformMonitorData } from "@/resource/utils/resource.utils";
 import { getClusterMonitorData } from "./cluster.api";
 
 // ============================================================================

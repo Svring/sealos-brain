@@ -1,5 +1,5 @@
-import { initTRPC } from "@trpc/server";
-import { z } from "zod";
+import type { K8sContext } from "@sealos-brain/k8s/shared/models";
+import { CustomResourceTargetSchema } from "@sealos-brain/k8s/shared/models";
 import {
 	createCluster,
 	createClusterBackup,
@@ -10,6 +10,8 @@ import {
 	getCluster,
 	getClusterBackups,
 	getClusterLogs,
+	getClusterMonitor,
+	getClusterResources,
 	getClusterVersions,
 	listClusters,
 	pauseCluster,
@@ -17,16 +19,14 @@ import {
 	restoreClusterBackup,
 	startCluster,
 	updateCluster,
-} from "@/lib/sealos/cluster/cluster.api";
+} from "@sealos-brain/sealos/cluster/api";
 import {
-	getClusterMonitor,
-	getClusterResources,
-} from "@/lib/sealos/cluster/cluster-service.api";
+	clusterCreateSchema,
+	clusterUpdateSchema,
+} from "@sealos-brain/sealos/cluster/models";
+import { initTRPC } from "@trpc/server";
+import { z } from "zod";
 import { createErrorFormatter } from "@/lib/trpc/trpc.utils";
-import { CustomResourceTargetSchema } from "@/mvvm/k8s/models/k8s.model";
-import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
-import { clusterCreateSchema } from "@/mvvm/sealos/cluster/models/cluster-create.model";
-import { clusterUpdateSchema } from "@/mvvm/sealos/cluster/models/cluster-update.model";
 
 // Context creation function
 export async function createClusterContext(opts: {

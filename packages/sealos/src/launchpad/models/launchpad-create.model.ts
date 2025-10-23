@@ -1,11 +1,14 @@
+import { EnvSchema, NameSchema } from "@sealos-brain/k8s/shared/models";
+import {
+	createNumberUnionSchema,
+	nanoid,
+} from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	LAUNCHPAD_CPU_OPTIONS,
 	LAUNCHPAD_MEMORY_OPTIONS,
 	LAUNCHPAD_REPLICAS_OPTIONS,
-} from "@/constants/launchpad/launchpad-resource.constant";
-import { createNumberUnionSchema, nanoid } from "@/lib/utils";
-import { EnvSchema, NameSchema } from "@/mvvm/k8s/models/k8s-resource.model";
+} from "../constants/launchpad-resource.constant";
 
 // Component schemas
 export const LaunchCommandSchema = z.object({

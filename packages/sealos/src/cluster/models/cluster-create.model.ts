@@ -1,13 +1,16 @@
+import { NameSchema } from "@sealos-brain/k8s/shared/models";
+import {
+	createNumberUnionSchema,
+	nanoid,
+} from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	CLUSTER_CPU_OPTIONS,
 	CLUSTER_MEMORY_OPTIONS,
 	CLUSTER_REPLICAS_OPTIONS,
 	CLUSTER_STORAGE_OPTIONS,
-} from "@/constants/cluster/cluster-resource.constant";
-import { CLUSTER_AVAILABLE_TYPES } from "@/constants/cluster/cluster-type.constant";
-import { createNumberUnionSchema, nanoid } from "@/lib/utils";
-import { NameSchema } from "@/mvvm/k8s/models/k8s-resource.model";
+} from "../constants/cluster-resource.constant";
+import { CLUSTER_AVAILABLE_TYPES } from "../constants/cluster-type.constant";
 
 // Component schemas
 export const ClusterTypeSchema = z.enum(CLUSTER_AVAILABLE_TYPES);

@@ -103,10 +103,10 @@
     "vaul": "^0.9.6",
     "xstate": "^5.21.0",
     "zod": "^3.24.1",
-    "@sealos-brain/constants": "workspace:*",
-    "@sealos-brain/models": "workspace:*",
-    "@sealos-brain/lib": "workspace:*",
-    "@sealos-brain/bridge": "workspace:*"
+    "@sealos-brain/bridge": "workspace:*",
+    "@sealos-brain/k8s": "workspace:*",
+    "@sealos-brain/sealos": "workspace:*",
+    "@sealos-brain/shared": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.5",

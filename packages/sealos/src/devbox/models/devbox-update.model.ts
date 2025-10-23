@@ -1,5 +1,5 @@
+import { NameSchema } from "@sealos-brain/k8s/shared/models";
 import { z } from "zod";
-import { NameSchema } from "@/mvvm/k8s/models/k8s-resource.model";
 import {
 	DevboxPortCreateSchema,
 	DevboxResourceSchema,

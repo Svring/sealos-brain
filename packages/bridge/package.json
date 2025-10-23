@@ -6,7 +6,6 @@
     ".": "./src/bridge-query.api.ts"
   },
   "dependencies": {
-    "zod": "^4.1.12",
-    "@sealos-brain/models": "workspace:*"
+    "zod": "^4.1.12"
   }
 }

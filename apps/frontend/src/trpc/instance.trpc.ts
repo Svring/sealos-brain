@@ -1,3 +1,9 @@
+import type { K8sContext } from "@sealos-brain/k8s/shared/models";
+import {
+	CustomResourceTargetSchema,
+	K8sItemSchema,
+	resourceTargetSchema,
+} from "@sealos-brain/k8s/shared/models";
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import {
@@ -11,12 +17,6 @@ import {
 	updateInstanceName,
 } from "@/lib/sealos/instance/instance.api";
 import { createErrorFormatter } from "@/lib/trpc/trpc.utils";
-import {
-	CustomResourceTargetSchema,
-	resourceTargetSchema,
-} from "@/mvvm/k8s/models/k8s.model";
-import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
-import { K8sItemSchema } from "@/mvvm/k8s/models/k8s-resource.model";
 import { instanceCreateSchema } from "@/mvvm/sealos/instance/models/instance-create.model";
 import { InstanceObjectSchema } from "@/mvvm/sealos/instance/models/instance-object.model";
 import { instanceUpdateSchema } from "@/mvvm/sealos/instance/models/instance-update.model";

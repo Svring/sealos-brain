@@ -1,5 +1,5 @@
+import { EnvSchema } from "@sealos-brain/k8s/shared/models";
 import { z } from "zod";
-import { EnvSchema } from "@/mvvm/k8s/models/k8s-resource.model";
 
 export const ResourceSchema = z.object({
 	cpu: z.number(),

@@ -1,5 +1,5 @@
-import { initTRPC } from "@trpc/server";
-import { z } from "zod";
+import type { K8sContext } from "@sealos-brain/k8s/shared/models";
+import { CustomResourceTargetSchema } from "@sealos-brain/k8s/shared/models";
 import {
 	authCname,
 	autostartDevbox,
@@ -8,7 +8,11 @@ import {
 	deleteDevboxRelease,
 	deployDevbox,
 	getDevbox,
+	getDevboxDeployments,
+	getDevboxMonitor,
+	getDevboxNetwork,
 	getDevboxReleases,
+	getDevboxResources,
 	getDevboxTemplates,
 	pauseDevbox,
 	releaseDevbox,
@@ -16,18 +20,14 @@ import {
 	shutdownDevbox,
 	startDevbox,
 	updateDevbox,
-} from "@/lib/sealos/devbox/devbox.api";
+} from "@sealos-brain/sealos/devbox/api";
 import {
-	getDevboxDeployments,
-	getDevboxMonitor,
-	getDevboxNetwork,
-	getDevboxResources,
-} from "@/lib/sealos/devbox/devbox-service.api";
+	devboxCreateSchema,
+	devboxUpdateSchema,
+} from "@sealos-brain/sealos/devbox/models";
+import { initTRPC } from "@trpc/server";
+import { z } from "zod";
 import { createErrorFormatter } from "@/lib/trpc/trpc.utils";
-import { CustomResourceTargetSchema } from "@/mvvm/k8s/models/k8s.model";
-import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
-import { devboxCreateSchema } from "@/mvvm/sealos/devbox/models/devbox-create.model";
-import { devboxUpdateSchema } from "@/mvvm/sealos/devbox/models/devbox-update.model";
 
 // Context creation function
 export async function createDevboxContext(opts: {

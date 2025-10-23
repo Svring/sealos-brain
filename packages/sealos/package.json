@@ -1,13 +1,34 @@
 {
-  "name": "@sealos-brain/sealos-api",
+  "name": "@sealos-brain/sealos",
   "type": "module",
   "scripts": {},
   "exports": {
-    ".": "./src/sealos.api.ts"
+    "./cluster/api": "./src/cluster/api/index.ts",
+    "./cluster/constants": "./src/cluster/constants/index.ts",
+    "./cluster/models": "./src/cluster/models/index.ts",
+    "./cluster/utils": "./src/cluster/utils/index.ts",
+    "./devbox/api": "./src/devbox/api/index.ts",
+    "./devbox/constants": "./src/devbox/constants/index.ts",
+    "./devbox/models": "./src/devbox/models/index.ts",
+    "./devbox/utils": "./src/devbox/utils/index.ts",
+    "./launchpad/api": "./src/launchpad/api/index.ts",
+    "./launchpad/constants": "./src/launchpad/constants/index.ts",
+    "./launchpad/models": "./src/launchpad/models/index.ts",
+    "./launchpad/utils": "./src/launchpad/utils/index.ts",
+    "./osb/api": "./src/osb/api/index.ts",
+    "./osb/constants": "./src/osb/constants/index.ts",
+    "./osb/models": "./src/osb/models/index.ts",
+    "./osb/utils": "./src/osb/utils/index.ts",
+    "./template/api": "./src/template/api/index.ts",
+    "./template/models": "./src/template/models/index.ts",
+    "./ai-proxy/api": "./src/ai-proxy/api/index.ts",
+    "./ai-proxy/models": "./src/ai-proxy/models/index.ts",
+    "./ai-proxy/utils": "./src/ai-proxy/utils/index.ts"
   },
   "dependencies": {
-    "@sealos-brain/models": "workspace:*",
+    "@sealos-brain/bridge": "workspace:*",
     "@sealos-brain/k8s": "workspace:*",
-    "@sealos-brain/bridge": "workspace:*"
+    "@sealos-brain/shared": "workspace:*",
+    "date-fns": "^4.1.0"
   }
 }

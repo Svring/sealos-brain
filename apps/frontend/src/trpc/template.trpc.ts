@@ -1,8 +1,8 @@
+import type { K8sContext } from "@sealos-brain/k8s/shared/models";
+import { getTemplate, listTemplates } from "@sealos-brain/sealos/template/api";
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
-import { getTemplate, listTemplates } from "@/lib/sealos/template/template.api";
 import { createErrorFormatter } from "@/lib/trpc/trpc.utils";
-import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
 
 // Context creation function
 export async function createTemplateContext(opts: {

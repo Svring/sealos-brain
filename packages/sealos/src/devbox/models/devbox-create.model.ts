@@ -1,11 +1,14 @@
+import { EnvSchema, NameSchema } from "@sealos-brain/k8s/shared/models";
+import {
+	createNumberUnionSchema,
+	nanoid,
+} from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	DEVBOX_CPU_OPTIONS,
 	DEVBOX_MEMORY_OPTIONS,
-} from "@/constants/devbox/devbox-resource.constant";
-import { DEVBOX_RUNTIMES } from "@/constants/devbox/devbox-runtime.constant";
-import { createNumberUnionSchema, nanoid } from "@/lib/utils";
-import { EnvSchema, NameSchema } from "@/mvvm/k8s/models/k8s-resource.model";
+} from "../constants/devbox-resource.constant";
+import { DEVBOX_RUNTIMES } from "../constants/devbox-runtime.constant";
 
 // Component schemas
 export const DevboxRuntimeSchema = z.enum(DEVBOX_RUNTIMES);

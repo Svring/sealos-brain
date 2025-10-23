@@ -3,6 +3,12 @@
   "compilerOptions": {
     "baseUrl": "."
   },
-  "include": ["src", "**/*.ts", "**/*.tsx"],
+  "include": [
+    "src",
+    "**/*.ts",
+    "**/*.tsx",
+    "../shared/src/utils",
+    "../shared/src/network"
+  ],
   "exclude": ["node_modules", "dist"]
 }

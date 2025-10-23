@@ -1,16 +1,14 @@
 "use client";
 
-import { useQueries } from "@tanstack/react-query";
-import { resourceParser } from "@/lib/resource/resource.parser";
 import type {
 	BuiltinResourceTarget,
 	CustomResourceTarget,
-	ResourceTarget,
-} from "@/mvvm/k8s/models/k8s.model";
-import type {
 	K8sItem,
 	K8sResource,
-} from "@/mvvm/k8s/models/k8s-resource.model";
+	ResourceTarget,
+} from "@sealos-brain/k8s/shared/models";
+import { useQueries } from "@tanstack/react-query";
+import { resourceParser } from "@/lib/resource/resource.parser";
 import { useTRPCClients } from "../trpc/use-trpc-clients";
 
 /**

@@ -1,6 +1,6 @@
-import type { BuiltinResourceTarget } from "@/mvvm/k8s/models/k8s-builtin.model";
-import type { DeploymentResource } from "@/mvvm/sealos/launchpad/models/deployment/deployment-resource.model";
-import type { StatefulSetResource } from "@/mvvm/sealos/launchpad/models/statefulset/statefulset-resource.model";
+import type { BuiltinResourceTarget } from "@sealos-brain/k8s/shared/models";
+import type { DeploymentResource } from "../models/deployment/deployment-resource.model";
+import type { StatefulSetResource } from "../models/statefulset/statefulset-resource.model";
 
 export interface LaunchpadItem extends Record<string, unknown> {
 	name: string;

@@ -1,13 +1,10 @@
 "use server";
 
 import https from "node:https";
-import { getRegionUrlFromKubeconfig } from "@sealos-brain/lib/k8s-server.utils";
+import type { K8sContext } from "@sealos-brain/k8s/shared/models";
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import axios from "axios";
-import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
-import {
-	TemplateItemSchema,
-	TemplateObjectSchema,
-} from "@/mvvm/sealos/template/models/template-object.model";
+import { TemplateObjectSchema } from "../models/template-object.model";
 
 /**
  * Creates axios instance for template API calls

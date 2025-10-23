@@ -5,8 +5,8 @@ import { composeObjectFromTarget } from "@sealos-brain/bridge";
 import type {
 	CustomResourceTarget,
 	K8sContext,
-} from "@sealos-brain/k8s/models";
-import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/utils";
+} from "@sealos-brain/k8s/shared/models";
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import axios from "axios";
 import { ClusterBridgeSchema } from "@/cluster/models/cluster-bridge.model";
 import type { ClusterCreateData } from "@/cluster/models/cluster-create.model";

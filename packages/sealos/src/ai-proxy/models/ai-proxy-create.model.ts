@@ -1,4 +1,4 @@
-import { NameSchema } from "@sealos-brain/k8s/models";
+import { NameSchema } from "@sealos-brain/k8s/shared/models";
 import { z } from "zod";
 
 // AI Proxy create schema

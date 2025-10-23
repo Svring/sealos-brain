@@ -2,14 +2,20 @@
 
 import https from "node:https";
 import { composeObjectFromTarget } from "@sealos-brain/bridge";
-import { getRegionUrlFromKubeconfig } from "@sealos-brain/lib/k8s-server.utils";
+import type {
+	CustomResourceTarget,
+	K8sContext,
+} from "@sealos-brain/k8s/shared/models";
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
+import type {
+	DevboxCreateData,
+	DevboxUpdateData,
+} from "@sealos-brain/sealos/devbox/models";
+import {
+	DevboxBridgeSchema,
+	DevboxObjectSchema,
+} from "@sealos-brain/sealos/devbox/models";
 import axios from "axios";
-import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s.model";
-import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
-import { DevboxBridgeSchema } from "@/mvvm/sealos/devbox/models/devbox-bridge.model";
-import type { DevboxCreateData } from "@/mvvm/sealos/devbox/models/devbox-create.model";
-import { DevboxObjectSchema } from "@/mvvm/sealos/devbox/models/devbox-object.model";
-import type { DevboxUpdateData } from "@/mvvm/sealos/devbox/models/devbox-update.model";
 
 /**
  * Creates axios instance for devbox API calls

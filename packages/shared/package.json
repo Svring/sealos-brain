@@ -1,0 +1,19 @@
+{
+  "name": "@sealos-brain/shared",
+  "type": "module",
+  "scripts": {},
+  "exports": {
+    "./date/utils": "./src/date/utils/index.ts",
+    "./misc/utils": "./src/misc/utils/index.ts",
+    "./network/api": "./src/network/api/index.ts",
+    "./network/models": "./src/network/models/index.ts",
+    "./network/utils": "./src/network/utils/index.ts",
+    "./resource/models": "./src/resource/models/index.ts",
+    "./resource/utils": "./src/resource/utils/index.ts"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "is-port-reachable": "^4.0.0",
+    "zod": "^4.1.12"
+  }
+}
