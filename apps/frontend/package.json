@@ -105,7 +105,8 @@
     "zod": "^3.24.1",
     "@sealos-brain/constants": "workspace:*",
     "@sealos-brain/models": "workspace:*",
-    "@sealos-brain/lib": "workspace:*"
+    "@sealos-brain/lib": "workspace:*",
+    "@sealos-brain/bridge": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.5",

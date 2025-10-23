@@ -1,9 +1,0 @@
-{
-  "name": "@sealos-brain/devbox",
-  "type": "module",
-  "scripts": {},
-  "exports": {
-    ".": "./src/devbox.api.ts"
-  },
-  "dependencies": {}
-}

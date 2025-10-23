@@ -1,0 +1,15 @@
+{
+  "name": "@sealos-brain/k8s",
+  "type": "module",
+  "scripts": {},
+  "exports": {
+    ".": "./src/k8s.api.ts"
+  },
+  "dependencies": {
+    "@kubernetes/client-node": "^1.4.0",
+    "@sealos-brain/models": "workspace:*",
+    "fast-json-patch": "^3.1.1",
+    "lodash": "^4.17.21",
+    "zod": "^4.1.12"
+  }
+}

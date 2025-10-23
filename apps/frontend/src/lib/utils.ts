@@ -10,7 +10,9 @@ export function cn(...inputs: ClassValue[]) {
 export const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 6);
 
 // Helper function to create number union schema
-export function createNumberUnionSchema<T extends readonly number[]>(values: T) {
+export function createNumberUnionSchema<T extends readonly number[]>(
+	values: T,
+) {
 	return z.number().refine((val) => values.includes(val as T[number]), {
 		message: `Value must be one of: ${values.join(", ")}`,
 	});
