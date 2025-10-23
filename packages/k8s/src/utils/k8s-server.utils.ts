@@ -65,30 +65,6 @@ export async function getRegionUrlFromKubeconfig(
 	}
 }
 
-/**
- * Helper to add missing apiVersion and kind to builtin resource lists.
- */
-export async function addMissingFields<T extends Record<string, unknown>>(
-	items: T[],
-	apiVersion: string,
-	kind: string,
-): Promise<{
-	apiVersion: string;
-	kind: string;
-	items: T[];
-}> {
-	await new Promise((resolve) => setTimeout(resolve, 0));
-	return {
-		apiVersion: `${apiVersion}List`,
-		kind: `${kind}List`,
-		items: items.map((item) => ({
-			apiVersion,
-			kind,
-			...item,
-		})),
-	};
-}
-
 const clientCache: Record<string, { kc: KubeConfig; clients: K8sApiClients }> =
 	{};
 

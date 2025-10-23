@@ -2,8 +2,8 @@
 
 import https from "node:https";
 import axios, { type AxiosInstance } from "axios";
-import type { AiProxyCreateData } from "@/mvvm/sealos/ai-proxy/models/ai-proxy-create.model";
-import { composeAiProxyBaseUrl } from "./ai-proxy-utils";
+import type { AiProxyCreateData } from "@/ai-proxy/models/ai-proxy-create.model";
+import { composeAiProxyBaseUrl } from "@/ai-proxy/utils/ai-proxy-utils";
 
 // ===== TYPES =====
 

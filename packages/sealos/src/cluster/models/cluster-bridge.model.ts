@@ -1,19 +1,19 @@
-import { standardizeUnit } from "@sealos-brain/lib/k8s-client.utils";
+import type { K8sResource } from "@sealos-brain/k8s/models";
 import {
 	getCurrentNamespace,
 	getRegionUrlFromKubeconfig,
-} from "@sealos-brain/lib/k8s-server.utils";
+	standardizeUnit,
+} from "@sealos-brain/k8s/utils";
 import { z } from "zod";
+import type {
+	ClusterResource,
+	ComponentSpec,
+} from "@/cluster/models/cluster-resource.model";
 import {
 	formatDurationToReadable,
 	formatIsoDateToReadable,
 } from "@/lib/date/date-utils";
 import { transformRegionUrl } from "@/lib/network/network.utils";
-import type { K8sResource } from "@/mvvm/k8s/models/k8s-resource.model";
-import type {
-	ClusterResource,
-	ComponentSpec,
-} from "./models/cluster-resource.model";
 
 export const ClusterBridgeSchema = z.object({
 	name: z.any().describe(

@@ -3,7 +3,10 @@
   "type": "module",
   "scripts": {},
   "exports": {
-    ".": "./src/k8s.api.ts"
+    "./models": "./src/models/k8s.model.ts",
+    "./constants": "./src/constants/k8s.constant.ts",
+    "./utils": "./src/utils/k8s.utils.ts",
+    "./api": "./src/api/k8s-service.api.ts"
   },
   "dependencies": {
     "@kubernetes/client-node": "^1.4.0",

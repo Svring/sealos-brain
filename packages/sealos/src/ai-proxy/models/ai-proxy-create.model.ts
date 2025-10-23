@@ -1,5 +1,5 @@
+import { NameSchema } from "@sealos-brain/k8s/models";
 import { z } from "zod";
-import { NameSchema } from "@/mvvm/k8s/models/k8s-resource.model";
 
 // AI Proxy create schema
 export const aiProxyCreateSchema = z.object({

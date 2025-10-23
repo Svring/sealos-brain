@@ -1,8 +1,7 @@
 {
   "extends": "@sealos-brain/typescript-config/base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
+    "baseUrl": "."
   },
   "include": ["src", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "dist"]
