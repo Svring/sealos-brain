@@ -1,0 +1,22 @@
+{
+  "name": "@sealos-brain/db",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "exports": {
+    "./mongodb": "./src/mongodb.api.ts",
+    "./mysql": "./src/mysql.api.ts",
+    "./postgresql": "./src/postgresql.api.ts",
+    "./redis": "./src/redis.api.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.6",
+    "ioredis": "^5.8.2",
+    "mongoose": "^8.19.2",
+    "mysql2": "^3.11.5",
+    "postgres": "^3.4.5",
+    "zod": "^4.1.12"
+  }
+}
