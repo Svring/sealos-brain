@@ -31,6 +31,7 @@ export type ProjectEvent =
 	| { type: "REMOVE_RESOURCE"; resourceUid: string }
 	| { type: "SET_ACTIVE_RESOURCE"; resource: Resource | null }
 	| { type: "CLEAR_ACTIVE_RESOURCE" }
+	| { type: "NOOP" }
 	| { type: "FAIL" }
 	| { type: "RETRY" };
 

@@ -9,7 +9,7 @@ export interface Chat {
 
 // View object interface
 export interface View {
-	type: 'chat' | 'info';
+	type: "chat" | "info";
 }
 
 // Copilot context interface
@@ -23,7 +23,8 @@ export type CopilotEvent =
 	| { type: "ADD_CHAT"; chat: Chat }
 	| { type: "OPEN_COPILOT" }
 	| { type: "CLOSE_COPILOT" }
-	| { type: "SET_VIEW_TYPE"; viewType: 'chat' | 'info' };
+	| { type: "SET_VIEW_TYPE"; viewType: "chat" | "info" }
+	| { type: "NOOP" };
 
 export const copilotMachine = createMachine({
 	types: {} as {
@@ -35,7 +36,7 @@ export const copilotMachine = createMachine({
 	context: {
 		chats: [],
 		opened: false,
-		view: { type: 'chat' },
+		view: { type: "chat" },
 	},
 	states: {
 		idle: {

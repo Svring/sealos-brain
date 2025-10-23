@@ -33,6 +33,11 @@ export function useNodeClick({ resourceUid, target }: UseNodeClickProps) {
 			target: target,
 		});
 
+		console.log("Active resource set:", {
+			uid: resourceUid,
+			target: target,
+		});
+
 		// Add chat with project and resource ID
 		handleAddChat(project?.uid, resourceUid);
 	};

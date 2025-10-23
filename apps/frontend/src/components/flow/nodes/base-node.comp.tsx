@@ -4,6 +4,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { Position, Handle as ReactFlowHandle } from "@xyflow/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { MoreHorizontal, Square } from "lucide-react";
+import Image from "next/image";
 import type { ComponentProps } from "react";
 import { createContext, useContext, useMemo } from "react";
 import {
@@ -65,27 +66,46 @@ export const useBaseNode = () => {
 	return context;
 };
 
-export type RootProps = ComponentProps<"div"> &
+export type RootProps = {
+	target: ResourceTarget;
+	children: React.ReactNode;
+};
+
+export const Root = ({ target, children }: RootProps) => {
+	const { data: object } = useResourceObject(target);
+
+	return (
+		<BaseNodeContext.Provider
+			value={{ target, object: object || ({} as ResourceObject) }}
+		>
+			{children}
+		</BaseNodeContext.Provider>
+	);
+};
+
+export type VesselProps = ComponentProps<"div"> &
 	VariantProps<typeof baseNodeVariants> & {
 		asChild?: boolean;
-		target: ResourceTarget;
+		onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 	};
 
-export const Root = ({
+export const Vessel = ({
 	className,
 	size = "default",
 	asChild = false,
-	target,
+	children,
+	onClick,
 	...props
-}: RootProps) => {
+}: VesselProps) => {
 	const Comp = asChild ? Slot : "div";
-	const { data: object, isLoading, isError, error } = useResourceObject(target);
+	const { target, object } = useBaseNode();
+	const { isLoading, isError, error } = useResourceObject(target);
 
 	// Show loading state
 	if (isLoading) {
 		return (
 			<Comp
-				data-slot="base-node-root"
+				data-slot="base-node-vessel"
 				data-size={size}
 				className={cn(baseNodeVariants({ size, className }))}
 				{...props}
@@ -101,7 +121,7 @@ export const Root = ({
 	if (isError) {
 		return (
 			<Comp
-				data-slot="base-node-root"
+				data-slot="base-node-vessel"
 				data-size={size}
 				className={cn(baseNodeVariants({ size, className }))}
 				{...props}
@@ -117,7 +137,7 @@ export const Root = ({
 	if (!object) {
 		return (
 			<Comp
-				data-slot="base-node-root"
+				data-slot="base-node-vessel"
 				data-size={size}
 				className={cn(baseNodeVariants({ size, className }))}
 				{...props}
@@ -130,14 +150,18 @@ export const Root = ({
 	}
 
 	return (
-		<BaseNodeContext.Provider value={{ target, object }}>
-			<Comp
-				data-slot="base-node-root"
-				data-size={size}
-				className={cn(baseNodeVariants({ size, className }))}
-				{...props}
-			/>
-		</BaseNodeContext.Provider>
+		<Comp
+			data-slot="base-node-vessel"
+			data-size={size}
+			className={cn(baseNodeVariants({ size, className }))}
+			onClick={(e) => {
+				console.log("Vessel clicked");
+				onClick?.(e);
+			}}
+			{...props}
+		>
+			{children}
+		</Comp>
 	);
 };
 
@@ -239,12 +263,12 @@ export const Title = ({
 		>
 			<div className="flex flex-col items-start">
 				<span className="flex items-center gap-2">
-					<img
+					<Image
 						src={iconURL}
 						alt={`Icon`}
 						width={24}
 						height={24}
-						className="rounded-lg h-9 w-9 flex-shrink-0 p-1 bg-muted"
+						className="rounded-lg h-9 w-9 shrink-0 p-1 bg-muted"
 					/>
 					<span className="flex flex-col min-w-0">
 						<span className="text-xs text-muted-foreground leading-none capitalize">
@@ -270,10 +294,7 @@ export const Menu = ({
 	return (
 		<Comp
 			data-slot="base-node-menu"
-			className={cn(
-				"flex flex-row items-center gap-2 flex-shrink-0",
-				className,
-			)}
+			className={cn("flex flex-row items-center gap-2 shrink-0", className)}
 			{...props}
 		>
 			<DropdownMenu>

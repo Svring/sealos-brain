@@ -6,9 +6,11 @@ import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { DevboxToolConfig } from "@/configs/devbox-tool.config";
 import QueryConfig from "@/configs/query.config";
+import { ActorProvider } from "@/contexts/actor/actor.provider";
 import { AuthProvider } from "@/contexts/auth/auth.provider";
 import { CopilotProvider } from "@/contexts/copilot/copilot.provider";
 import { EnvProvider } from "@/contexts/env/env.provider";
+import { FlowProvider } from "@/contexts/flow/flow.provider";
 import { LangGraphProvider } from "@/contexts/langgraph/langgraph.provider";
 import { ProjectProvider } from "@/contexts/project/project.provider";
 import { ProxyProvider } from "@/contexts/proxy/proxy.provider";
@@ -46,18 +48,22 @@ export default function RootLayout({
 									<DevboxToolConfig>
 										<ProxyProvider>
 											<LangGraphProvider>
-												<CopilotProvider>
-													<ProjectProvider>
-														<SidebarProvider defaultOpen={false}>
-															<AppSidebar />
-															<SidebarInset>
-																<main className="h-full w-full">
-																	{children}
-																</main>
-															</SidebarInset>
-														</SidebarProvider>
-													</ProjectProvider>
-												</CopilotProvider>
+												<ActorProvider>
+													<CopilotProvider>
+														<ProjectProvider>
+															<FlowProvider>
+																<SidebarProvider defaultOpen={false}>
+																	<AppSidebar />
+																	<SidebarInset>
+																		<main className="h-full w-full">
+																			{children}
+																		</main>
+																	</SidebarInset>
+																</SidebarProvider>
+															</FlowProvider>
+														</ProjectProvider>
+													</CopilotProvider>
+												</ActorProvider>
 											</LangGraphProvider>
 										</ProxyProvider>
 									</DevboxToolConfig>

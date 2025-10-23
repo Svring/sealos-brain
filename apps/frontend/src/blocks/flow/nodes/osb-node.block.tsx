@@ -1,11 +1,11 @@
 "use client";
 
+import type { CustomResourceTarget } from "@sealos-brain/models/k8s";
 import { Copy, Globe, HardDrive } from "lucide-react";
 import * as BaseNode from "@/components/flow/nodes/base-node.comp";
-import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
+import { useNodeClick } from "@/hooks/flow/use-node-click";
 import { useResourceObject } from "@/hooks/resource/use-resource-object";
-import type { CustomResourceTarget } from "@/models/k8s/k8s-custom.model";
 import { OsbObjectSchema } from "@/models/sealos/osb/osb-object.model";
 
 interface OsbNodeBlockProps {
@@ -16,17 +16,25 @@ interface OsbNodeBlockProps {
 
 export function OsbNodeBlock({ data }: OsbNodeBlockProps) {
 	const { target } = data;
-	const { data: object, isLoading } = useResourceObject(target);
+	const { data: object } = useResourceObject(target);
+	const { handleNodeClick } = useNodeClick({
+		resourceUid: object?.uid || "",
+		target: target,
+	});
 
-	if (isLoading || !object) {
+	if (!object) {
 		return (
 			<BaseNode.Root target={target}>
-				<BaseNode.Header>
-					<BaseNode.Title />
-				</BaseNode.Header>
-				<BaseNode.Content>
-					<Spinner className="h-4 w-4" />
-				</BaseNode.Content>
+				<BaseNode.Vessel onClick={handleNodeClick}>
+					<BaseNode.Header>
+						<BaseNode.Title />
+					</BaseNode.Header>
+					<BaseNode.Content>
+						<div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+							No data available
+						</div>
+					</BaseNode.Content>
+				</BaseNode.Vessel>
 			</BaseNode.Root>
 		);
 	}
@@ -53,45 +61,47 @@ export function OsbNodeBlock({ data }: OsbNodeBlockProps) {
 
 	return (
 		<BaseNode.Root target={target}>
-			<BaseNode.Header>
-				<BaseNode.Title />
-			</BaseNode.Header>
+			<BaseNode.Vessel onClick={handleNodeClick}>
+				<BaseNode.Header>
+					<BaseNode.Title />
+				</BaseNode.Header>
 
-			<BaseNode.Content>
-				{isPublic && (
-					<div className="flex items-center justify-between gap-2">
-						<div className="flex items-center gap-2">
-							<Globe className="h-4 w-4 text-theme-green" />
-							<span className="text-sm text-muted-foreground">
-								Static Hosting
-							</span>
-							<Switch checked={true} disabled className="scale-75" />
+				<BaseNode.Content>
+					{isPublic && (
+						<div className="flex items-center justify-between gap-2">
+							<div className="flex items-center gap-2">
+								<Globe className="h-4 w-4 text-theme-green" />
+								<span className="text-sm text-muted-foreground">
+									Static Hosting
+								</span>
+								<Switch checked={true} disabled className="scale-75" />
+							</div>
+							<BaseNode.Widget
+								icon={Copy}
+								onClick={handleCopyClick}
+								tooltip="Copy access key"
+							/>
 						</div>
-						<BaseNode.Widget
-							icon={Copy}
-							onClick={handleCopyClick}
-							tooltip="Copy access key"
-						/>
-					</div>
-				)}
-				{!isPublic && (
-					<div className="flex items-center gap-2">
-						<Globe className="h-4 w-4 text-muted-foreground" />
-						<span className="text-sm text-muted-foreground">
-							Private Storage
-						</span>
-					</div>
-				)}
-			</BaseNode.Content>
+					)}
+					{!isPublic && (
+						<div className="flex items-center gap-2">
+							<Globe className="h-4 w-4 text-muted-foreground" />
+							<span className="text-sm text-muted-foreground">
+								Private Storage
+							</span>
+						</div>
+					)}
+				</BaseNode.Content>
 
-			<BaseNode.Footer>
-				<BaseNode.Status onClick={handleStatusClick} />
-				<BaseNode.Widget
-					icon={HardDrive}
-					onClick={handleStorageClick}
-					tooltip="Storage management"
-				/>
-			</BaseNode.Footer>
+				<BaseNode.Footer>
+					<BaseNode.Status onClick={handleStatusClick} />
+					<BaseNode.Widget
+						icon={HardDrive}
+						onClick={handleStorageClick}
+						tooltip="Storage management"
+					/>
+				</BaseNode.Footer>
+			</BaseNode.Vessel>
 		</BaseNode.Root>
 	);
 }

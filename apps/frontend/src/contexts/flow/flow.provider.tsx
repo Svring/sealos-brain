@@ -3,9 +3,8 @@ import { FlowAdapter } from "./flow.adapter";
 
 interface FlowProviderProps {
 	children: React.ReactNode;
-	context: React.ContextType<typeof import("./flow.context").flowMachineContext>;
 }
 
-export function FlowProvider({ children, context }: FlowProviderProps) {
-	return <FlowAdapter context={context}>{children}</FlowAdapter>;
+export function FlowProvider({ children }: FlowProviderProps) {
+	return <FlowAdapter>{children}</FlowAdapter>;
 }

@@ -1,6 +1,13 @@
 "use server";
 
 import https from "node:https";
+import {
+	patchBuiltinResourceMetadata,
+	patchCustomResourceMetadata,
+	removeBuiltinResourceMetadata,
+	removeCustomResourceMetadata,
+	upsertCustomResource,
+} from "@sealos-brain/lib/k8s-mutation";
 import { k8sParser } from "@sealos-brain/lib/k8s-parser";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/lib/k8s-server.utils";
 import {
@@ -8,28 +15,21 @@ import {
 	listResources,
 	selectResources,
 } from "@sealos-brain/lib/k8s-service";
+import type {
+	BuiltinResourceTarget,
+	CustomResourceTarget,
+	K8sItem,
+	ResourceTarget,
+} from "@sealos-brain/models/k8s";
 import axios from "axios";
 import _ from "lodash";
 import { INSTANCE_ANNOTATIONS } from "@/constants/instance/instance-annotations.constant";
 import { INSTANCE_LABELS } from "@/constants/instance/instance-labels.constant";
-import {
-	patchBuiltinResourceMetadata,
-	patchCustomResourceMetadata,
-	removeBuiltinResourceMetadata,
-	removeCustomResourceMetadata,
-	upsertCustomResource,
-} from "@/lib/k8s/k8s-mutation.api";
 import { resourceParser } from "@/lib/resource/resource.parser";
 import { instanceParser } from "@/lib/sealos/instance/instance.parser";
-import type {
-	BuiltinResourceTarget,
-	CustomResourceTarget,
-	ResourceTarget,
-} from "@/mvvm/k8s/models/k8s.model";
+import type { InstanceObject } from "@/models/sealos/instance/instance-object.model";
+import { InstanceResourceSchema } from "@/models/sealos/instance/instance-resource.model";
 import type { K8sContext } from "@/mvvm/k8s/models/k8s-context.model";
-import type { K8sItem } from "@/mvvm/k8s/models/k8s-resource.model";
-import type { InstanceObject } from "@/mvvm/sealos/instance/models/instance-object.model";
-import { InstanceResourceSchema } from "@/mvvm/sealos/instance/models/instance-resource.model";
 
 /**
  * Creates axios instance for instance API calls

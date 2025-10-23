@@ -1,12 +1,15 @@
 "use client";
 
+import type { Edge, Node } from "@xyflow/react";
 import { createContext, use, useCallback } from "react";
 import type { EventFrom, StateFrom } from "xstate";
+import type { Chat } from "../copilot/copilot.state";
+import type { Resource } from "../project/project.state";
 import type { flowMachine } from "./flow.state";
 
 interface FlowContextValue {
-	nodes: unknown[];
-	edges: unknown[];
+	nodes: Node[];
+	edges: Edge[];
 	state: StateFrom<typeof flowMachine>;
 	send: (event: EventFrom<typeof flowMachine>) => void;
 }
@@ -33,6 +36,8 @@ export function useFlowState() {
 	return {
 		nodes: state.context.nodes,
 		edges: state.context.edges,
+		selectedNodeId: state.context.selectedNodeId,
+		selectedEdgeId: state.context.selectedEdgeId,
 		isIdle: state.matches("idle"),
 		isReady: state.matches("ready"),
 		isFailed: state.matches("failed"),
@@ -44,15 +49,15 @@ export function useFlowEvents() {
 
 	return {
 		setNodes: useCallback(
-			(nodes: unknown[]) => send({ type: "SET_NODES", nodes }),
+			(nodes: Node[]) => send({ type: "SET_NODES", nodes }),
 			[send],
 		),
 		addNode: useCallback(
-			(node: unknown) => send({ type: "ADD_NODE", node }),
+			(node: Node) => send({ type: "ADD_NODE", node }),
 			[send],
 		),
 		updateNode: useCallback(
-			(node: unknown) => send({ type: "UPDATE_NODE", node }),
+			(node: Node) => send({ type: "UPDATE_NODE", node }),
 			[send],
 		),
 		removeNode: useCallback(
@@ -60,21 +65,34 @@ export function useFlowEvents() {
 			[send],
 		),
 		setEdges: useCallback(
-			(edges: unknown[]) => send({ type: "SET_EDGES", edges }),
+			(edges: Edge[]) => send({ type: "SET_EDGES", edges }),
 			[send],
 		),
 		addEdge: useCallback(
-			(edge: unknown) => send({ type: "ADD_EDGE", edge }),
+			(edge: Edge) => send({ type: "ADD_EDGE", edge }),
 			[send],
 		),
 		updateEdge: useCallback(
-			(edge: unknown) => send({ type: "UPDATE_EDGE", edge }),
+			(edge: Edge) => send({ type: "UPDATE_EDGE", edge }),
 			[send],
 		),
 		removeEdge: useCallback(
 			(edgeId: string) => send({ type: "REMOVE_EDGE", edgeId }),
 			[send],
 		),
+		selectNode: useCallback(
+			(nodeId: string | null, resource?: Resource, chat?: Chat) =>
+				send({ type: "SELECT_NODE", nodeId, resource, chat }),
+			[send],
+		),
+		selectEdge: useCallback(
+			(edgeId: string | null) => send({ type: "SELECT_EDGE", edgeId }),
+			[send],
+		),
+		clearSelection: useCallback(() => {
+			send({ type: "SELECT_NODE", nodeId: null });
+			send({ type: "SELECT_EDGE", edgeId: null });
+		}, [send]),
 		clearFlow: useCallback(() => send({ type: "CLEAR_FLOW" }), [send]),
 		fail: useCallback(() => send({ type: "FAIL" }), [send]),
 		retry: useCallback(() => send({ type: "RETRY" }), [send]),

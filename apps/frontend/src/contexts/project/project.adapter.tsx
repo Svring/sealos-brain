@@ -1,32 +1,46 @@
 "use client";
 
-import { useMachine } from "@xstate/react";
+import { useSelector } from "@xstate/react";
 import type { ReactNode } from "react";
+import { useCallback, useMemo } from "react";
+import type { ActorRefFrom, EventFrom } from "xstate";
+import { useActorSystem } from "../actor/actor.context";
 import { projectMachineContext } from "./project.context";
-import type { ProjectContext } from "./project.state";
-import { projectMachine } from "./project.state";
+import type { projectMachine } from "./project.state";
 
 interface ProjectAdapterProps {
 	children: ReactNode;
-	projectContext: ProjectContext;
 }
 
-export function ProjectAdapter({
-	children,
-	projectContext,
-}: ProjectAdapterProps) {
-	const [state, send] = useMachine(projectMachine, {
-		input: projectContext,
-	});
+export function ProjectAdapter({ children }: ProjectAdapterProps) {
+	const { actorSystemRef } = useActorSystem();
+
+	const projectRef = useMemo(
+		() =>
+			actorSystemRef.system.get("project") as ActorRefFrom<
+				typeof projectMachine
+			>,
+		[actorSystemRef],
+	);
+
+	const state = useSelector(projectRef, (s) => s);
+
+	const send = useCallback(
+		(event: EventFrom<typeof projectMachine>) => projectRef.send(event),
+		[projectRef],
+	);
+
+	const value = useMemo(
+		() => ({
+			project: state.context,
+			state,
+			send,
+		}),
+		[state.context, state, send],
+	);
 
 	return (
-		<projectMachineContext.Provider
-			value={{
-				project: state.context,
-				state,
-				send,
-			}}
-		>
+		<projectMachineContext.Provider value={value}>
 			{children}
 		</projectMachineContext.Provider>
 	);

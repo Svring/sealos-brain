@@ -1,9 +1,11 @@
 "use server";
 
+import {
+	BUILTIN_RESOURCES,
+	CUSTOM_RESOURCES,
+} from "@sealos-brain/constants/k8s";
 import { selectResources } from "@sealos-brain/lib/k8s-service";
 import { DEVBOX_LABELS } from "@/constants/devbox/devbox-labels.constant";
-import { BUILTIN_RESOURCES } from "@/constants/k8s/k8s-builtin.constant";
-import { CUSTOM_RESOURCES } from "@/constants/k8s/k8s-custom.constant";
 import { checkPorts } from "@/lib/network/network.api";
 import { resourceParser } from "@/lib/resource/resource.parser";
 import { transformMonitorData } from "@/lib/resource/resource.utils";

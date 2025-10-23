@@ -1,11 +1,15 @@
 "use client";
 
 import type { Edge, Node } from "@xyflow/react";
-import { assign, createMachine } from "xstate";
+import { assign, createMachine, sendTo } from "xstate";
+import type { Chat } from "../copilot/copilot.state";
+import type { Resource } from "../project/project.state";
 
 export interface FlowContext {
 	nodes: Node[];
 	edges: Edge[];
+	selectedNodeId: string | null;
+	selectedEdgeId: string | null;
 }
 
 export type FlowEvent =
@@ -17,6 +21,13 @@ export type FlowEvent =
 	| { type: "ADD_EDGE"; edge: Edge }
 	| { type: "UPDATE_EDGE"; edge: Edge }
 	| { type: "REMOVE_EDGE"; edgeId: string }
+	| {
+			type: "SELECT_NODE";
+			nodeId: string | null;
+			resource?: Resource;
+			chat?: Chat;
+	  }
+	| { type: "SELECT_EDGE"; edgeId: string | null }
 	| { type: "CLEAR_FLOW" }
 	| { type: "FAIL" }
 	| { type: "RETRY" };
@@ -27,10 +38,12 @@ export const flowMachine = createMachine({
 		events: FlowEvent;
 	},
 	id: "flow",
-	initial: "idle",
+	initial: "ready",
 	context: {
 		nodes: [],
 		edges: [],
+		selectedNodeId: null,
+		selectedEdgeId: null,
 	},
 	states: {
 		idle: {
@@ -101,10 +114,50 @@ export const flowMachine = createMachine({
 							context.edges.filter((edge) => edge.id !== event.edgeId),
 					}),
 				},
+				SELECT_NODE: {
+					actions: [
+						assign({
+							selectedNodeId: ({ event }) => event.nodeId,
+							selectedEdgeId: () => null, // Clear edge selection when selecting node
+						}),
+						sendTo(
+							({ system }) => system.get("project"),
+							({ event }) => {
+								if (event.resource) {
+									return {
+										type: "SET_ACTIVE_RESOURCE",
+										resource: event.resource,
+									};
+								}
+								return { type: "NOOP" };
+							},
+						),
+						sendTo(
+							({ system }) => system.get("copilot"),
+							({ event }) => {
+								if (event.chat) {
+									return {
+										type: "ADD_CHAT",
+										chat: event.chat,
+									};
+								}
+								return { type: "NOOP" };
+							},
+						),
+					],
+				},
+				SELECT_EDGE: {
+					actions: assign({
+						selectedEdgeId: ({ event }) => event.edgeId,
+						selectedNodeId: () => null, // Clear node selection when selecting edge
+					}),
+				},
 				CLEAR_FLOW: {
 					actions: assign({
 						nodes: [],
 						edges: [],
+						selectedNodeId: null,
+						selectedEdgeId: null,
 					}),
 				},
 				FAIL: {

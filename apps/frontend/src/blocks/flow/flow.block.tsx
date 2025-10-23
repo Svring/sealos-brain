@@ -6,6 +6,7 @@ import * as Control from "@/components/control/control.comp";
 import FloatingConnectionLine from "@/components/flow/edges/floating-connection-line";
 import * as Flow from "@/components/flow/flow.comp";
 import { FLOW_CONFIG } from "@/constants/flow/flow-config.constant";
+import { useFlowContext } from "@/contexts/flow/flow.context";
 import { flowMachine } from "@/contexts/flow/flow.state";
 import { useProjectState } from "@/contexts/project/project.context";
 import { useAddChat } from "@/hooks/copilot/use-add-chat";
@@ -17,7 +18,7 @@ import edgeTypes from "@/mvvm/flow/edges/models/edge.types";
 import "@xyflow/react/dist/style.css";
 
 export function FlowBlock() {
-	const [state, send] = useMachine(flowMachine);
+	const { nodes: flowNodes, edges: flowEdges, state, send } = useFlowContext();
 	const { project } = useProjectState();
 	const { handleAddChat } = useAddChat();
 

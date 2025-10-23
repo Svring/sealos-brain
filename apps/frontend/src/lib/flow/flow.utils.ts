@@ -20,7 +20,10 @@ export const convertObjectsToNodes = (objects: ResourceObject[]): Node[] =>
 			? "launchpad"
 			: resourceType.toLowerCase(),
 		position: { x: 0, y: 0 },
-		data: { target: resourceParser.toTarget({ resourceType, name }) },
+		data: {
+			id: `${resourceType.toLowerCase()}-${name}`,
+			target: resourceParser.toTarget({ resourceType, name }),
+		},
 	}));
 
 export const inferObjectsReliances = (
