@@ -1,7 +1,4 @@
-import { initTRPC } from "@trpc/server";
-import type { Operation } from "fast-json-patch";
-import { z } from "zod";
-import { k8sParser } from "@/lib/k8s/k8s.parser";
+import { k8sParser } from "@sealos-brain/lib/k8s-parser";
 import {
 	deleteResource,
 	getResource,
@@ -12,7 +9,10 @@ import {
 	selectResources,
 	strategicMergePatchResource,
 	upsertResource,
-} from "@/lib/k8s/k8s-service.api";
+} from "@sealos-brain/lib/k8s-service";
+import { initTRPC } from "@trpc/server";
+import type { Operation } from "fast-json-patch";
+import { z } from "zod";
 import { getResourceEvents } from "@/lib/sealos/event/event.api";
 import { getResourceLogs } from "@/lib/sealos/log/log.api";
 import { getResourcePods } from "@/lib/sealos/pod/pod.api";

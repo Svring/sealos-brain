@@ -1,22 +1,22 @@
 "use server";
 
+import { CUSTOM_RESOURCES } from "@sealos-brain/constants/k8s";
+import type {
+	BuiltinResourceTarget,
+	CustomResourceTarget,
+	K8sContext,
+	ResourceTarget,
+} from "@sealos-brain/models/k8s";
 import type { Operation } from "fast-json-patch";
 import { load } from "js-yaml";
 import _ from "lodash";
-import { CUSTOM_RESOURCES } from "@/registry/dark/constants/k8s/k8s-custom.constant";
-import { escapeSlash } from "@/registry/dark/lib/k8s/k8s-client.utils";
+import { escapeSlash } from "./k8s-client.utils";
 import {
 	getApiClients,
 	getBuiltinApiClient,
 	getCurrentNamespace,
 	invokeApiMethod,
-} from "@/registry/dark/lib/k8s/k8s-server.utils";
-import type {
-	BuiltinResourceTarget,
-	CustomResourceTarget,
-	ResourceTarget,
-} from "@/registry/dark/models/k8s/k8s.model";
-import type { K8sContext } from "@/registry/dark/models/k8s/k8s-context.model";
+} from "./k8s-server.utils";
 
 /**
  * Delete a custom resource by name in Kubernetes.

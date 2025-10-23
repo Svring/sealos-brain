@@ -1,0 +1,14 @@
+{
+  "name": "@sealos-brain/constants",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "exports": {
+    "./k8s": "./src/k8s/k8s.constant.ts"
+  },
+  "dependencies": {
+    "@sealos-brain/models": "workspace:*"
+  }
+}

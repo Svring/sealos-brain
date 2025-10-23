@@ -10,10 +10,12 @@ import {
 	NetworkingV1Api,
 	RbacAuthorizationV1Api,
 } from "@kubernetes/client-node";
+import { BUILTIN_RESOURCES } from "@sealos-brain/constants/k8s";
+import type {
+	BuiltinResourceConfig,
+	K8sApiClients,
+} from "@sealos-brain/models/k8s";
 import _ from "lodash";
-import { BUILTIN_RESOURCES } from "@/constants/k8s/k8s-builtin.constant";
-import type { BuiltinResourceConfig } from "@/mvvm/k8s/models/k8s-builtin.model";
-import type { K8sApiClients } from "@/mvvm/k8s/models/k8s-clients.model";
 
 /**
  * Get the current namespace from a kubeconfig string.
@@ -182,5 +184,3 @@ export async function getBuiltinApiClient(
 		resourceConfig,
 	};
 }
-
-

@@ -1,5 +1,16 @@
 "use server";
 
+import type {
+	BuiltinResourceTarget,
+	BuiltinResourceTypeTarget,
+	CustomResourceTarget,
+	CustomResourceTypeTarget,
+	K8sContext,
+	K8sResource,
+	ResourceTarget,
+	ResourceTypeTarget,
+} from "@sealos-brain/models/k8s";
+import { K8sResourceListSchema } from "@sealos-brain/models/k8s";
 import type { Operation } from "fast-json-patch";
 import _ from "lodash";
 import {
@@ -16,24 +27,13 @@ import {
 	strategicMergePatchCustomResource,
 	upsertBuiltinResource,
 	upsertCustomResource,
-} from "@/registry/dark/lib/k8s/k8s-mutation.api";
+} from "./k8s-mutation.api";
 import {
 	getBuiltinResource,
 	getCustomResource,
 	listBuiltinResources,
 	listCustomResources,
-} from "@/registry/dark/lib/k8s/k8s-query.api";
-import type {
-	BuiltinResourceTarget,
-	BuiltinResourceTypeTarget,
-	CustomResourceTarget,
-	CustomResourceTypeTarget,
-	ResourceTarget,
-	ResourceTypeTarget,
-} from "@/registry/dark/models/k8s/k8s.model";
-import type { K8sContext } from "@/registry/dark/models/k8s/k8s-context.model";
-import type { K8sResource } from "@/registry/dark/models/k8s/k8s-resource.model";
-import { K8sResourceListSchema } from "@/registry/dark/models/k8s/k8s-resource.model";
+} from "./k8s-query.api";
 
 // ============================================================================
 // Resource Selection Functions

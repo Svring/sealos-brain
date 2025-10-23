@@ -1,20 +1,20 @@
 "use server";
 
-import { CUSTOM_RESOURCES } from "@/registry/dark/constants/k8s/k8s-custom.constant";
-import { addMissingFields } from "@/registry/dark/lib/k8s/k8s-client.utils";
-import {
-	getApiClients,
-	getBuiltinApiClient,
-	getCurrentNamespace,
-	invokeApiMethod,
-} from "@/registry/dark/lib/k8s/k8s-server.utils";
+import { CUSTOM_RESOURCES } from "@sealos-brain/constants/k8s";
 import type {
 	BuiltinResourceTarget,
 	BuiltinResourceTypeTarget,
 	CustomResourceTarget,
 	CustomResourceTypeTarget,
-} from "@/registry/dark/models/k8s/k8s.model";
-import type { K8sContext } from "@/registry/dark/models/k8s/k8s-context.model";
+	K8sContext,
+} from "@sealos-brain/models/k8s";
+import { addMissingFields } from "./k8s-client.utils";
+import {
+	getApiClients,
+	getBuiltinApiClient,
+	getCurrentNamespace,
+	invokeApiMethod,
+} from "./k8s-server.utils";
 
 // ============================================================================
 // Kubernetes API Query Functions

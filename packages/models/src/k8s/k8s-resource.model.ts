@@ -30,8 +30,8 @@ export const K8sResourceSchema = z.object({
 		generation: z.number().optional(),
 		creationTimestamp: z.string().optional(),
 		deletionTimestamp: z.string().optional(),
-		labels: z.record(z.string()).optional(),
-		annotations: z.record(z.string()).optional(),
+		labels: z.record(z.string(), z.string()).optional(),
+		annotations: z.record(z.string(), z.string()).optional(),
 		ownerReferences: z
 			.array(
 				z.object({
@@ -46,9 +46,9 @@ export const K8sResourceSchema = z.object({
 			.optional(),
 		finalizers: z.array(z.string()).optional(),
 	}),
-	spec: z.record(z.unknown()).optional(),
-	status: z.record(z.unknown()).optional(),
-	data: z.record(z.unknown()).optional(),
+	spec: z.record(z.string(), z.unknown()).optional(),
+	status: z.record(z.string(), z.unknown()).optional(),
+	data: z.record(z.string(), z.unknown()).optional(),
 });
 
 // Event-specific schema
@@ -63,8 +63,8 @@ export const K8sEventSchema = z.object({
 		generation: z.number().optional(),
 		creationTimestamp: z.string().optional(),
 		deletionTimestamp: z.string().optional(),
-		labels: z.record(z.string()).optional(),
-		annotations: z.record(z.string()).optional(),
+		labels: z.record(z.string(), z.string()).optional(),
+		annotations: z.record(z.string(), z.string()).optional(),
 		ownerReferences: z
 			.array(
 				z.object({
