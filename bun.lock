@@ -185,6 +185,12 @@
         "zod": "^4.1.12",
       },
     },
+    "packages/devbox": {
+      "name": "@sealos-brain/devbox",
+      "dependencies": {
+        "@aws-sdk/client-s3": "^3.914.0",
+      },
+    },
     "packages/lib": {
       "name": "@sealos-brain/lib",
       "dependencies": {
@@ -197,6 +203,12 @@
       "name": "@sealos-brain/models",
       "dependencies": {
         "zod": "^4.1.12",
+      },
+    },
+    "packages/s3": {
+      "name": "@sealos-brain/s3",
+      "dependencies": {
+        "@aws-sdk/client-s3": "^3.914.0",
       },
     },
     "packages/typescript-config": {
@@ -893,6 +905,8 @@
 
     "@sealos-brain/db": ["@sealos-brain/db@workspace:packages/db"],
 
+    "@sealos-brain/devbox": ["@sealos-brain/devbox@workspace:packages/devbox"],
+
     "@sealos-brain/doc": ["@sealos-brain/doc@workspace:apps/doc"],
 
     "@sealos-brain/frontend": ["@sealos-brain/frontend@workspace:apps/frontend"],
@@ -900,6 +914,8 @@
     "@sealos-brain/lib": ["@sealos-brain/lib@workspace:packages/lib"],
 
     "@sealos-brain/models": ["@sealos-brain/models@workspace:packages/models"],
+
+    "@sealos-brain/s3": ["@sealos-brain/s3@workspace:packages/s3"],
 
     "@sealos-brain/typescript-config": ["@sealos-brain/typescript-config@workspace:packages/typescript-config"],
 

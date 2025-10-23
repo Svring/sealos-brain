@@ -1,0 +1,14 @@
+{
+  "name": "@sealos-brain/s3",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "exports": {
+    ".": "./src/s3.api.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.914.0"
+  }
+}
