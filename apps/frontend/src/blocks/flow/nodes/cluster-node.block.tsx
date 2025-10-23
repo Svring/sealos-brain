@@ -22,14 +22,16 @@ import { ClusterObjectSchema } from "@/models/sealos/cluster/cluster-object.mode
 
 interface ClusterNodeBlockProps {
 	data: {
+		id: string;
 		target: CustomResourceTarget;
 	};
 }
 
 export function ClusterNodeBlock({ data }: ClusterNodeBlockProps) {
-	const { target } = data;
+	const { id, target } = data;
 	const { data: object } = useResourceObject(target);
 	const { handleNodeClick } = useNodeClick({
+		id,
 		resourceUid: object?.uid || "",
 		target: target,
 	});

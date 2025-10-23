@@ -1,0 +1,11 @@
+{
+  "name": "@sealos-brain/sealos-api",
+  "type": "module",
+  "scripts": {},
+  "exports": {
+    ".": "./src/sealos.api.ts"
+  },
+  "dependencies": {
+    "@sealos-brain/models": "workspace:*"
+  }
+}

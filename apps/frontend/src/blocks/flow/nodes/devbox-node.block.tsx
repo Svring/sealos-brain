@@ -1,7 +1,7 @@
 "use client";
 
 import type { CustomResourceTarget } from "@sealos-brain/models/k8s";
-import { Position, useInternalNode } from "@xyflow/react";
+import { Position } from "@xyflow/react";
 import {
 	Activity,
 	Package,
@@ -12,13 +12,10 @@ import {
 } from "lucide-react";
 import * as BaseNode from "@/components/flow/nodes/base-node.comp";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { useAuthState } from "@/contexts/auth/auth.context";
-import { useFlowEvents } from "@/contexts/flow/flow.context";
-import { useProjectState } from "@/contexts/project/project.context";
+import { useNodeClick } from "@/hooks/flow/use-node-click";
 import { useResourceObject } from "@/hooks/resource/use-resource-object";
 import { useDevboxDelete } from "@/hooks/sealos/devbox/use-devbox-delete";
 import { useDevboxLifecycle } from "@/hooks/sealos/devbox/use-devbox-lifecycle";
-import { composeMetadata } from "@/lib/langgraph/langgraph.utils";
 import { DevboxObjectSchema } from "@/models/sealos/devbox/devbox-object.model";
 
 interface DevboxNodeBlockProps {
@@ -31,30 +28,14 @@ interface DevboxNodeBlockProps {
 export function DevboxNodeBlock({ data }: DevboxNodeBlockProps) {
 	const { id, target } = data;
 	const { data: object } = useResourceObject(target);
-	const { selectNode } = useFlowEvents();
-	const { auth } = useAuthState();
-	const { project, activeResource } = useProjectState();
+	const { handleNodeClick } = useNodeClick({
+		id,
+		resourceUid: object?.uid || "",
+		target: target,
+	});
 
 	const { start, pause, restart, isPending } = useDevboxLifecycle();
 	const { del, isPending: isDeleting } = useDevboxDelete();
-
-	const handleNodeClick = () => {
-		console.log("handleNodeClick", id);
-		selectNode(
-			id,
-			{
-				uid: object?.uid || "",
-				target: target,
-			},
-			{
-				metadata: {
-					kubeconfigEncoded: auth?.kubeconfigEncoded || "",
-					projectUid: project?.uid || "",
-					resourceUid: activeResource?.uid || "",
-				},
-			},
-		);
-	};
 
 	if (!object) {
 		return (

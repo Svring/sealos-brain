@@ -1,5 +1,6 @@
 "use client";
 
+import { isEqual } from "lodash";
 import { assign, createMachine } from "xstate";
 
 // Chat object interface
@@ -42,9 +43,18 @@ export const copilotMachine = createMachine({
 		idle: {
 			on: {
 				ADD_CHAT: {
-					actions: assign({
-						chats: ({ context, event }) => [...context.chats, event.chat],
-						opened: true,
+					actions: assign(({ context, event }) => {
+						const latestChat = context.chats[context.chats.length - 1];
+						const isSameChat =
+							latestChat && isEqual(latestChat.metadata, event.chat.metadata);
+
+						return isSameChat
+							? { ...context, opened: false }
+							: {
+									...context,
+									chats: [...context.chats, event.chat],
+									opened: true,
+								};
 					}),
 				},
 				OPEN_COPILOT: {

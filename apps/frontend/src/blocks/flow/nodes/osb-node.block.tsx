@@ -10,14 +10,16 @@ import { OsbObjectSchema } from "@/models/sealos/osb/osb-object.model";
 
 interface OsbNodeBlockProps {
 	data: {
+		id: string;
 		target: CustomResourceTarget;
 	};
 }
 
 export function OsbNodeBlock({ data }: OsbNodeBlockProps) {
-	const { target } = data;
+	const { id, target } = data;
 	const { data: object } = useResourceObject(target);
 	const { handleNodeClick } = useNodeClick({
+		id,
 		resourceUid: object?.uid || "",
 		target: target,
 	});

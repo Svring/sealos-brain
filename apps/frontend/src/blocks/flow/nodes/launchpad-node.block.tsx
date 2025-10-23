@@ -21,14 +21,16 @@ import { LaunchpadObjectSchema } from "@/models/sealos/launchpad/launchpad-objec
 
 interface LaunchpadNodeBlockProps {
 	data: {
+		id: string;
 		target: BuiltinResourceTarget;
 	};
 }
 
 export function LaunchpadNodeBlock({ data }: LaunchpadNodeBlockProps) {
-	const { target } = data;
+	const { id, target } = data;
 	const { data: object } = useResourceObject(target);
 	const { handleNodeClick } = useNodeClick({
+		id,
 		resourceUid: object?.uid || "",
 		target: target,
 	});

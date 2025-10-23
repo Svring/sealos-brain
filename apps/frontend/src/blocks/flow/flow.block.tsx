@@ -1,15 +1,14 @@
 "use client";
 
-import { useMachine } from "@xstate/react";
 import { ReactFlow } from "@xyflow/react";
 import * as Control from "@/components/control/control.comp";
 import FloatingConnectionLine from "@/components/flow/edges/floating-connection-line";
 import * as Flow from "@/components/flow/flow.comp";
 import { FLOW_CONFIG } from "@/constants/flow/flow-config.constant";
+import { useAuthState } from "@/contexts/auth/auth.context";
+import { useCopilotEvents } from "@/contexts/copilot/copilot.context";
 import { useFlowContext } from "@/contexts/flow/flow.context";
-import { flowMachine } from "@/contexts/flow/flow.state";
 import { useProjectState } from "@/contexts/project/project.context";
-import { useAddChat } from "@/hooks/copilot/use-add-chat";
 import { useFlow } from "@/hooks/flow/use-flow";
 import { instanceParser } from "@/lib/sealos/instance/instance.parser";
 import nodeTypes from "@/models/flow/nodes/node.types";
@@ -18,9 +17,10 @@ import edgeTypes from "@/mvvm/flow/edges/models/edge.types";
 import "@xyflow/react/dist/style.css";
 
 export function FlowBlock() {
-	const { nodes: flowNodes, edges: flowEdges, state, send } = useFlowContext();
+	const { state, send } = useFlowContext();
 	const { project } = useProjectState();
-	const { handleAddChat } = useAddChat();
+	const { auth } = useAuthState();
+	const { addChat } = useCopilotEvents();
 
 	// Create instance target from project name using instanceParser
 	const instance = instanceParser.toTarget(project?.object?.name || "");
@@ -29,7 +29,14 @@ export function FlowBlock() {
 	const { nodes, edges } = useFlow(instance);
 
 	const handlePaneClick = () => {
-		handleAddChat(project?.uid);
+		if (project?.uid && auth?.kubeconfigEncoded) {
+			addChat({
+				metadata: {
+					kubeconfigEncoded: auth.kubeconfigEncoded,
+					projectUid: project.uid,
+				},
+			});
+		}
 	};
 
 	const handleEdgeClick = (event: React.MouseEvent) => {

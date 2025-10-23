@@ -1,45 +1,36 @@
 "use client";
 
-import {
-	useProjectEvents,
-	useProjectState,
-} from "@/contexts/project/project.context";
-import { useAddChat } from "@/hooks/copilot/use-add-chat";
+import { useAuthState } from "@/contexts/auth/auth.context";
+import { useFlowEvents } from "@/contexts/flow/flow.context";
+import { useProjectState } from "@/contexts/project/project.context";
 import type { ResourceTarget } from "@/mvvm/k8s/models/k8s.model";
 
 interface UseNodeClickProps {
+	id: string;
 	resourceUid: string;
 	target: ResourceTarget;
 }
 
-export function useNodeClick({ resourceUid, target }: UseNodeClickProps) {
-	const { project } = useProjectState();
-	const { setActiveResource } = useProjectEvents();
-	const { handleAddChat } = useAddChat();
+export function useNodeClick({ id, resourceUid, target }: UseNodeClickProps) {
+	const { selectNode } = useFlowEvents();
+	const { auth } = useAuthState();
+	const { project, activeResource } = useProjectState();
 
-	const handleNodeClick = (event: React.MouseEvent<HTMLDivElement>) => {
-		if (event.target !== event.currentTarget) {
-			return;
-		}
-
-		if (!resourceUid) {
-			console.warn("No resource ID provided for node click");
-			return;
-		}
-
-		// Set the active resource
-		setActiveResource({
-			uid: resourceUid,
-			target: target,
-		});
-
-		console.log("Active resource set:", {
-			uid: resourceUid,
-			target: target,
-		});
-
-		// Add chat with project and resource ID
-		handleAddChat(project?.uid, resourceUid);
+	const handleNodeClick = () => {
+		selectNode(
+			id,
+			{
+				uid: resourceUid,
+				target: target,
+			},
+			{
+				metadata: {
+					kubeconfigEncoded: auth?.kubeconfigEncoded || "",
+					projectUid: project?.uid || "",
+					resourceUid: activeResource?.uid || "",
+				},
+			},
+		);
 	};
 
 	return { handleNodeClick };
