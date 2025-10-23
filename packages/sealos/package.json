@@ -6,6 +6,8 @@
     ".": "./src/sealos.api.ts"
   },
   "dependencies": {
-    "@sealos-brain/models": "workspace:*"
+    "@sealos-brain/models": "workspace:*",
+    "@sealos-brain/k8s": "workspace:*",
+    "@sealos-brain/bridge": "workspace:*"
   }
 }
