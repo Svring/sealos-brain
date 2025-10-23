@@ -1,0 +1,26 @@
+{
+  "title": "components.build",
+  "description": "Build the modern web",
+  "root": true,
+  "pages": [
+    "index",
+    "---General---",
+    "definitions",
+    "principles",
+    "---Build---",
+    "composition",
+    "accessibility",
+    "design-tokens",
+    "state",
+    "styling",
+    "types",
+    "polymorphism",
+    "as-child",
+    "data-attributes",
+    "docs",
+    "---Publish---",
+    "registry",
+    "marketplaces",
+    "npm"
+  ]
+}

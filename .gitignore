@@ -6,6 +6,8 @@ node_modules
 .pnp.js
 
 .note
+.github
+.vscode
 
 # Local env files
 .env

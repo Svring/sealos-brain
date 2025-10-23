@@ -1,8 +1,6 @@
 # deps
 /node_modules
 
-.next
-
 # generated content
 .contentlayer
 .content-collections

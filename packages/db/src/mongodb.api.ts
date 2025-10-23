@@ -32,7 +32,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 	console.log("Testing MongoDB connection...");
 
 	// Test connection string - can be overridden via command line argument
-	const testUrl = process.argv[2] || "mongodb://root:s49k2jcd@usw.sealos.io:49403/?directConnection=true";
+	const testUrl = process.argv[2] || "";
 	console.log("Using test URL:", testUrl);
 
 	connectMongoDB(testUrl)
