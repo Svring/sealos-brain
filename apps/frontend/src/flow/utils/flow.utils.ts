@@ -3,7 +3,6 @@ import {
 	inferRelianceFromEnv,
 	inferRelianceFromImage,
 } from "@sealos-brain/shared/reliance/utils";
-import type { ResourceObject } from "@sealos-brain/shared/resource/models";
 import { type Edge, MarkerType, type Node } from "@xyflow/react";
 import _ from "lodash";
 import {
@@ -11,7 +10,8 @@ import {
 	SPLIT_OPTIONS,
 } from "@/flow/constants/flow-layout.constant";
 import type { LayoutOptions } from "@/flow/models/layout-options.model";
-import { resourceParser } from "@sealos-brain/shared/resource/utils";
+import type { ResourceObject } from "@/lib/resource/models/resource-object.model";
+import { resourceParser } from "@/lib/resource/utils/resource.parser";
 import { applyNormalLayout } from "./layout/layout-normal.utils";
 import { applySplitLayout } from "./layout/layout-split.utils";
 

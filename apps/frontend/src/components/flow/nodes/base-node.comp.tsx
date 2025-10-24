@@ -13,7 +13,6 @@ import {
 import { LAUNCHPAD_DEFAULT_ICON } from "@sealos-brain/sealos/launchpad/constants";
 import { OBJECTSTORAGE_DEFAULT_ICON } from "@sealos-brain/sealos/osb/constants";
 import { cn } from "@sealos-brain/shared/misc/utils";
-import type { ResourceObject } from "@sealos-brain/shared/resource/models";
 import { Position, Handle as ReactFlowHandle } from "@xyflow/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { MoreHorizontal, Square } from "lucide-react";
@@ -32,6 +31,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useResourceObject } from "@/hooks/shared/resource/use-resource-object";
+import type { ResourceObject } from "@/lib/resource/models/resource-object.model";
 
 const baseNodeVariants = cva(
 	"relative cursor-pointer rounded-xl border bg-background-tertiary p-5 text-card-foreground hover:brightness-120 flex flex-col",

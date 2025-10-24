@@ -8,7 +8,7 @@ import type {
 	ResourceTarget,
 } from "@sealos-brain/k8s/shared/models";
 import { useQueries } from "@tanstack/react-query";
-import { resourceParser } from "@/lib/resource/resource.parser";
+import { resourceParser } from "@/lib/resource/utils/resource.parser";
 import { useTRPCClients } from "../../trpc/use-trpc-clients";
 
 /**
