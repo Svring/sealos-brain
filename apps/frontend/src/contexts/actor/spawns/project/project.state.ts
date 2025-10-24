@@ -1,8 +1,8 @@
 "use client";
 
+import type { InstanceObject } from "@sealos-brain/k8s/resources/instance/models";
+import type { ResourceTarget } from "@sealos-brain/k8s/shared/models";
 import { assign, createMachine } from "xstate";
-import type { ResourceTarget } from "@/mvvm/k8s/models/k8s.model";
-import type { InstanceObject } from "@/mvvm/sealos/instance/models/instance-object.model";
 
 // Resource interface
 export interface Resource {

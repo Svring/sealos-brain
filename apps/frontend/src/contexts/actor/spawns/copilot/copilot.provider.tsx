@@ -4,7 +4,7 @@ import { useSelector } from "@xstate/react";
 import type React from "react";
 import { useCallback, useMemo } from "react";
 import type { ActorRefFrom, EventFrom } from "xstate";
-import { useActorSystem } from "../actor/actor.context";
+import { useActorSystem } from "../../actor.context";
 import { copilotMachineContext } from "./copilot.context";
 import type { copilotMachine } from "./copilot.state";
 

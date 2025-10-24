@@ -1,11 +1,11 @@
 "use client";
 
 import * as Copilot from "@/components/copilot/copilot.comp";
-import { CopilotAdapter } from "@/contexts/copilot/copilot.adapter";
+import { CopilotAdapter } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 import {
 	useCopilotMachineContext,
 	useCopilotState,
-} from "@/contexts/copilot/copilot.context";
+} from "@/contexts/actor/spawns/copilot/copilot.context";
 import { ChatBlock } from "./chat/chat.block";
 
 export function CopilotBlock() {

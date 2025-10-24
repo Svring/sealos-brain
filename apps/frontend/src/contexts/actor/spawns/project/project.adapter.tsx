@@ -4,7 +4,7 @@ import { useSelector } from "@xstate/react";
 import type { ReactNode } from "react";
 import { useCallback, useMemo } from "react";
 import type { ActorRefFrom, EventFrom } from "xstate";
-import { useActorSystem } from "../actor/actor.context";
+import { useActorSystem } from "../../actor.context";
 import { projectMachineContext } from "./project.context";
 import type { projectMachine } from "./project.state";
 

@@ -1,36 +1,58 @@
 import type { Edge, Node } from "@xyflow/react";
+import { z } from "zod";
 
-export interface LayoutOptions {
-	direction?: "TB" | "BT" | "LR" | "RL";
-	nodeWidth?: number;
-	nodeHeight?: number;
-	rankSep?: number;
-	nodeSep?: number;
-	getNodeSize?: (node: Node) => { width: number; height: number };
-	edgeAware?: boolean;
-	barycentricIterations?: number;
-}
+// Position schema
+export const PositionSchema = z.object({
+	x: z.number(),
+	y: z.number(),
+});
 
-export type DefaultLayoutOptions = Required<
-	Omit<LayoutOptions, "getNodeSize" | "edgeAware" | "barycentricIterations">
-> & {
-	edgeAware: boolean;
-	barycentricIterations: number;
-};
+// LayoutOptions schema
+export const LayoutOptionsSchema = z.object({
+	direction: z.enum(["TB", "BT", "LR", "RL"]).optional(),
+	nodeWidth: z.number().optional(),
+	nodeHeight: z.number().optional(),
+	rankSep: z.number().optional(),
+	nodeSep: z.number().optional(),
+	getNodeSize: z.function().optional(),
+	edgeAware: z.boolean().optional(),
+	barycentricIterations: z.number().optional(),
+});
 
-export interface SplitLayoutOptions {
-	groupId?: string;
-	groupPadding?: number;
-	gapBetweenGroupAndRest?: number;
-	groupPosition?: { x: number; y: number };
-	childNodeWidth?: number;
-	childNodeHeight?: number;
-	getChildNodeSize?: (node: Node) => { width: number; height: number };
-	getOutsideNodeSize?: (node: Node) => { width: number; height: number };
-	edgeClearance?: number;
-	autoResizeGroup?: boolean;
-	groupLayoutOptions?: LayoutOptions;
-	outsideLayoutOptions?: LayoutOptions;
-}
+// DefaultLayoutOptions schema
+export const DefaultLayoutOptionsSchema = LayoutOptionsSchema.required({
+	direction: true,
+	nodeWidth: true,
+	nodeHeight: true,
+	rankSep: true,
+	nodeSep: true,
+	edgeAware: true,
+	barycentricIterations: true,
+}).omit({
+	getNodeSize: true,
+});
 
+// SplitLayoutOptions schema
+export const SplitLayoutOptionsSchema = z.object({
+	groupId: z.string().optional(),
+	groupPadding: z.number().optional(),
+	gapBetweenGroupAndRest: z.number().optional(),
+	groupPosition: PositionSchema.optional(),
+	childNodeWidth: z.number().optional(),
+	childNodeHeight: z.number().optional(),
+	getChildNodeSize: z.function().optional(),
+	getOutsideNodeSize: z.function().optional(),
+	edgeClearance: z.number().optional(),
+	autoResizeGroup: z.boolean().optional(),
+	groupLayoutOptions: LayoutOptionsSchema.optional(),
+	outsideLayoutOptions: LayoutOptionsSchema.optional(),
+});
+
+// Type exports
+export type Position = z.infer<typeof PositionSchema>;
+export type LayoutOptions = z.infer<typeof LayoutOptionsSchema>;
+export type DefaultLayoutOptions = z.infer<typeof DefaultLayoutOptionsSchema>;
+export type SplitLayoutOptions = z.infer<typeof SplitLayoutOptionsSchema>;
+
+// Re-export Edge and Node types from @xyflow/react
 export type { Edge, Node };
