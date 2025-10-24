@@ -4,7 +4,7 @@ import { instanceParser } from "@sealos-brain/k8s/resources/instance/utils";
 import { useParams } from "next/navigation";
 import type React from "react";
 import { useEffect, useMemo } from "react";
-import { useProjectEvents } from "@/contexts/project/project.context";
+import { useProjectEvents } from "@/contexts/actor/spawns/project/project.context";
 import { useInstanceObject } from "@/hooks/sealos/instance/use-instance-object";
 
 interface LayoutProps {

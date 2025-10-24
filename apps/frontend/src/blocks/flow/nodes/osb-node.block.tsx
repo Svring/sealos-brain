@@ -1,6 +1,6 @@
 "use client";
 
-import type { CustomResourceTarget } from "@sealos-brain/models/k8s";
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
 import { OsbObjectSchema } from "@sealos-brain/sealos/osb/models";
 import { Copy, Globe, HardDrive } from "lucide-react";
 import * as BaseNode from "@/components/flow/nodes/base-node.comp";

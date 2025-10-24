@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useTRPCClients } from "@/trpc/hooks/use-trpc-clients";
+import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
 
 export const useDevboxReleases = (devboxName: string) => {
 	const { devbox } = useTRPCClients();
@@ -21,9 +21,15 @@ export const useDevboxRelease = () => {
 	const { devbox } = useTRPCClients();
 
 	const releaseMutation = useMutation(devbox.release.mutationOptions());
-	const deleteReleaseMutation = useMutation(devbox.deleteRelease.mutationOptions());
+	const deleteReleaseMutation = useMutation(
+		devbox.deleteRelease.mutationOptions(),
+	);
 
-	const release = async (devboxName: string, tag: string, releaseDes?: string) => {
+	const release = async (
+		devboxName: string,
+		tag: string,
+		releaseDes?: string,
+	) => {
 		return await releaseMutation.mutateAsync({
 			devboxName,
 			tag,

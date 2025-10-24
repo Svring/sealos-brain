@@ -2,12 +2,12 @@
 
 import type { Message } from "@langchain/langgraph-sdk";
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import { Loader2 } from "lucide-react";
 import type { ComponentProps } from "react";
 import { Children, cloneElement, isValidElement, useMemo, useRef } from "react";
-import { useCopilotAdapterContext } from "@/contexts/copilot/copilot.adapter";
+import { useCopilotAdapterContext } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 import { useAutoScroll } from "@/hooks/shared/misc/use-auto-scroll";
-import { cn } from "@/lib/utils";
 
 // Messages container
 export const Messages = ({

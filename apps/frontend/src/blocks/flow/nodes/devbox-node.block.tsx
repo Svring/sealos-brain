@@ -1,6 +1,6 @@
 "use client";
 
-import type { CustomResourceTarget } from "@sealos-brain/models/k8s";
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
 import { DevboxObjectSchema } from "@sealos-brain/sealos/devbox/models";
 import { Position } from "@xyflow/react";
 import {

@@ -1,9 +1,9 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import type { ComponentProps } from "react";
-import { flowMachineContext } from "@/contexts/flow/flow.context";
-import { cn } from "@/lib/utils";
+import { flowMachineContext } from "@/contexts/actor/spawns/flow/flow.context";
 
 // Root container
 export const Root = ({
@@ -11,7 +11,7 @@ export const Root = ({
 	asChild = false,
 	context,
 	...props
-}: ComponentProps<"div"> & { 
+}: ComponentProps<"div"> & {
 	asChild?: boolean;
 	context: React.ContextType<typeof flowMachineContext>;
 }) => {

@@ -1,12 +1,12 @@
 "use client";
 
-import { useQueries } from "@tanstack/react-query";
 import type {
 	BuiltinResourceTarget,
 	CustomResourceTarget,
 	ResourceTarget,
-} from "@sealos-brain/k8s/shared/models/models/k8s.model";
-import { useTRPCClients } from "@/trpc/hooks/use-trpc-clients";
+} from "@sealos-brain/k8s/shared/models";
+import { useQueries } from "@tanstack/react-query";
+import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
 
 export const useNetworkStatus = (target: ResourceTarget) => {
 	const { launchpad, devbox } = useTRPCClients();

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useProjectState } from "@/contexts/project/project.context";
+import { useProjectState } from "@/contexts/actor/spawns/project/project.context";
 import { OverlayControlView } from "../views/overlay-control.view";
 
 interface OverlayControlProps {

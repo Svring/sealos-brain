@@ -1,6 +1,6 @@
 "use client";
 
-import type { BuiltinResourceTarget } from "@sealos-brain/models/k8s";
+import type { BuiltinResourceTarget } from "@sealos-brain/k8s/shared/models";
 import { LaunchpadObjectSchema } from "@sealos-brain/sealos/launchpad/models";
 import { Position } from "@xyflow/react";
 import {

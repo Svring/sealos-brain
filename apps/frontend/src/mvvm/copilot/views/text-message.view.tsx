@@ -1,8 +1,8 @@
 "use client";
 
 import type { Message } from "@langchain/langgraph-sdk";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import Markdown from "react-markdown";
-import { cn } from "@/lib/utils";
 
 import "@/styles/github-markdown-dark.css";
 

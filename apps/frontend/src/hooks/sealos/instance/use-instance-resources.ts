@@ -1,8 +1,8 @@
 "use client";
 
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
 import { useQuery } from "@tanstack/react-query";
-import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s.model";
-import { useTRPCClients } from "../../trpc/use-trpc-clients";
+import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
 
 export const useInstanceResources = (target: CustomResourceTarget) => {
 	const { instance } = useTRPCClients();

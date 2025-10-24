@@ -106,7 +106,8 @@
     "@sealos-brain/bridge": "workspace:*",
     "@sealos-brain/k8s": "workspace:*",
     "@sealos-brain/sealos": "workspace:*",
-    "@sealos-brain/shared": "workspace:*"
+    "@sealos-brain/shared": "workspace:*",
+    "@sealos-brain/langgraph": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.5",

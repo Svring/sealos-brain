@@ -1,7 +1,7 @@
 "use client";
 
 import { GroupNode } from "@/components/flow/nodes/group-node.comp";
-import { useProjectState } from "@/contexts/project/project.context";
+import { useProjectState } from "@/contexts/actor/spawns/project/project.context";
 import { useAddChat } from "@/hooks/copilot/use-add-chat";
 
 export function DevGroupNodeBlock() {

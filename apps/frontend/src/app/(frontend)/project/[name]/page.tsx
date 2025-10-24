@@ -2,7 +2,7 @@
 
 import { CopilotBlock } from "@/blocks/copilot/copilot.block";
 import { FlowBlock } from "@/blocks/flow/flow.block";
-import { useCopilotState } from "@/contexts/copilot/copilot.context";
+import { useCopilotState } from "@/contexts/actor/spawns/copilot/copilot.context";
 
 export default function ProjectPage() {
 	const { opened } = useCopilotState();

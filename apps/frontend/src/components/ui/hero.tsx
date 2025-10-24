@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@sealos-brain/shared/misc/utils";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface TextRevealProps {
 	text: string;

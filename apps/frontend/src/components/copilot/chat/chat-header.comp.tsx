@@ -1,6 +1,8 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@sealos-brain/shared/misc/utils";
+import { getResourceIcon } from "@sealos-brain/shared/resource/utils";
 import {
 	ChevronRight,
 	History as HistoryIcon,
@@ -16,14 +18,12 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCopilotAdapterContext } from "@/contexts/copilot/copilot.adapter";
+import { useCopilotAdapterContext } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 import {
 	useCopilotEvents,
 	useCopilotState,
-} from "@/contexts/copilot/copilot.context";
-import { useProjectState } from "@/contexts/project/project.context";
-import { getResourceIcon } from "@/lib/resource/resource.utils";
-import { cn } from "@/lib/utils";
+} from "@/contexts/actor/spawns/copilot/copilot.context";
+import { useProjectState } from "@/contexts/actor/spawns/project/project.context";
 
 // Header section
 export const Header = ({
@@ -35,10 +35,7 @@ export const Header = ({
 	return (
 		<Comp
 			data-slot="chat-header"
-			className={cn(
-				"flex items-center justify-between p-2",
-				className,
-			)}
+			className={cn("flex items-center justify-between p-2", className)}
 			{...props}
 		/>
 	);
@@ -219,7 +216,8 @@ export const History = ({
 									<div className="flex items-center justify-between w-full gap-2">
 										<div className="flex-1 min-w-0">
 											<div className="text-sm font-medium truncate">
-												{(thread.metadata as Record<string, unknown>)?.title as string ||
+												{((thread.metadata as Record<string, unknown>)
+													?.title as string) ||
 													`Thread ${thread.thread_id.slice(0, 8)}`}
 											</div>
 											{thread.updated_at && (

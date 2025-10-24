@@ -1,5 +1,7 @@
 "use client";
 
+import type { ResourceTarget } from "@sealos-brain/k8s/shared/models";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import { Globe, HelpCircle } from "lucide-react";
 import { BaseNode } from "@/components/flow/nodes/base-node";
 import {
@@ -8,8 +10,6 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import type { ResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s.model";
 
 interface NetworkPortData {
 	port: {
@@ -42,7 +42,10 @@ export function NetworkNodeView({
 	if (!firstPort) {
 		return (
 			<BaseNode height={14}>
-				<div className="flex items-center justify-center h-full" onClick={onClick}>
+				<div
+					className="flex items-center justify-center h-full"
+					onClick={onClick}
+				>
 					<div className="flex items-center justify-center gap-2 text-sm w-full">
 						<Globe className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
 						<span className="text-muted-foreground">No ports available</span>
@@ -71,7 +74,10 @@ export function NetworkNodeView({
 
 	return (
 		<BaseNode height={14}>
-			<div className="flex items-center justify-center h-full" onClick={onClick}>
+			<div
+				className="flex items-center justify-center h-full"
+				onClick={onClick}
+			>
 				<div className="flex items-center justify-center gap-2 text-sm w-full">
 					{!isReachable ? (
 						<TooltipProvider>

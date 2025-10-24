@@ -1,7 +1,7 @@
 "use client";
 
 import type { Edge, Node } from "@xyflow/react";
-import { useCopilotState } from "@/contexts/copilot/copilot.context";
+import { useCopilotState } from "@/contexts/actor/spawns/copilot/copilot.context";
 import { OverlayControl } from "../vms/overlay-control.vm";
 import { ProjectCopilot } from "../vms/project-copilot.vm";
 import { ProjectFlow } from "../vms/project-flow.vm";

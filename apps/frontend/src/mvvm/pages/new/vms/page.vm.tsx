@@ -1,6 +1,6 @@
 "use client";
 
-import { useCopilotAdapterContext } from "@/contexts/copilot/copilot.adapter";
+import { useCopilotAdapterContext } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 import { useTemplateModal } from "@/hooks/sealos/template/use-template-modal";
 import { PageView } from "../views/page.view";
 

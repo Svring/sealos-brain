@@ -1,9 +1,11 @@
 "use client";
 
+import { composeMetadata } from "@sealos-brain/langgraph/utils";
 import type React from "react";
+import { CopilotAdapter } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 import { useAuthState } from "@/contexts/auth/auth.context";
-import { CopilotAdapter } from "@/contexts/copilot/copilot.adapter";
-import { composeMetadata } from "@/lib/langgraph/langgraph.utils";
+
+// import { composeMetada
 
 interface LayoutProps {
 	children: React.ReactNode;

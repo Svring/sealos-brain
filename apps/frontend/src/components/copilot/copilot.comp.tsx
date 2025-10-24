@@ -1,9 +1,9 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import type { ComponentProps } from "react";
-import { copilotMachineContext } from "@/contexts/copilot/copilot.context";
-import { cn } from "@/lib/utils";
+import { copilotMachineContext } from "@/contexts/actor/spawns/copilot/copilot.context";
 
 // Root - provides copilot context
 export const Root = ({
@@ -42,4 +42,3 @@ export const Content = ({
 		/>
 	);
 };
-

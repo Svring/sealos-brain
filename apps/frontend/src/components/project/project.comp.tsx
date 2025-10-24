@@ -1,6 +1,7 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 import type { ComponentProps } from "react";
@@ -13,8 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { projectMachineContext } from "@/contexts/project/project.context";
-import { cn } from "@/lib/utils";
+import { projectMachineContext } from "@/contexts/actor/spawns/project/project.context";
 
 const cardVariants = cva(
 	"relative flex w-full cursor-pointer rounded-lg border bg-background-tertiary text-left shadow-sm flex-col p-4 py-3 transition-all duration-200 hover:brightness-120 ease-out",
@@ -402,10 +402,7 @@ export const Loading = ({
 	return (
 		<Comp
 			data-slot="project-loading"
-			className={cn(
-				"flex flex-col items-center py-12 text-center",
-				className,
-			)}
+			className={cn("flex flex-col items-center py-12 text-center", className)}
 			{...props}
 		>
 			<Spinner className="h-8 w-8" />

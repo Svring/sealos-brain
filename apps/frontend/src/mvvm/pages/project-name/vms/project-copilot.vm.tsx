@@ -1,6 +1,6 @@
 "use client";
 
-import { useCopilotState } from "@/contexts/copilot/copilot.context";
+import { useCopilotState } from "@/contexts/actor/spawns/copilot/copilot.context";
 import { ProjectCopilotView } from "../views/project-copilot.view";
 
 export function ProjectCopilot() {

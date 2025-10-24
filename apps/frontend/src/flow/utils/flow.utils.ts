@@ -11,7 +11,7 @@ import {
 	SPLIT_OPTIONS,
 } from "@/flow/constants/flow-layout.constant";
 import type { LayoutOptions } from "@/flow/models/layout-options.model";
-import { resourceParser } from "@/lib/resource/resource.parser";
+import { resourceParser } from "@sealos-brain/shared/resource/utils";
 import { applyNormalLayout } from "./layout/layout-normal.utils";
 import { applySplitLayout } from "./layout/layout-split.utils";
 

@@ -1,10 +1,10 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import { cva } from "class-variance-authority";
 import type { ComponentProps } from "react";
-import { CopilotAdapter } from "@/contexts/copilot/copilot.adapter";
-import { cn } from "@/lib/utils";
+import { CopilotAdapter } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 
 export * from "./chat/chat-content.comp";
 export * from "./chat/chat-footer.comp";

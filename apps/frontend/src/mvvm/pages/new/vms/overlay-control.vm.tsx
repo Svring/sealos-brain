@@ -4,7 +4,7 @@ import { SquarePen } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useCopilotAdapterContext } from "@/contexts/copilot/copilot.adapter";
+import { useCopilotAdapterContext } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 
 interface OverlayControlProps {
 	children: ReactNode;

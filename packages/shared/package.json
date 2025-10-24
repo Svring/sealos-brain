@@ -17,6 +17,8 @@
   "dependencies": {
     "date-fns": "^4.1.0",
     "is-port-reachable": "^4.0.0",
-    "zod": "^4.1.12"
+    "zod": "^4.1.12",
+    "@sealos-brain/k8s": "workspace:*",
+    "@sealos-brain/sealos": "workspace:*"
   }
 }

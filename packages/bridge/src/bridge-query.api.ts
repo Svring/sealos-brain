@@ -1,13 +1,13 @@
 "use server";
 
-import { k8sParser } from "@sealos-brain/lib/k8s-parser";
-import { getResource, listResources } from "@sealos-brain/lib/k8s-service";
-import type { BridgeQueryItem } from "@sealos-brain/models/bridge";
 import type {
 	K8sContext,
 	K8sResource,
 	ResourceTarget,
-} from "@sealos-brain/models/k8s";
+} from "@sealos-brain/k8s/shared/models";
+import { k8sParser } from "@sealos-brain/lib/k8s-parser";
+import { getResource, listResources } from "@sealos-brain/lib/k8s-service";
+import type { BridgeQueryItem } from "@sealos-brain/models/bridge";
 import type { z } from "zod";
 import {
 	createResourceLocatorKey,

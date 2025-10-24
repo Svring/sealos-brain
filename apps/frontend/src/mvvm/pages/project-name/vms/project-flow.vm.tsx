@@ -1,7 +1,7 @@
 "use client";
 
 import type { Edge, Node } from "@xyflow/react";
-import { useProjectState } from "@/contexts/project/project.context";
+import { useProjectState } from "@/contexts/actor/spawns/project/project.context";
 import { useAddChat } from "@/hooks/copilot/use-add-chat";
 import { ProjectFlowView } from "../views/project-flow.view";
 

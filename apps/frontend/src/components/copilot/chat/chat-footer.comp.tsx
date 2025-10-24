@@ -1,9 +1,9 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import { SendHorizonal } from "lucide-react";
 import type { ComponentProps } from "react";
-import { cn } from "@/lib/utils";
 
 // Footer section
 export const Footer = ({
@@ -15,10 +15,7 @@ export const Footer = ({
 	return (
 		<Comp
 			data-slot="chat-footer"
-			className={cn(
-				"flex items-center justify-between p-2",
-				className,
-			)}
+			className={cn("flex items-center justify-between p-2", className)}
 			{...props}
 		/>
 	);

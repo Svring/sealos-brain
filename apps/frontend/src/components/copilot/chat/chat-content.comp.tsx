@@ -1,8 +1,8 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import type { ComponentProps } from "react";
-import { cn } from "@/lib/utils";
 
 // Content section
 export const Content = ({
@@ -19,5 +19,3 @@ export const Content = ({
 		/>
 	);
 };
-
-

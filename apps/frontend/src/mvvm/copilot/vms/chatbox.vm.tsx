@@ -1,6 +1,6 @@
 "use client";
 
-import { useCopilotAdapterContext } from "@/contexts/copilot/copilot.adapter";
+import { useCopilotAdapterContext } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 import { ChatboxView } from "../views/chatbox.view";
 
 export const Chatbox = () => {

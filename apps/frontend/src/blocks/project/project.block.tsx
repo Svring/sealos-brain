@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import * as Project from "@/components/project/project.comp";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { useProjectContext } from "@/contexts/project/project.context";
+import { useProjectContext } from "@/contexts/actor/spawns/project/project.context";
 import { useInstances } from "@/hooks/sealos/instance/use-instances";
 
 export function ProjectBlock() {

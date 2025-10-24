@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@sealos-brain/shared/misc/utils";
 import {
 	ChevronRight,
 	Focus,
@@ -16,7 +17,6 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Toggle } from "@/components/ui/toggle";
-import { cn } from "@/lib/utils";
 
 interface HeaderViewProps {
 	title?: string;

@@ -1,8 +1,7 @@
 "use client";
 
+import { cn } from "@sealos-brain/shared/misc/utils";
 import React from "react";
-
-import { cn } from "@/lib/utils";
 
 interface AvatarCirclesProps {
 	className?: string;

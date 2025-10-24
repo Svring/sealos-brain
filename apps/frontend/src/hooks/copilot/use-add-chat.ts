@@ -1,10 +1,10 @@
 "use client";
 
-import { useAuthState } from "@/contexts/auth/auth.context";
 import {
 	useCopilotEvents,
 	useCopilotState,
-} from "@/contexts/copilot/copilot.context";
+} from "@/contexts/actor/spawns/copilot/copilot.context";
+import { useAuthState } from "@/contexts/auth/auth.context";
 import { composeMetadata } from "@/lib/langgraph/langgraph.utils";
 
 /**

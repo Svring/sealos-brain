@@ -1,9 +1,9 @@
 "use client";
 
 import { createMachine } from "xstate";
-import { copilotMachine } from "../copilot/copilot.state";
-import { flowMachine } from "../flow/flow.state";
-import { projectMachine } from "../project/project.state";
+import { copilotMachine } from "./spawns/copilot/copilot.state";
+import { flowMachine } from "./spawns/flow/flow.state";
+import { projectMachine } from "./spawns/project/project.state";
 
 export type AppEvent = { type: "READY" };
 

@@ -1,9 +1,9 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
-import { cn } from "@/lib/utils";
 
 const infoVariants = cva(
 	"flex flex-col rounded-lg border bg-background-tertiary text-card-foreground shadow-sm",
@@ -91,7 +91,10 @@ export const Footer = ({
 	return (
 		<Comp
 			data-slot="info-footer"
-			className={cn("mt-auto flex items-center justify-between pt-2", className)}
+			className={cn(
+				"mt-auto flex items-center justify-between pt-2",
+				className,
+			)}
 			{...props}
 		/>
 	);

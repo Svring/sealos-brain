@@ -1,6 +1,7 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@sealos-brain/shared/misc/utils";
 import { ChevronDownIcon, Scan } from "lucide-react";
 import type { ComponentProps } from "react";
 import {
@@ -25,7 +26,6 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
 
 // Root container
 export const Root = ({

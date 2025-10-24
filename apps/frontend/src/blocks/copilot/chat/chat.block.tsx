@@ -3,7 +3,7 @@
 import { useMount } from "@reactuses/core";
 import { useState } from "react";
 import * as Chat from "@/components/copilot/chat.comp";
-import { useCopilotAdapterContext } from "@/contexts/copilot/copilot.adapter";
+import { useCopilotAdapterContext } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 
 interface ChatBlockProps {
 	metadata?: Record<string, string>;

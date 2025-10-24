@@ -5,14 +5,14 @@ import { ReactFlow } from "@xyflow/react";
 import * as Control from "@/components/control/control.comp";
 import FloatingConnectionLine from "@/components/flow/edges/floating-connection-line";
 import * as Flow from "@/components/flow/flow.comp";
+import { useCopilotEvents } from "@/contexts/actor/spawns/copilot/copilot.context";
+import { useFlowContext } from "@/contexts/actor/spawns/flow/flow.context";
+import { useProjectState } from "@/contexts/actor/spawns/project/project.context";
 import { useAuthState } from "@/contexts/auth/auth.context";
-import { useCopilotEvents } from "@/contexts/copilot/copilot.context";
-import { useFlowContext } from "@/contexts/flow/flow.context";
-import { useProjectState } from "@/contexts/project/project.context";
+import edgeTypes from "@/flow/constants/edge-types.constant";
 import { FLOW_CONFIG } from "@/flow/constants/flow-config.constant";
-import edgeTypes from "@/flow/models/edge.types";
+import nodeTypes from "@/flow/constants/node-types.constant";
 import { useFlow } from "@/hooks/flow/use-flow";
-import nodeTypes from "@/models/flow/nodes/node.types";
 
 import "@xyflow/react/dist/style.css";
 

@@ -1,9 +1,9 @@
 "use client";
 
+import type { ResourceTarget } from "@sealos-brain/k8s/shared/models";
+import { useFlowEvents } from "@/contexts/actor/spawns/flow/flow.context";
+import { useProjectState } from "@/contexts/actor/spawns/project/project.context";
 import { useAuthState } from "@/contexts/auth/auth.context";
-import { useFlowEvents } from "@/contexts/flow/flow.context";
-import { useProjectState } from "@/contexts/project/project.context";
-import type { ResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s.model";
 
 interface UseNodeClickProps {
 	id: string;
