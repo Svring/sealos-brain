@@ -2,7 +2,7 @@ import type {
 	Edge,
 	Node,
 	SplitLayoutOptions,
-} from "@/mvvm/flow/layout/models/layout-options.model";
+} from "@/flow/models/layout-options.model";
 import { alignNetworkNodesWithParents } from "./layout.utils";
 import { applyNormalLayout } from "./layout-normal.utils";
 

@@ -8,8 +8,8 @@ import { CLUSTER_ICON_BASE_URL } from "@/constants/cluster/cluster-icons.constan
 import { DEVBOX_ICON_BASE_URL } from "@/constants/devbox/devbox-icons.constant";
 import { LAUNCHPAD_DEFAULT_ICON } from "@/constants/launchpad/launchpad-icons.constant";
 import { OBJECTSTORAGE_DEFAULT_ICON } from "@/constants/osb/osb-icons.constant";
-import type { K8sItem } from "@/mvvm/k8s/models/k8s-resource.model";
-import type { InstanceObject } from "@/mvvm/sealos/instance/models/instance-object.model";
+import type { K8sItem } from "@sealos-brain/k8s/shared/models/models/k8s-resource.model";
+import type { InstanceObject } from "@sealos-brain/k8s/resources/instance/models";
 
 interface ProjectCardViewProps {
 	project: InstanceObject;

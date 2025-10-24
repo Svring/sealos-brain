@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { ResourceTypeTarget } from "@/mvvm/k8s/models/k8s.model";
+import type { ResourceTypeTarget } from "@sealos-brain/k8s/shared/models/models/k8s.model";
 import { useTRPCClients } from "../../trpc/use-trpc-clients";
 
 export const useSelectResources = (targets: ResourceTypeTarget[]) => {

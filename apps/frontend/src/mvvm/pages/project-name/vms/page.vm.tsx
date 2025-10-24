@@ -1,8 +1,8 @@
 "use client";
 
+import { instanceParser } from "@sealos-brain/k8s/resources/instance/utils";
 import { useParams } from "next/navigation";
 import { useFlow } from "@/hooks/flow/use-flow";
-import { instanceParser } from "@/lib/sealos/instance/instance.parser";
 import { PageView } from "../views/page.view";
 
 export const Page = () => {

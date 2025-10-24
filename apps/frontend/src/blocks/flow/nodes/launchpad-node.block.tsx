@@ -1,6 +1,7 @@
 "use client";
 
 import type { BuiltinResourceTarget } from "@sealos-brain/models/k8s";
+import { LaunchpadObjectSchema } from "@sealos-brain/sealos/launchpad/models";
 import { Position } from "@xyflow/react";
 import {
 	Activity,
@@ -17,7 +18,6 @@ import { useNodeClick } from "@/hooks/flow/use-node-click";
 import { useLaunchpadDelete } from "@/hooks/sealos/launchpad/use-launchpad-delete";
 import { useLaunchpadLifecycle } from "@/hooks/sealos/launchpad/use-launchpad-lifecycle";
 import { useResourceObject } from "@/hooks/shared/resource/use-resource-object";
-import { LaunchpadObjectSchema } from "@/models/sealos/launchpad/launchpad-object.model";
 
 interface LaunchpadNodeBlockProps {
 	data: {

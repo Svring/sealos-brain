@@ -1,6 +1,8 @@
 import { getResourceEvents } from "@sealos-brain/k8s/resources/event/api";
 import { getResourceLogs } from "@sealos-brain/k8s/resources/log/api";
 import { getResourcePods } from "@sealos-brain/k8s/resources/pod/api";
+import { QuotaResourceSchema } from "@sealos-brain/k8s/resources/quota/models";
+import { quotaParser } from "@sealos-brain/k8s/resources/quota/utils";
 import {
 	deleteResource,
 	getResource,
@@ -21,9 +23,7 @@ import { k8sParser } from "@sealos-brain/k8s/shared/utils";
 import { initTRPC } from "@trpc/server";
 import type { Operation } from "fast-json-patch";
 import { z } from "zod";
-import { quotaParser } from "@/lib/sealos/quota/quota.parser";
-import { createErrorFormatter } from "@/lib/trpc/trpc.utils";
-import { QuotaResourceSchema } from "@/mvvm/sealos/quota/models/quota-resource.model";
+import { createErrorFormatter } from "@/trpc/utils/trpc.utils";
 
 // Context creation function
 export async function createK8sContext(opts: {

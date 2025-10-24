@@ -1,6 +1,8 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
+import type { ResourceTarget } from "@sealos-brain/k8s/shared/models";
+import type { ResourceObject } from "@sealos-brain/shared/resource/models";
 import { Position, Handle as ReactFlowHandle } from "@xyflow/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { MoreHorizontal, Square } from "lucide-react";
@@ -30,8 +32,6 @@ import { LAUNCHPAD_DEFAULT_ICON } from "@/constants/launchpad/launchpad-icons.co
 import { OBJECTSTORAGE_DEFAULT_ICON } from "@/constants/osb/osb-icons.constant";
 import { useResourceObject } from "@/hooks/shared/resource/use-resource-object";
 import { cn } from "@/lib/utils";
-import type { ResourceTarget } from "@/mvvm/k8s/models/k8s.model";
-import type { ResourceObject } from "@/mvvm/resource/models/resource-object.model";
 
 const baseNodeVariants = cva(
 	"relative cursor-pointer rounded-xl border bg-background-tertiary p-5 text-card-foreground hover:brightness-120 flex flex-col",

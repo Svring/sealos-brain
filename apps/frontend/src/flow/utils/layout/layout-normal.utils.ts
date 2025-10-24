@@ -1,5 +1,5 @@
 import type { Edge, Node } from "@xyflow/react";
-import type { LayoutOptions } from "@/mvvm/flow/layout/models/layout-options.model";
+import type { LayoutOptions } from "@/flow/models/layout-options.model";
 import {
 	alignNetworkNodesWithParents,
 	averageIndex,

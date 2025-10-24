@@ -1,11 +1,3 @@
-import type { K8sContext } from "@sealos-brain/k8s/shared/models";
-import {
-	CustomResourceTargetSchema,
-	K8sItemSchema,
-	resourceTargetSchema,
-} from "@sealos-brain/k8s/shared/models";
-import { initTRPC } from "@trpc/server";
-import { z } from "zod";
 import {
 	addResourcesToInstance,
 	createInstance,
@@ -15,11 +7,21 @@ import {
 	listInstances,
 	removeResourcesFromInstance,
 	updateInstanceName,
-} from "@/lib/sealos/instance/instance.api";
-import { createErrorFormatter } from "@/lib/trpc/trpc.utils";
-import { instanceCreateSchema } from "@/mvvm/sealos/instance/models/instance-create.model";
-import { InstanceObjectSchema } from "@/mvvm/sealos/instance/models/instance-object.model";
-import { instanceUpdateSchema } from "@/mvvm/sealos/instance/models/instance-update.model";
+} from "@sealos-brain/k8s/resources/instance/api";
+import {
+	InstanceCreateSchema,
+	InstanceObjectSchema,
+	InstanceUpdateSchema,
+} from "@sealos-brain/k8s/resources/instance/models";
+import type { K8sContext } from "@sealos-brain/k8s/shared/models";
+import {
+	CustomResourceTargetSchema,
+	K8sItemSchema,
+	ResourceTargetSchema,
+} from "@sealos-brain/k8s/shared/models";
+import { initTRPC } from "@trpc/server";
+import { z } from "zod";
+import { createErrorFormatter } from "@/trpc/utils/trpc.utils";
 
 // Context creation function
 export async function createInstanceContext(opts: {
@@ -68,7 +70,7 @@ export const instanceRouter = t.router({
 
 	// Instance Lifecycle Management
 	create: t.procedure
-		.input(instanceCreateSchema)
+		.input(InstanceCreateSchema)
 		.output(InstanceObjectSchema)
 		.mutation(async ({ ctx, input }) => {
 			return await createInstance(ctx, input);
@@ -82,15 +84,14 @@ export const instanceRouter = t.router({
 
 	// Instance Configuration
 	update: t.procedure
-		.input(instanceUpdateSchema)
-		.output(
-			z.object({
-				name: z.string(),
-				newDisplayName: z.string(),
-			}),
-		)
+		.input(InstanceUpdateSchema)
+		.output(InstanceUpdateSchema)
 		.mutation(async ({ ctx, input }) => {
-			return await updateInstanceName(ctx, input);
+			const result = await updateInstanceName(ctx, {
+				name: input.name,
+				displayName: input.displayName,
+			});
+			return { name: result.name, displayName: result.newDisplayName };
 		}),
 
 	// Resource Management
@@ -98,7 +99,7 @@ export const instanceRouter = t.router({
 		.input(
 			z.object({
 				target: CustomResourceTargetSchema,
-				resources: z.array(resourceTargetSchema),
+				resources: z.array(ResourceTargetSchema),
 			}),
 		)
 		.output(z.object({ success: z.boolean() }))
@@ -109,7 +110,7 @@ export const instanceRouter = t.router({
 	removeResources: t.procedure
 		.input(
 			z.object({
-				resources: z.array(resourceTargetSchema),
+				resources: z.array(ResourceTargetSchema),
 			}),
 		)
 		.output(z.object({ success: z.boolean() }))

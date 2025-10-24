@@ -1,6 +1,7 @@
 "use client";
 
 import type { CustomResourceTarget } from "@sealos-brain/models/k8s";
+import { DevboxObjectSchema } from "@sealos-brain/sealos/devbox/models";
 import { Position } from "@xyflow/react";
 import {
 	Activity,
@@ -16,7 +17,6 @@ import { useNodeClick } from "@/hooks/flow/use-node-click";
 import { useDevboxDelete } from "@/hooks/sealos/devbox/use-devbox-delete";
 import { useDevboxLifecycle } from "@/hooks/sealos/devbox/use-devbox-lifecycle";
 import { useResourceObject } from "@/hooks/shared/resource/use-resource-object";
-import { DevboxObjectSchema } from "@/models/sealos/devbox/devbox-object.model";
 
 interface DevboxNodeBlockProps {
 	data: {

@@ -1,15 +1,17 @@
+import type { ResourceReliances } from "@sealos-brain/shared/reliance/models";
+import {
+	inferRelianceFromEnv,
+	inferRelianceFromImage,
+} from "@sealos-brain/shared/reliance/utils";
+import type { ResourceObject } from "@sealos-brain/shared/resource/models";
 import { type Edge, MarkerType, type Node } from "@xyflow/react";
 import _ from "lodash";
 import {
 	LAYOUT_OPTIONS,
 	SPLIT_OPTIONS,
-} from "@/constants/flow/flow-layout.constant";
-import type { LayoutOptions } from "@/mvvm/flow/layout/models/layout-options.model";
-import type { ResourceObject } from "@/mvvm/resource/models/resource-object.model";
-import type { ResourceReliances } from "@/mvvm/resource/models/resource-reliance.model";
-import { inferRelianceFromEnv } from "../resource/reliance/reliance-env.utils";
-import { inferRelianceFromImage } from "../resource/reliance/reliance-image.utils";
-import { resourceParser } from "../resource/resource.parser";
+} from "@/flow/constants/flow-layout.constant";
+import type { LayoutOptions } from "@/flow/models/layout-options.model";
+import { resourceParser } from "@/lib/resource/resource.parser";
 import { applyNormalLayout } from "./layout/layout-normal.utils";
 import { applySplitLayout } from "./layout/layout-split.utils";
 

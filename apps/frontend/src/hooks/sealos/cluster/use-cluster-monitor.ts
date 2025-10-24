@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
-import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s.model";
+import { useTRPCClients } from "@/trpc/hooks/use-trpc-clients";
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s.model";
 
 interface ClusterMonitorParams extends CustomResourceTarget {
 	dbType: string;

@@ -4,7 +4,7 @@ import { Plus, Search } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { InstanceObject } from "@/mvvm/sealos/instance/models/instance-object.model";
+import type { InstanceObject } from "@sealos-brain/k8s/resources/instance/models";
 
 interface ProjectDashboardProps {
 	projects: InstanceObject[];

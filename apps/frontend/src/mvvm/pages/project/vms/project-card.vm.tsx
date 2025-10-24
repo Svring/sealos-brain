@@ -2,8 +2,8 @@
 
 import { k8sParser } from "@sealos-brain/lib/k8s-parser";
 import { useInstanceResources } from "@/hooks/sealos/instance/use-instance-resources";
-import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s-custom.model";
-import type { InstanceObject } from "@/mvvm/sealos/instance/models/instance-object.model";
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s-custom.model";
+import type { InstanceObject } from "@sealos-brain/k8s/resources/instance/models";
 import { ProjectCardView } from "../views/project-card.view";
 
 export const ProjectCard = ({ project }: { project: InstanceObject }) => {

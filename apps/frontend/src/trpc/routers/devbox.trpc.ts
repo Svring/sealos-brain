@@ -27,7 +27,7 @@ import {
 } from "@sealos-brain/sealos/devbox/models";
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
-import { createErrorFormatter } from "@/lib/trpc/trpc.utils";
+import { createErrorFormatter } from "@/trpc/utils/trpc.utils";
 
 // Context creation function
 export async function createDevboxContext(opts: {

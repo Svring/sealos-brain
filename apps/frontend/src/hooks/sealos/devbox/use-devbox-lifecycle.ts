@@ -2,7 +2,7 @@
 
 import { devboxParser } from "@sealos-brain/sealos/devbox/utils";
 import { useMutation } from "@tanstack/react-query";
-import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
+import { useTRPCClients } from "@/trpc/hooks/use-trpc-clients";
 
 export const useDevboxLifecycle = () => {
 	const { devbox } = useTRPCClients();

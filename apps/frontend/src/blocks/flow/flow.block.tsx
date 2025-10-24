@@ -1,18 +1,18 @@
 "use client";
 
+import { instanceParser } from "@sealos-brain/k8s/resources/instance/utils";
 import { ReactFlow } from "@xyflow/react";
 import * as Control from "@/components/control/control.comp";
 import FloatingConnectionLine from "@/components/flow/edges/floating-connection-line";
 import * as Flow from "@/components/flow/flow.comp";
-import { FLOW_CONFIG } from "@/constants/flow/flow-config.constant";
 import { useAuthState } from "@/contexts/auth/auth.context";
 import { useCopilotEvents } from "@/contexts/copilot/copilot.context";
 import { useFlowContext } from "@/contexts/flow/flow.context";
 import { useProjectState } from "@/contexts/project/project.context";
+import { FLOW_CONFIG } from "@/flow/constants/flow-config.constant";
+import edgeTypes from "@/flow/models/edge.types";
 import { useFlow } from "@/hooks/flow/use-flow";
-import { instanceParser } from "@/lib/sealos/instance/instance.parser"; // TODO: move to instance package
 import nodeTypes from "@/models/flow/nodes/node.types";
-import edgeTypes from "@/mvvm/flow/edges/models/edge.types";
 
 import "@xyflow/react/dist/style.css";
 

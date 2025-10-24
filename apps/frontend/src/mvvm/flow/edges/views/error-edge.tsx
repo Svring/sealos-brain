@@ -4,7 +4,7 @@ import {
 	getBezierPath,
 	useInternalNode,
 } from "@xyflow/react";
-import { getEdgeParams } from "@/lib/flow/edge/edge.utils";
+import { getEdgeParams } from "@/flow/utils/edge/edge.utils";
 
 function FloatingErrorEdge(props: EdgeProps) {
 	const { id, source, target, markerEnd } = props;

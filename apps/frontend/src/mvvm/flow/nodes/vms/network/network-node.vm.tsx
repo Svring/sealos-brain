@@ -5,7 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useNodeClick } from "@/hooks/flow/use-node-click";
 import { useNetworkStatus } from "@/hooks/shared/network/use-network-status";
 import { NetworkNodeView } from "@/mvvm/flow/nodes/views/network/network-node.view";
-import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s-custom.model";
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s-custom.model";
 
 interface NetworkNodeProps {
 	data: {

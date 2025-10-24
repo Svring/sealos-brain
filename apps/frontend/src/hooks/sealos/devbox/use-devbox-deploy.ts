@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
+import { useTRPCClients } from "@/trpc/hooks/use-trpc-clients";
 
 export const useDevboxDeployments = (devboxName: string) => {
 	const { devbox } = useTRPCClients();

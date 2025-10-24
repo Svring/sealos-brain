@@ -9,7 +9,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { ResourceTarget } from "@/mvvm/k8s/models/k8s.model";
+import type { ResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s.model";
 
 interface NetworkPortData {
 	port: {

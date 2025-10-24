@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
+import { useTRPCClients } from "@/trpc/hooks/use-trpc-clients";
 
 export const useInvalidateQueries = () => {
 	const queryClient = useQueryClient();

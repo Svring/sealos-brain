@@ -2,7 +2,7 @@ import type { K8sContext } from "@sealos-brain/k8s/shared/models";
 import { CustomResourceTargetSchema } from "@sealos-brain/k8s/shared/models";
 import { getOsbBucket } from "@sealos-brain/sealos/osb/api";
 import { initTRPC } from "@trpc/server";
-import { createErrorFormatter } from "@/lib/trpc/trpc.utils";
+import { createErrorFormatter } from "@/trpc/utils/trpc.utils";
 
 // Context creation function
 export async function createOsbContext(opts: {

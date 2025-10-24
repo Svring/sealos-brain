@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
-import type { BuiltinResourceTarget } from "@/mvvm/k8s/models/k8s.model";
+import { useTRPCClients } from "@/trpc/hooks/use-trpc-clients";
+import type { BuiltinResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s.model";
 
 export const useLaunchpadObject = (target: BuiltinResourceTarget) => {
 	const { launchpad } = useTRPCClients();

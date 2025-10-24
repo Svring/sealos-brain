@@ -102,7 +102,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.6",
     "xstate": "^5.21.0",
-    "zod": "^3.24.1",
+    "zod": "^4.1.12",
     "@sealos-brain/bridge": "workspace:*",
     "@sealos-brain/k8s": "workspace:*",
     "@sealos-brain/sealos": "workspace:*",

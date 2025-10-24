@@ -1,7 +1,7 @@
 import { getBezierPath, type InternalNode, type Position } from "@xyflow/react";
 import React from "react";
 
-import { getEdgeParams } from "@/lib/flow/edge/edge.utils";
+import { getEdgeParams } from "@/flow/utils/edge/edge.utils";
 
 function FloatingConnectionLine({
 	toX,

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import type { InstanceObject } from "@/mvvm/sealos/instance/models/instance-object.model";
+import type { InstanceObject } from "@sealos-brain/k8s/resources/instance/models";
 import { OverlayControl } from "./overlay-control.view";
 import { ProjectDashboardView } from "./project-dashboard.view";
 

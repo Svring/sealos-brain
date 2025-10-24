@@ -1,6 +1,7 @@
 "use client";
 
 import type { CustomResourceTarget } from "@sealos-brain/models/k8s";
+import { ClusterObjectSchema } from "@sealos-brain/sealos/cluster/models";
 import { Position } from "@xyflow/react";
 import {
 	Activity,
@@ -18,7 +19,6 @@ import { useNodeClick } from "@/hooks/flow/use-node-click";
 import { useClusterDelete } from "@/hooks/sealos/cluster/use-cluster-delete";
 import { useClusterLifecycle } from "@/hooks/sealos/cluster/use-cluster-lifecycle";
 import { useResourceObject } from "@/hooks/shared/resource/use-resource-object";
-import { ClusterObjectSchema } from "@/models/sealos/cluster/cluster-object.model";
 
 interface ClusterNodeBlockProps {
 	data: {

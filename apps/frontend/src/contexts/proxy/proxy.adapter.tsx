@@ -1,10 +1,10 @@
 "use client";
 
+import { composeAiProxyChatUrl } from "@sealos-brain/sealos/ai-proxy/utils";
 import { useMachine } from "@xstate/react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { useProxyCreate } from "@/hooks/sealos/ai-proxy/use-proxy-create";
 import { useProxyToken } from "@/hooks/sealos/ai-proxy/use-proxy-token";
-import { composeAiProxyChatUrl } from "@/lib/sealos/ai-proxy/ai-proxy-utils";
 import { useAuthState } from "../auth/auth.context";
 import { proxyMachineContext } from "./proxy.context";
 import { proxyMachine } from "./proxy.state";

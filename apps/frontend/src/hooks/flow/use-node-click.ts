@@ -3,7 +3,7 @@
 import { useAuthState } from "@/contexts/auth/auth.context";
 import { useFlowEvents } from "@/contexts/flow/flow.context";
 import { useProjectState } from "@/contexts/project/project.context";
-import type { ResourceTarget } from "@/mvvm/k8s/models/k8s.model";
+import type { ResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s.model";
 
 interface UseNodeClickProps {
 	id: string;

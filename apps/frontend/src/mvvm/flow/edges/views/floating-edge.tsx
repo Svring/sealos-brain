@@ -7,7 +7,7 @@ import {
 } from "@xyflow/react";
 import { useState } from "react";
 
-import { getEdgeParams } from "@/lib/flow/edge/edge.utils";
+import { getEdgeParams } from "@/flow/utils/edge/edge.utils";
 
 function FloatingEdge(props: EdgeProps) {
 	const { id, source, target, markerEnd, style, data } = props;

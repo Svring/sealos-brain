@@ -1,12 +1,12 @@
 "use client";
 
 import { useQueries } from "@tanstack/react-query";
-import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
 import type {
 	BuiltinResourceTarget,
 	CustomResourceTarget,
 	ResourceTarget,
-} from "@/mvvm/k8s/models/k8s.model";
+} from "@sealos-brain/k8s/shared/models/models/k8s.model";
+import { useTRPCClients } from "@/trpc/hooks/use-trpc-clients";
 
 export const useNetworkStatus = (target: ResourceTarget) => {
 	const { launchpad, devbox } = useTRPCClients();
@@ -20,12 +20,16 @@ export const useNetworkStatus = (target: ResourceTarget) => {
 						return devbox.network.queryOptions(target as CustomResourceTarget);
 					case "deployment":
 					case "statefulset":
-						return launchpad.network.queryOptions(target as BuiltinResourceTarget);
+						return launchpad.network.queryOptions(
+							target as BuiltinResourceTarget,
+						);
 					default:
 						return {
 							queryKey: [],
 							queryFn: async () => {
-								throw new Error(`Unsupported resource type: ${target.resourceType}`);
+								throw new Error(
+									`Unsupported resource type: ${target.resourceType}`,
+								);
 							},
 							enabled: false,
 						};

@@ -8,8 +8,8 @@ import {
 	createDevGroup,
 	deriveNetworkNodesAndEdges,
 	inferObjectsReliances,
-} from "@/lib/flow/flow.utils";
-import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s-custom.model";
+} from "@/flow/utils/flow.utils";
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s-custom.model";
 import { useInstanceResources } from "../sealos/instance/use-instance-resources";
 import { useResourceObjects } from "../shared/resource/use-resource-objects";
 

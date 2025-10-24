@@ -2,7 +2,7 @@
 
 import { clusterParser } from "@sealos-brain/sealos/cluster/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
+import { useTRPCClients } from "@/trpc/hooks/use-trpc-clients";
 
 export const useClusterBackup = () => {
 	const { cluster } = useTRPCClients();
