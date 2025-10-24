@@ -5,5 +5,10 @@
   "exports": {
     ".": "./src/devbox.api.ts"
   },
-  "dependencies": {}
+  "dependencies": {
+    "node-ssh": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
 }

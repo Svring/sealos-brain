@@ -9,6 +9,10 @@ node_modules
 .github
 .vscode
 
+.claude
+bun.lock
+package.json
+
 # Local env files
 .env
 .env.local
