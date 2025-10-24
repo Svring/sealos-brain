@@ -1,14 +1,11 @@
-import {
-	BUILTIN_RESOURCES,
-	CUSTOM_RESOURCES,
-} from "@/shared/constants/k8s.constant";
+import { BUILTIN_RESOURCES, CUSTOM_RESOURCES } from "../constants/k8s.constant";
 import type {
 	BuiltinResourceTarget,
 	BuiltinResourceTypeTarget,
 	CustomResourceTarget,
 	CustomResourceTypeTarget,
 	K8sResource,
-} from "@/shared/models/k8s.model";
+} from "../models/k8s.model";
 
 /**
  * Convert a resource type string to a resource type target

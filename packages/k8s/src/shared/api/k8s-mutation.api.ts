@@ -3,20 +3,20 @@
 import type { Operation } from "fast-json-patch";
 import { load } from "js-yaml";
 import _ from "lodash";
-import { CUSTOM_RESOURCES } from "@/shared/constants/k8s.constant";
+import { CUSTOM_RESOURCES } from "../constants/k8s.constant";
 import type {
 	BuiltinResourceTarget,
 	CustomResourceTarget,
 	K8sContext,
 	ResourceTarget,
-} from "@/shared/models/k8s.model";
-import { escapeSlash } from "@/shared/utils/k8s-client.utils";
+} from "../models/k8s.model";
+import { escapeSlash } from "../utils/k8s-client.utils";
 import {
 	getApiClients,
 	getBuiltinApiClient,
 	getCurrentNamespace,
 	invokeApiMethod,
-} from "@/shared/utils/k8s-server.utils";
+} from "../utils/k8s-server.utils";
 
 /**
  * Delete a custom resource by name in Kubernetes.

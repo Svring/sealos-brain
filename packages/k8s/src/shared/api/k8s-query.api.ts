@@ -1,20 +1,20 @@
 "use server";
 
-import { CUSTOM_RESOURCES } from "@/shared/constants/k8s-custom.constant";
+import { CUSTOM_RESOURCES } from "../constants/k8s-custom.constant";
 import type {
 	BuiltinResourceTarget,
 	BuiltinResourceTypeTarget,
 	CustomResourceTarget,
 	CustomResourceTypeTarget,
 	K8sContext,
-} from "@/shared/models/k8s.model";
-import { addMissingFields } from "@/shared/utils/k8s-client.utils";
+} from "../models/k8s.model";
+import { addMissingFields } from "../utils/k8s-client.utils";
 import {
 	getApiClients,
 	getBuiltinApiClient,
 	getCurrentNamespace,
 	invokeApiMethod,
-} from "@/shared/utils/k8s-server.utils";
+} from "../utils/k8s-server.utils";
 
 // ============================================================================
 // Kubernetes API Query Functions

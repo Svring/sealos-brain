@@ -2,6 +2,17 @@
 
 import type { Operation } from "fast-json-patch";
 import _ from "lodash";
+import type {
+	BuiltinResourceTarget,
+	BuiltinResourceTypeTarget,
+	CustomResourceTarget,
+	CustomResourceTypeTarget,
+	K8sContext,
+	K8sResource,
+	ResourceTarget,
+	ResourceTypeTarget,
+} from "../models/k8s.model";
+import { K8sResourceListSchema } from "../models/k8s.model";
 import {
 	applyResource as applyResourceMutation,
 	deleteBuiltinResource,
@@ -16,24 +27,13 @@ import {
 	strategicMergePatchCustomResource,
 	upsertBuiltinResource,
 	upsertCustomResource,
-} from "@/shared/api/k8s-mutation.api";
+} from "./k8s-mutation.api";
 import {
 	getBuiltinResource,
 	getCustomResource,
 	listBuiltinResources,
 	listCustomResources,
-} from "@/shared/api/k8s-query.api";
-import type {
-	BuiltinResourceTarget,
-	BuiltinResourceTypeTarget,
-	CustomResourceTarget,
-	CustomResourceTypeTarget,
-	K8sContext,
-	K8sResource,
-	ResourceTarget,
-	ResourceTypeTarget,
-} from "@/shared/models/k8s.model";
-import { K8sResourceListSchema } from "@/shared/models/k8s.model";
+} from "./k8s-query.api";
 
 // ============================================================================
 // Resource Selection Functions

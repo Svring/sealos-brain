@@ -1,9 +1,9 @@
 import "@/app/global.css";
-import { cn } from "@sealos-brain/shared/misc/utils";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { RootProvider } from "fumadocs-ui/provider";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cn } from "@/lib/utils";
 
 const sans = Geist({
 	subsets: ["latin"],

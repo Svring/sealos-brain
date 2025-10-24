@@ -11,11 +11,8 @@ import {
 	RbacAuthorizationV1Api,
 } from "@kubernetes/client-node";
 import _ from "lodash";
-import { BUILTIN_RESOURCES } from "@/shared/constants/k8s.constant";
-import type {
-	BuiltinResourceConfig,
-	K8sApiClients,
-} from "@/shared/models/k8s.model";
+import { BUILTIN_RESOURCES } from "../constants";
+import type { BuiltinResourceConfig, K8sApiClients } from "../models/k8s.model";
 
 /**
  * Get the current namespace from a kubeconfig string.

@@ -15,8 +15,12 @@
     "./reliance/utils": "./src/reliance/utils/index.ts"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "is-port-reachable": "^4.0.0",
+    "nanoid": "^5.1.6",
+    "tailwind-merge": "^2.5.5",
     "zod": "^4.1.12",
     "@sealos-brain/k8s": "workspace:*"
   }

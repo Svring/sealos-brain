@@ -1,10 +1,10 @@
 "use server";
 
-import { POD_LABELS } from "@/resources/pod/constants/pod-label.constant";
-import { podParser } from "@/resources/pod/utils/pod.parser";
-import { listResources } from "@/shared/api/k8s-service.api";
-import type { K8sContext, ResourceTarget } from "@/shared/models/k8s.model";
-import { k8sParser } from "@/shared/utils/k8s.parser";
+import { listResources } from "../../../shared/api/index";
+import type { K8sContext, ResourceTarget } from "../../../shared/models/index";
+import { k8sParser } from "../../../shared/utils/index";
+import { POD_LABELS } from "../constants/pod-label.constant";
+import { podParser } from "../utils/pod.parser";
 
 /**
  * Get pods associated with a resource.

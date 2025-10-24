@@ -1,37 +1,29 @@
 import { DocsLayout } from "fumadocs-ui/layouts/notebook";
+import Image from "next/image";
 import { source } from "@/lib/source";
 
 export default function Layout({ children }: LayoutProps<"/">) {
-  return (
-    <DocsLayout
-      githubUrl="https://github.com/vercel/components.build"
-      links={[]}
-      nav={{
-        mode: "top",
-        title: (
-          <>
-            <svg
-              fill="none"
-              height={20}
-              viewBox="0 0 76 65"
-              width={24}
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>Vercel</title>
-              <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="currentColor" />
-            </svg>
-            <span className="font-normal text-muted-foreground/50">/</span>
-            <span className="font-medium">components.build</span>
-          </>
-        ),
-      }}
-      sidebar={{
-        collapsible: false,
-      }}
-      tabMode="navbar"
-      tree={source.pageTree}
-    >
-      {children}
-    </DocsLayout>
-  );
+	return (
+		<DocsLayout
+			githubUrl="https://github.com/svring/sealos-brain"
+			links={[]}
+			nav={{
+				mode: "top",
+				title: (
+					<>
+						<Image src="/icon.svg" alt="Sealos Brain" width={30} height={30} />
+						<span className="font-normal text-muted-foreground/50">/</span>
+						<span className="font-medium">Sealos Brain</span>
+					</>
+				),
+			}}
+			sidebar={{
+				collapsible: false,
+			}}
+			tabMode="navbar"
+			tree={source.pageTree}
+		>
+			{children}
+		</DocsLayout>
+	);
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import { useMount } from "@reactuses/core";
+import { checkGraphStatus } from "@sealos-brain/langgraph/utils";
 import { toast } from "sonner";
 import { useLangGraphState } from "@/contexts/langgraph/langgraph.context";
-import { checkGraphStatus } from "@/lib/langgraph/langgraph.utils";
 
 export function useLangGraphHealth() {
 	const { deploymentUrl } = useLangGraphState();

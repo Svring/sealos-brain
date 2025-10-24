@@ -1,5 +1,3 @@
-import { initTRPC } from "@trpc/server";
-import { z } from "zod";
 import {
 	createThread,
 	deleteThread,
@@ -8,7 +6,9 @@ import {
 	patchThread,
 	searchThreads,
 	updateThreadState,
-} from "@/lib/langgraph/langgraph.api";
+} from "@sealos-brain/langgraph/api";
+import { initTRPC } from "@trpc/server";
+import { z } from "zod";
 import { createErrorFormatter } from "@/trpc/utils/trpc.utils";
 
 // Context creation function
@@ -40,7 +40,7 @@ export const langgraphRouter = t.router({
 	searchThreads: t.procedure
 		.input(
 			z.object({
-				metadata: z.record(z.any()),
+				metadata: z.record(z.string(), z.string()),
 			}),
 		)
 		.query(async ({ input }) => {
@@ -53,7 +53,7 @@ export const langgraphRouter = t.router({
 	createThread: t.procedure
 		.input(
 			z.object({
-				metadata: z.record(z.any()),
+				metadata: z.record(z.string(), z.string()),
 			}),
 		)
 		.mutation(async ({ input }) => {
@@ -82,7 +82,7 @@ export const langgraphRouter = t.router({
 		.input(
 			z.object({
 				threadId: z.string(),
-				values: z.record(z.any()),
+				values: z.record(z.string(), z.string()),
 			}),
 		)
 		.mutation(async ({ input }) => {
@@ -100,7 +100,7 @@ export const langgraphRouter = t.router({
 		.input(
 			z.object({
 				threadId: z.string(),
-				metadata: z.record(z.any()).optional(),
+				metadata: z.record(z.string(), z.string()).optional(),
 			}),
 		)
 		.mutation(async ({ input }) => {

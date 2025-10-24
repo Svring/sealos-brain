@@ -1,15 +1,15 @@
 "use server";
 
-import { EVENT_FIELDS } from "@/resources/event/constants/event.constant";
-import { eventParser } from "@/resources/event/utils/event.parser";
-import { getResourcePods } from "@/resources/pod/api/pod.api";
-import type { K8sContext, ResourceTarget } from "@/shared/models/k8s.model";
-import { addMissingFields } from "@/shared/utils/k8s-client.utils";
+import type { K8sContext, ResourceTarget } from "../../../shared/models/index";
 import {
+	addMissingFields,
 	getBuiltinApiClient,
 	getCurrentNamespace,
 	invokeApiMethod,
-} from "@/shared/utils/k8s-server.utils";
+} from "../../../shared/utils/index";
+import { getResourcePods } from "../../pod/api/pod.api";
+import { EVENT_FIELDS } from "../constants";
+import { eventParser } from "../utils/event.parser";
 
 /**
  * Get events for all pods associated with a resource.

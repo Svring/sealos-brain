@@ -40,7 +40,8 @@
     "tailwind-merge": "^3.3.1",
     "vaul": "^1.1.2",
     "zod": "^4.1.5",
-    "radix-ui": "latest"
+    "radix-ui": "latest",
+    "@sealos-brain/shared": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.2",
