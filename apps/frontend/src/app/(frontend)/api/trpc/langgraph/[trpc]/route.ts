@@ -1,5 +1,8 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { createLanggraphContext, langgraphRouter } from "@/trpc/langgraph.trpc";
+import {
+	createLanggraphContext,
+	langgraphRouter,
+} from "@/trpc/routers/langgraph.trpc";
 
 const handler = (req: Request) =>
 	fetchRequestHandler({

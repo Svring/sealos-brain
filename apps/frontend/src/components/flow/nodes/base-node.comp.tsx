@@ -28,7 +28,7 @@ import {
 } from "@/constants/devbox/devbox-icons.constant";
 import { LAUNCHPAD_DEFAULT_ICON } from "@/constants/launchpad/launchpad-icons.constant";
 import { OBJECTSTORAGE_DEFAULT_ICON } from "@/constants/osb/osb-icons.constant";
-import { useResourceObject } from "@/hooks/resource/use-resource-object";
+import { useResourceObject } from "@/hooks/shared/resource/use-resource-object";
 import { cn } from "@/lib/utils";
 import type { ResourceTarget } from "@/mvvm/k8s/models/k8s.model";
 import type { ResourceObject } from "@/mvvm/resource/models/resource-object.model";

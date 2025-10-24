@@ -14,9 +14,9 @@ import {
 import * as BaseNode from "@/components/flow/nodes/base-node.comp";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useNodeClick } from "@/hooks/flow/use-node-click";
-import { useResourceObject } from "@/hooks/resource/use-resource-object";
 import { useLaunchpadDelete } from "@/hooks/sealos/launchpad/use-launchpad-delete";
 import { useLaunchpadLifecycle } from "@/hooks/sealos/launchpad/use-launchpad-lifecycle";
+import { useResourceObject } from "@/hooks/shared/resource/use-resource-object";
 import { LaunchpadObjectSchema } from "@/models/sealos/launchpad/launchpad-object.model";
 
 interface LaunchpadNodeBlockProps {

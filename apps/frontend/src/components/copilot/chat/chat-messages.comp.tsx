@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import type { ComponentProps } from "react";
 import { Children, cloneElement, isValidElement, useMemo, useRef } from "react";
 import { useCopilotAdapterContext } from "@/contexts/copilot/copilot.adapter";
-import { useAutoScroll } from "@/hooks/utils/use-auto-scroll";
+import { useAutoScroll } from "@/hooks/shared/misc/use-auto-scroll";
 import { cn } from "@/lib/utils";
 
 // Messages container
@@ -70,17 +70,13 @@ export const AIMessage = ({
 	asChild = false,
 	content,
 	...props
-}: ComponentProps<"div"> & { 
+}: ComponentProps<"div"> & {
 	asChild?: boolean;
 	content?: string;
 }) => {
 	const Comp = asChild ? Slot : "div";
 	return (
-		<Comp
-			data-slot="chat-ai-message"
-			className={cn("", className)}
-			{...props}
-		>
+		<Comp data-slot="chat-ai-message" className={cn("", className)} {...props}>
 			{content}
 		</Comp>
 	);
@@ -92,7 +88,7 @@ export const HumanMessage = ({
 	asChild = false,
 	content,
 	...props
-}: ComponentProps<"div"> & { 
+}: ComponentProps<"div"> & {
 	asChild?: boolean;
 	content?: string;
 }) => {
@@ -114,7 +110,7 @@ export const ToolMessage = ({
 	asChild = false,
 	content,
 	...props
-}: ComponentProps<"div"> & { 
+}: ComponentProps<"div"> & {
 	asChild?: boolean;
 	content?: string;
 }) => {
@@ -136,7 +132,7 @@ export const SystemMessage = ({
 	asChild = false,
 	content,
 	...props
-}: ComponentProps<"div"> & { 
+}: ComponentProps<"div"> & {
 	asChild?: boolean;
 	content?: string;
 }) => {

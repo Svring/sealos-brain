@@ -5,7 +5,7 @@ import { Copy, Globe, HardDrive } from "lucide-react";
 import * as BaseNode from "@/components/flow/nodes/base-node.comp";
 import { Switch } from "@/components/ui/switch";
 import { useNodeClick } from "@/hooks/flow/use-node-click";
-import { useResourceObject } from "@/hooks/resource/use-resource-object";
+import { useResourceObject } from "@/hooks/shared/resource/use-resource-object";
 import { OsbObjectSchema } from "@/models/sealos/osb/osb-object.model";
 
 interface OsbNodeBlockProps {

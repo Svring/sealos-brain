@@ -15,9 +15,9 @@ import {
 import * as BaseNode from "@/components/flow/nodes/base-node.comp";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useNodeClick } from "@/hooks/flow/use-node-click";
-import { useResourceObject } from "@/hooks/resource/use-resource-object";
 import { useClusterDelete } from "@/hooks/sealos/cluster/use-cluster-delete";
 import { useClusterLifecycle } from "@/hooks/sealos/cluster/use-cluster-lifecycle";
+import { useResourceObject } from "@/hooks/shared/resource/use-resource-object";
 import { ClusterObjectSchema } from "@/models/sealos/cluster/cluster-object.model";
 
 interface ClusterNodeBlockProps {

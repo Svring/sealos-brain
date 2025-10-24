@@ -3,7 +3,7 @@
 import { BaseNode } from "@/components/flow/nodes/base-node";
 import { Spinner } from "@/components/ui/spinner";
 import { useNodeClick } from "@/hooks/flow/use-node-click";
-import { useNetworkStatus } from "@/hooks/network/use-network-status";
+import { useNetworkStatus } from "@/hooks/shared/network/use-network-status";
 import { NetworkNodeView } from "@/mvvm/flow/nodes/views/network/network-node.view";
 import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s-custom.model";
 

@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useTemplates } from "@/hooks/template/use-templates";
+import { useTemplates } from "@/hooks/sealos/template/use-templates";
 import type { TemplateItem } from "../models/template-object.model";
 import { TemplateCard } from "./template-card.vm";
 import { TemplateInfo } from "./template-info.vm";
@@ -14,7 +14,9 @@ export default function TemplateStore() {
 	const { data, isLoading, error } = useTemplates();
 	const templates = data?.templates || [];
 	const menuKeys = data?.menuKeys || "";
-	const [selectedTemplate, setSelectedTemplate] = useState<TemplateItem | null>(null);
+	const [selectedTemplate, setSelectedTemplate] = useState<TemplateItem | null>(
+		null,
+	);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedCategory, setSelectedCategory] = useState("all");
 

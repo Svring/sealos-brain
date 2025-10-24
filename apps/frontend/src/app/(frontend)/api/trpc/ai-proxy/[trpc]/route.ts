@@ -1,5 +1,8 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { aiProxyRouter, createAiProxyContext } from "@/trpc/ai-proxy.trpc";
+import {
+	aiProxyRouter,
+	createAiProxyContext,
+} from "@/trpc/routers/ai-proxy.trpc";
 
 const handler = (req: Request) =>
 	fetchRequestHandler({

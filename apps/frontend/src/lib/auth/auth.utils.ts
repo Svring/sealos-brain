@@ -1,4 +1,4 @@
-import { getRegionUrlFromKubeconfig } from "@sealos-brain/lib/k8s-server.utils";
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import type { Auth } from "@/contexts/auth/auth.state";
 
 // Helper function to handle auth computation and state updates

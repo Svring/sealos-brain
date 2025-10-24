@@ -1,5 +1,5 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { createOsbContext, osbRouter } from "@/trpc/osb.trpc";
+import { createOsbContext, osbRouter } from "@/trpc/routers/osb.trpc";
 
 const handler = (req: Request) =>
 	fetchRequestHandler({

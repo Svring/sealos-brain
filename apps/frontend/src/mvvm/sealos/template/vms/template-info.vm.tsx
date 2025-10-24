@@ -15,7 +15,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useTemplateObject } from "@/hooks/template/use-template-object";
+import { useTemplateObject } from "@/hooks/sealos/template/use-template-object";
 import type { TemplateItem } from "../models/template-object.model";
 
 import "@/styles/github-markdown-dark.css";

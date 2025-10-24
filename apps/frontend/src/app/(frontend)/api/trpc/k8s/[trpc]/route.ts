@@ -1,5 +1,5 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { createK8sContext, k8sRouter } from "@/trpc/k8s.trpc";
+import { createK8sContext, k8sRouter } from "@/trpc/routers/k8s.trpc";
 
 const handler = (req: Request) =>
 	fetchRequestHandler({

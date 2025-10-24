@@ -1,5 +1,8 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { createTemplateContext, templateRouter } from "@/trpc/template.trpc";
+import {
+	createTemplateContext,
+	templateRouter,
+} from "@/trpc/routers/template.trpc";
 
 const handler = (req: Request) =>
 	fetchRequestHandler({

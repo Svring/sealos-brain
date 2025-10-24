@@ -1,5 +1,8 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { clusterRouter, createClusterContext } from "@/trpc/cluster.trpc";
+import {
+	clusterRouter,
+	createClusterContext,
+} from "@/trpc/routers/cluster.trpc";
 
 const handler = (req: Request) =>
 	fetchRequestHandler({

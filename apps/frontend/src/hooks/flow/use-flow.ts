@@ -10,8 +10,8 @@ import {
 	inferObjectsReliances,
 } from "@/lib/flow/flow.utils";
 import type { CustomResourceTarget } from "@/mvvm/k8s/models/k8s-custom.model";
-import { useResourceObjects } from "../resource/use-resource-objects";
 import { useInstanceResources } from "../sealos/instance/use-instance-resources";
+import { useResourceObjects } from "../shared/resource/use-resource-objects";
 
 export const useFlow = (instance: CustomResourceTarget) => {
 	const { data: resources } = useInstanceResources(instance);

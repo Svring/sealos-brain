@@ -3,7 +3,7 @@
 import type { Message } from "@langchain/langgraph-sdk";
 import { Loader2 } from "lucide-react";
 import { useMemo, useRef } from "react";
-import { useAutoScroll } from "@/hooks/utils/use-auto-scroll";
+import { useAutoScroll } from "@/hooks/shared/misc/use-auto-scroll";
 import { RenderTextMessage } from "./text-message.view";
 
 interface MessagesViewProps {
@@ -11,10 +11,7 @@ interface MessagesViewProps {
 	isLoading: boolean;
 }
 
-export function MessagesView({
-	messages,
-	isLoading,
-}: MessagesViewProps) {
+export function MessagesView({ messages, isLoading }: MessagesViewProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 
 	// Use auto-scroll with messages
@@ -59,9 +56,7 @@ export function MessagesView({
 	if (!messages || !Array.isArray(messages) || messages.length === 0) {
 		return (
 			<div className="w-full px-4 h-full flex items-center justify-center">
-				<div className="text-center text-muted-foreground">
-					
-				</div>
+				<div className="text-center text-muted-foreground"></div>
 			</div>
 		);
 	}

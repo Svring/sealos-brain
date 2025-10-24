@@ -9,7 +9,7 @@ import { useCopilotMount } from "@/hooks/copilot/use-copilot-mount";
 import { useCreateThread } from "@/hooks/langgraph/use-create-thread";
 import { useSearchThreads } from "@/hooks/langgraph/use-search-threads";
 import { useStreamContext } from "@/hooks/langgraph/use-stream-context";
-import { useEffectOnCondition } from "@/hooks/utils/use-effect-on-condition";
+import { useEffectOnCondition } from "@/hooks/shared/misc/use-effect-on-condition";
 
 interface CopilotAdapterContextValue {
 	threads: Thread[];

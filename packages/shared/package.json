@@ -9,7 +9,10 @@
     "./network/models": "./src/network/models/index.ts",
     "./network/utils": "./src/network/utils/index.ts",
     "./resource/models": "./src/resource/models/index.ts",
-    "./resource/utils": "./src/resource/utils/index.ts"
+    "./resource/utils": "./src/resource/utils/index.ts",
+    "./reliance": "./src/reliance/index.ts",
+    "./reliance/models": "./src/reliance/models/index.ts",
+    "./reliance/utils": "./src/reliance/utils/index.ts"
   },
   "dependencies": {
     "date-fns": "^4.1.0",

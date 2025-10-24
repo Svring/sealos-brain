@@ -1,5 +1,8 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { createLaunchpadContext, launchpadRouter } from "@/trpc/launchpad.trpc";
+import {
+	createLaunchpadContext,
+	launchpadRouter,
+} from "@/trpc/routers/launchpad.trpc";
 
 const handler = (req: Request) =>
 	fetchRequestHandler({
