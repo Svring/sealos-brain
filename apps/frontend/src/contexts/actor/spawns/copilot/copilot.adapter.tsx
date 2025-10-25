@@ -60,12 +60,14 @@ export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 
 	// Auto-select first thread or create new thread when search is successful
 	useEffectOnCondition(() => {
+		console.log("threads", threads);
 		if (threads && threads.length > 0 && threads[0]?.thread_id) {
+			console.log("threads[0].thread_id", threads[0].thread_id);
 			setThreadId(threads[0].thread_id);
 		} else {
 			createNewThread();
 		}
-	}, isSuccess && !threadId);
+	}, isSuccess);
 
 	// Use stream context hook
 	const {
@@ -80,6 +82,8 @@ export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 		assistantId: graphId,
 		threadId: threadId ?? undefined,
 	});
+
+	console.log("threadId in copilot adapter", threadId);
 
 	return (
 		<copilotAdapterContext.Provider

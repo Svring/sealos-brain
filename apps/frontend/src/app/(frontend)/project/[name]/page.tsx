@@ -3,6 +3,7 @@
 import { CopilotBlock } from "@/blocks/copilot/copilot.block";
 import { FlowBlock } from "@/blocks/flow/flow.block";
 import { useCopilotState } from "@/contexts/actor/spawns/copilot/copilot.context";
+import { ProjectCopilot } from "@/mvvm/pages/project-name/vms/project-copilot.vm";
 
 export default function ProjectPage() {
 	const { opened } = useCopilotState();
@@ -18,6 +19,7 @@ export default function ProjectPage() {
 			{opened && (
 				<div className={`${opened ? "w-[35%]" : "w-0"} h-full min-w-[28rem]`}>
 					<CopilotBlock />
+					{/* <ProjectCopilot /> */}
 				</div>
 			)}
 		</div>

@@ -8,7 +8,9 @@ export const useSearchThreads = (metadata: Metadata) => {
 	const { langgraph } = useTRPCClients();
 
 	const query = useQuery(
-		langgraph.searchThreads.queryOptions({ metadata: metadata || {} })
+		langgraph.searchThreads.queryOptions({
+			metadata: metadata as Record<string, string>,
+		}),
 	);
 
 	return {

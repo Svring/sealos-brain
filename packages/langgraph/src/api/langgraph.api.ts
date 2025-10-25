@@ -106,6 +106,8 @@ export const searchThreads = async (
 ): Promise<Thread[]> => {
 	const client = createClient(apiUrl);
 
+	console.log("metadata", metadata);
+
 	const res = await client.threads
 		.search({
 			metadata,
@@ -116,6 +118,8 @@ export const searchThreads = async (
 		.then((res) => {
 			return res.filter((obj) => obj.values);
 		});
+
+	console.log("res", res);
 
 	return res;
 };

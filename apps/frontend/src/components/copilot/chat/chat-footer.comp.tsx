@@ -4,6 +4,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@sealos-brain/shared/misc/utils";
 import { SendHorizonal } from "lucide-react";
 import type { ComponentProps } from "react";
+import { useChatInput } from "@/components/copilot/chat.comp";
 
 // Footer section
 export const Footer = ({
@@ -26,20 +27,21 @@ export const TextArea = ({
 	className,
 	asChild = false,
 	placeholder = "",
-	value,
-	onChange,
 	onKeyDown,
 	disabled = false,
 	...props
 }: ComponentProps<"textarea"> & {
 	asChild?: boolean;
 	placeholder?: string;
-	value: string;
-	onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-	onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+	onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 	disabled?: boolean;
 }) => {
 	const Comp = asChild ? Slot : "textarea";
+	const { value, setValue } = useChatInput();
+
+	const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		setValue(e.target.value);
+	};
 
 	return (
 		<div className="flex-1 relative">
@@ -50,7 +52,7 @@ export const TextArea = ({
 				)}
 				placeholder={placeholder}
 				value={value}
-				onChange={onChange}
+				onChange={handleChange}
 				onKeyDown={onKeyDown}
 				disabled={disabled}
 				rows={1}
@@ -64,17 +66,24 @@ export const TextArea = ({
 export const Send = ({
 	className,
 	asChild = false,
-	onClick,
+	onSend,
 	disabled = false,
-	canSend = false,
 	...props
 }: ComponentProps<"button"> & {
 	asChild?: boolean;
-	onClick: () => void;
+	onSend: (messages: { type: "human"; content: string }[]) => void;
 	disabled?: boolean;
-	canSend?: boolean;
 }) => {
 	const Comp = asChild ? Slot : "button";
+	const { value, getValue } = useChatInput();
+	const canSend = !!value.trim();
+
+	const handleClick = () => {
+		const currentValue = getValue();
+		if (currentValue.trim()) {
+			onSend([{ type: "human", content: currentValue }]);
+		}
+	};
 
 	return (
 		<div className="flex items-end justify-end gap-2 p-0 mt-auto">
@@ -86,7 +95,7 @@ export const Send = ({
 						: "bg-transparent cursor-not-allowed text-foreground",
 					className,
 				)}
-				onClick={onClick}
+				onClick={handleClick}
 				disabled={disabled || !canSend}
 				type="button"
 				{...props}

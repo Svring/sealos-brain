@@ -168,13 +168,18 @@ export const Vessel = ({
 export const Header = ({
 	className,
 	asChild = false,
+	onClick,
 	...props
-}: ComponentProps<"div"> & { asChild?: boolean }) => {
+}: ComponentProps<"div"> & {
+	asChild?: boolean;
+	onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+}) => {
 	const Comp = asChild ? Slot : "div";
 	return (
 		<Comp
 			data-slot="base-node-header"
 			className={cn("flex items-center justify-between", className)}
+			onClick={onClick}
 			{...props}
 		/>
 	);
@@ -183,13 +188,18 @@ export const Header = ({
 export const Content = ({
 	className,
 	asChild = false,
+	onClick,
 	...props
-}: ComponentProps<"div"> & { asChild?: boolean }) => {
+}: ComponentProps<"div"> & {
+	asChild?: boolean;
+	onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+}) => {
 	const Comp = asChild ? Slot : "div";
 	return (
 		<Comp
 			data-slot="base-node-content"
 			className={cn("flex flex-1 items-start gap-2 mt-4 px-1", className)}
+			onClick={onClick}
 			{...props}
 		/>
 	);
@@ -198,13 +208,18 @@ export const Content = ({
 export const Footer = ({
 	className,
 	asChild = false,
+	onClick,
 	...props
-}: ComponentProps<"div"> & { asChild?: boolean }) => {
+}: ComponentProps<"div"> & {
+	asChild?: boolean;
+	onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+}) => {
 	const Comp = asChild ? Slot : "div";
 	return (
 		<Comp
 			data-slot="base-node-footer"
 			className={cn("mt-auto flex justify-between items-center", className)}
+			onClick={onClick}
 			{...props}
 		/>
 	);
@@ -213,9 +228,11 @@ export const Footer = ({
 export const Title = ({
 	className,
 	asChild = false,
+	onClick,
 	...props
 }: ComponentProps<"div"> & {
 	asChild?: boolean;
+	onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }) => {
 	const Comp = asChild ? Slot : "div";
 	const { target, object } = useBaseNode();
@@ -259,6 +276,7 @@ export const Title = ({
 				"flex items-center gap-2 truncate font-medium flex-1 min-w-0",
 				className,
 			)}
+			onClick={onClick}
 			{...props}
 		>
 			<div className="flex flex-col items-start">
@@ -288,13 +306,18 @@ export const Menu = ({
 	className,
 	asChild = false,
 	children,
+	onClick,
 	...props
-}: ComponentProps<"div"> & { asChild?: boolean }) => {
+}: ComponentProps<"div"> & {
+	asChild?: boolean;
+	onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+}) => {
 	const Comp = asChild ? Slot : "div";
 	return (
 		<Comp
 			data-slot="base-node-menu"
 			className={cn("flex flex-row items-center gap-2 shrink-0", className)}
+			onClick={onClick}
 			{...props}
 		>
 			<DropdownMenu>
@@ -474,10 +497,20 @@ export const Handle = ({
 	position = Position.Top,
 	type = "source",
 	id,
+	onClick,
 	...props
 }: ComponentProps<typeof ReactFlowHandle> & {
 	position?: Position;
 	type?: "source" | "target";
+	onClick?: (event: React.MouseEvent) => void;
 }) => {
-	return <ReactFlowHandle position={position} type={type} id={id} {...props} />;
+	return (
+		<ReactFlowHandle
+			position={position}
+			type={type}
+			id={id}
+			onClick={onClick}
+			{...props}
+		/>
+	);
 };

@@ -14,7 +14,7 @@ export const Content = ({
 	return (
 		<Comp
 			data-slot="chat-content"
-			className={cn("flex-1 overflow-y-auto p-4", className)}
+			className={cn("flex-1 overflow-y-auto p-2 px-4", className)}
 			{...props}
 		/>
 	);

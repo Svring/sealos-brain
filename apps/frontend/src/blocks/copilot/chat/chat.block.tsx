@@ -16,8 +16,8 @@ export function ChatBlock({
 	index = 0,
 	totalChats = 1,
 }: ChatBlockProps) {
-	const { submitWithContext, stop, isLoading } = useCopilotAdapterContext();
-	const [value, setValue] = useState("");
+	const { submitWithContext, stop, isLoading, threadId } =
+		useCopilotAdapterContext();
 	const [mounted, setMounted] = useState(false);
 
 	useMount(() => setMounted(true));
@@ -30,33 +30,17 @@ export function ChatBlock({
 		return null;
 	}
 
-	const handleSubmit = () => {
-		if (value.trim()) {
-			submitWithContext({
-				messages: [{ type: "human", content: value }],
-			});
-			setValue("");
-		}
-	};
-
-	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-		if (e.key === "Enter" && !e.shiftKey) {
-			e.preventDefault();
-			handleSubmit();
-		}
-	};
-
-	const handleSendClick = () => {
+	const handleSend = (messages: { type: "human"; content: string }[]) => {
 		if (isLoading) {
 			stop();
 		} else {
-			handleSubmit();
+			submitWithContext({ messages });
 		}
 	};
 
 	return (
 		<div
-			className={`absolute inset-2 grid-area-[1/1] transition-all duration-[0.15s] ${
+			className={`absolute inset-2 grid-area-[1/1] transition-all duration-150 ${
 				mounted ? "opacity-100" : "opacity-0 translate-x-full"
 			} [--index:${computedIndex}]`}
 			data-mounted={mounted}
@@ -75,6 +59,7 @@ export function ChatBlock({
 						<div className="flex items-center">
 							<Chat.Title />
 							<Chat.ViewToggle />
+							<>{threadId}</>
 						</div>
 
 						<div className="flex items-center gap-1">
@@ -97,16 +82,8 @@ export function ChatBlock({
 					{/* Footer Section - Input */}
 					<Chat.Footer>
 						<div className="rounded-lg border w-full bg-background-tertiary p-2 transition-all duration-200 focus-within:border-border-primary flex flex-col">
-							<Chat.TextArea
-								value={value}
-								onChange={(e) => setValue(e.target.value)}
-								onKeyDown={handleKeyDown}
-								disabled={isLoading}
-							/>
-							<Chat.Send
-								onClick={handleSendClick}
-								canSend={!!value.trim() || isLoading}
-							/>
+							<Chat.TextArea disabled={isLoading} />
+							<Chat.Send onSend={handleSend} disabled={isLoading} />
 						</div>
 					</Chat.Footer>
 				</Chat.Container>

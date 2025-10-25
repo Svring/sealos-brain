@@ -29,9 +29,19 @@ export function MessagesView({ messages, isLoading }: MessagesViewProps) {
 		}
 
 		const messageElements = messages.map((message) => {
+			// Check if this is the last AI message and we have a recent human message (indicating streaming)
+			const isLastMessage = message === messages[messages.length - 1];
+			const isAIMessage = message.type === "ai";
+			const hasRecentHumanMessage = messages.some((m) => m.type === "human");
+			const inProgress =
+				isLastMessage &&
+				isAIMessage &&
+				hasRecentHumanMessage &&
+				!message.content;
+
 			return (
 				<div key={message.id}>
-					<RenderTextMessage message={message} inProgress={false} />
+					<RenderTextMessage message={message} inProgress={inProgress} />
 				</div>
 			);
 		});

@@ -4,6 +4,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@sealos-brain/shared/misc/utils";
 import { cva } from "class-variance-authority";
 import type { ComponentProps } from "react";
+import { createContext, useContext, useState } from "react";
 import { CopilotAdapter } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 
 export * from "./chat/chat-content.comp";
@@ -11,6 +12,26 @@ export * from "./chat/chat-footer.comp";
 // Re-export from split files
 export * from "./chat/chat-header.comp";
 export * from "./chat/chat-messages.comp";
+
+// Chat Input Context
+interface ChatInputContextValue {
+	value: string;
+	setValue: (value: string) => void;
+	getValue: () => string;
+	clearValue: () => void;
+}
+
+const ChatInputContext = createContext<ChatInputContextValue | undefined>(
+	undefined,
+);
+
+export const useChatInput = () => {
+	const context = useContext(ChatInputContext);
+	if (!context) {
+		throw new Error("useChatInput must be used within ChatProvider");
+	}
+	return context;
+};
 
 const chatVariants = cva(
 	"h-full w-full flex flex-col bg-background-tertiary border rounded-lg",
@@ -34,8 +55,23 @@ export const Root = ({
 			className={cn("h-full w-full", className)}
 			{...props}
 		>
-			<CopilotAdapter metadata={metadata}>{children}</CopilotAdapter>
+			<Provider>{children}</Provider>
 		</Comp>
+	);
+};
+
+export const Provider = ({ children }: { children: React.ReactNode }) => {
+	const [value, setValue] = useState("");
+
+	const getValue = () => value;
+	const clearValue = () => setValue("");
+
+	return (
+		<ChatInputContext.Provider
+			value={{ value, setValue, getValue, clearValue }}
+		>
+			{children}
+		</ChatInputContext.Provider>
 	);
 };
 

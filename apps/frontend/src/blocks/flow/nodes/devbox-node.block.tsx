@@ -78,9 +78,9 @@ export function DevboxNodeBlock({ data }: DevboxNodeBlockProps) {
 		<BaseNode.Root target={target}>
 			<BaseNode.Handle position={Position.Top} type="source" />
 			<BaseNode.Handle position={Position.Bottom} type="target" />
-			<BaseNode.Vessel onClick={handleNodeClick}>
+			<BaseNode.Vessel>
 				<BaseNode.Header>
-					<BaseNode.Title />
+					<BaseNode.Title onClick={handleNodeClick} />
 					<BaseNode.Menu>
 						{devbox.status !== "Running" && (
 							<DropdownMenuItem
@@ -121,7 +121,7 @@ export function DevboxNodeBlock({ data }: DevboxNodeBlockProps) {
 					</BaseNode.Menu>
 				</BaseNode.Header>
 
-				<BaseNode.Content>
+				<BaseNode.Content onClick={handleNodeClick}>
 					<div className="flex items-center gap-2">
 						<Package className="h-4 w-4 text-muted-foreground" />
 						<div className="text-md text-muted-foreground truncate flex-1">
@@ -130,7 +130,7 @@ export function DevboxNodeBlock({ data }: DevboxNodeBlockProps) {
 					</div>
 				</BaseNode.Content>
 
-				<BaseNode.Footer>
+				<BaseNode.Footer onClick={handleNodeClick}>
 					<BaseNode.Status onClick={handleStatusClick} />
 					<BaseNode.Widget
 						icon={Activity}

@@ -1,6 +1,5 @@
 "use client";
 
-import { getResourceIcon } from "@sealos-brain/shared/resource/utils";
 import { useCallback } from "react";
 import { useCopilotAdapterContext } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 import {
@@ -8,6 +7,7 @@ import {
 	useCopilotState,
 } from "@/contexts/actor/spawns/copilot/copilot.context";
 import { useProjectState } from "@/contexts/actor/spawns/project/project.context";
+import { getResourceIcon } from "@/lib/resource/utils/resource.utils";
 import { HeaderView } from "../views/header.view";
 
 export const Header = () => {

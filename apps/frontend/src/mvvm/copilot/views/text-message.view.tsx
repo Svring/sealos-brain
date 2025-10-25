@@ -32,10 +32,10 @@ export function RenderTextMessage({
 		<div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
 			<div
 				className={cn(
-					"rounded-lg py-2 markdown-body max-w-full break-words",
+					"rounded-lg py-2 markdown-body wrap-break-word",
 					isUser
-						? "bg-background-tertiary rounded-2xl rounded-br-md text-foreground px-4 border border-border-primary"
-						: "text-foreground px-1 max-w-full",
+						? "bg-background-tertiary rounded-2xl rounded-br-md text-foreground px-4 border border-border-primary max-w-2xl"
+						: "text-foreground px-1 max-w-3xl",
 					isLoading && "animate-pulse",
 				)}
 			>

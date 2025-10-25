@@ -3,7 +3,7 @@
 import { useMount } from "@reactuses/core";
 import { useState } from "react";
 import { CopilotAdapter } from "@/contexts/actor/spawns/copilot/copilot.adapter";
-import type { Chat } from "@/contexts/copilot/copilot.state";
+import type { Chat } from "@/contexts/actor/spawns/copilot/copilot.state";
 import { Chatbox } from "@/mvvm/copilot/vms/chatbox.vm";
 
 interface CopilotChatProps {

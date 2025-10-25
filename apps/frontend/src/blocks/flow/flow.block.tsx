@@ -34,6 +34,7 @@ export function FlowBlock() {
 				metadata: {
 					kubeconfigEncoded: auth.kubeconfigEncoded,
 					projectUid: project.uid,
+					resourceUid: "",
 				},
 			});
 		}

@@ -37,15 +37,20 @@ export function CopilotBlock() {
 	return (
 		<Copilot.Root context={context}>
 			<Copilot.Content>
-				{chats.map((chat, index) => (
-					<CopilotAdapter key={index} metadata={chat.metadata}>
-						<ChatBlock
-							metadata={chat.metadata}
-							index={index}
-							totalChats={chats.length}
-						/>
-					</CopilotAdapter>
-				))}
+				{chats.map((chat, index) => {
+					if (chats.length - index - 1 > 2) {
+						return null;
+					}
+					return (
+						<CopilotAdapter key={index} metadata={chat.metadata}>
+							<ChatBlock
+								metadata={chat.metadata}
+								index={index}
+								totalChats={chats.length}
+							/>
+						</CopilotAdapter>
+					);
+				})}
 			</Copilot.Content>
 		</Copilot.Root>
 	);
