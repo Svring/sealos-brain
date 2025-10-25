@@ -1,5 +1,5 @@
-import type { PodObject } from "@/resources/pod/models/pod-object.model";
-import type { PodResource } from "@/resources/pod/models/pod-resource.model";
+import type { PodObject } from "../models/pod-object.model";
+import type { PodResource } from "../models/pod-resource.model";
 
 // Convert PodResource to PodObject
 const toObject = (pod: PodResource): PodObject => {

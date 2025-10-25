@@ -1,8 +1,8 @@
 "use server";
 
-import { listResources } from "../../../shared/api/index";
-import type { K8sContext, ResourceTarget } from "../../../shared/models/index";
-import { k8sParser } from "../../../shared/utils/index";
+import { listResources } from "#shared/api";
+import type { K8sContext, ResourceTarget } from "#shared/models";
+import { k8sParser } from "#shared/utils";
 import { POD_LABELS } from "../constants/pod-label.constant";
 import { podParser } from "../utils/pod.parser";
 

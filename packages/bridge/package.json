@@ -2,10 +2,18 @@
   "name": "@sealos-brain/bridge",
   "type": "module",
   "scripts": {},
+  "imports": {
+    "#*": "./src/*"
+  },
   "exports": {
-    ".": "./src/bridge-query.api.ts"
+    "./api": "./src/api/bridge-query.api.ts",
+    "./models": "./src/models/bridge-query.model.ts",
+    "./utils": "./src/utils/bridge-query.utils.ts"
   },
   "dependencies": {
-    "zod": "^4.1.12"
+    "@sealos-brain/k8s": "workspace:*",
+    "@types/lodash": "^4.17.20",
+    "lodash": "^4.17.21",
+    "zod": "^3.24.1"
   }
 }

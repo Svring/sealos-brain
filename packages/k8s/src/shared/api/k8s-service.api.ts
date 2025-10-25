@@ -14,7 +14,7 @@ import type {
 } from "../models/k8s.model";
 import { K8sResourceListSchema } from "../models/k8s.model";
 import {
-	applyResource as applyResourceMutation,
+	applyResourceMutation,
 	deleteBuiltinResource,
 	deleteCustomResource,
 	patchBuiltinResource,

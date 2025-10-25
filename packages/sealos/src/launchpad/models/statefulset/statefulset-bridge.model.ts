@@ -15,7 +15,7 @@ import {
 	transformStatefulSetEnv,
 	transformStatefulSetResource,
 	transformStrategy,
-} from "@/launchpad/utils/launchpad.utils";
+} from "#launchpad/utils/launchpad.utils";
 import { LAUNCHPAD_LABELS } from "../../constants/launchpad-labels.constant";
 
 // StatefulSet object query schema

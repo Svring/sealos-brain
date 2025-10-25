@@ -11,8 +11,23 @@ import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import { createErrorFormatter } from "@/trpc/utils/trpc.utils";
 
+// Helper function to get environment variables
+const getLanggraphConfig = () => {
+	const apiUrl = process.env.LANGGRAPH_DEPLOYMENT_URL;
+	const graphId = process.env.LANGGRAPH_GRAPH_ID;
+
+	if (!apiUrl) {
+		throw new Error("LANGGRAPH_DEPLOYMENT_URL environment variable is not set");
+	}
+	if (!graphId) {
+		throw new Error("LANGGRAPH_GRAPH_ID environment variable is not set");
+	}
+
+	return { apiUrl, graphId };
+};
+
 // Context creation function
-export async function createLanggraphContext(opts: { req: Request }) {
+export async function createLanggraphContext(_opts: { req: Request }) {
 	// TODO: Implement context creation
 	return {};
 }
@@ -30,11 +45,13 @@ export const langgraphRouter = t.router({
 	listThreads: t.procedure
 		.input(z.string().optional().default("threads"))
 		.query(async () => {
-			return await listThreads();
+			const { apiUrl } = getLanggraphConfig();
+			return await listThreads(apiUrl);
 		}),
 
 	getThread: t.procedure.input(z.string()).query(async ({ input }) => {
-		return await getThread(input);
+		const { apiUrl } = getLanggraphConfig();
+		return await getThread(apiUrl, input);
 	}),
 
 	searchThreads: t.procedure
@@ -44,7 +61,8 @@ export const langgraphRouter = t.router({
 			}),
 		)
 		.query(async ({ input }) => {
-			return await searchThreads(input.metadata);
+			const { apiUrl } = getLanggraphConfig();
+			return await searchThreads(apiUrl, input.metadata);
 		}),
 
 	// ===== MUTATION PROCEDURES =====
@@ -57,6 +75,7 @@ export const langgraphRouter = t.router({
 			}),
 		)
 		.mutation(async ({ input }) => {
+			const { apiUrl, graphId } = getLanggraphConfig();
 			const { metadata } = input;
 
 			// Default supersteps
@@ -72,6 +91,8 @@ export const langgraphRouter = t.router({
 			];
 
 			return await createThread({
+				apiUrl,
+				graphId,
 				metadata: metadata,
 				supersteps,
 			});
@@ -86,13 +107,15 @@ export const langgraphRouter = t.router({
 			}),
 		)
 		.mutation(async ({ input }) => {
+			const { apiUrl } = getLanggraphConfig();
 			const { threadId, values } = input;
-			return await updateThreadState(threadId, values);
+			return await updateThreadState(apiUrl, threadId, values);
 		}),
 
 	// Delete thread
 	deleteThread: t.procedure.input(z.string()).mutation(async ({ input }) => {
-		return await deleteThread(input);
+		const { apiUrl } = getLanggraphConfig();
+		return await deleteThread(apiUrl, input);
 	}),
 
 	// Patch thread metadata
@@ -104,8 +127,9 @@ export const langgraphRouter = t.router({
 			}),
 		)
 		.mutation(async ({ input }) => {
+			const { apiUrl } = getLanggraphConfig();
 			const { threadId, metadata } = input;
-			return await patchThread(threadId, metadata);
+			return await patchThread(apiUrl, threadId, metadata);
 		}),
 });
 

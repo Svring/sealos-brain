@@ -6,7 +6,7 @@ export const K8sObjectSchema = z
 		name: z.string(),
 		resourceType: z.string(),
 	})
-	.loose(); // Allow additional fields without validation
+	.passthrough(); // Allow additional fields without validation
 
 // Type export
 export type K8sObject = z.infer<typeof K8sObjectSchema>;

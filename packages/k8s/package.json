@@ -2,6 +2,9 @@
   "name": "@sealos-brain/k8s",
   "type": "module",
   "scripts": {},
+  "imports": {
+    "#*": "./src/*"
+  },
   "exports": {
     "./shared/models": "./src/shared/models/index.ts",
     "./shared/constants": "./src/shared/constants/index.ts",
@@ -29,9 +32,12 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "^1.4.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/lodash": "^4.17.20",
+    "axios": "^1.12.2",
     "fast-json-patch": "^3.1.1",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
-    "zod": "^4.1.12"
+    "zod": "^3.24.1"
   }
 }

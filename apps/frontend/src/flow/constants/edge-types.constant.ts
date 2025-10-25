@@ -1,10 +1,10 @@
 import type { EdgeTypes } from "@xyflow/react";
-import ErrorEdge from "../views/error-edge";
-import FloatingEdge from "../views/floating-edge";
+import FloatingErrorEdge from "@/mvvm/flow/edges/views/error-edge";
+import FloatingEdge from "@/mvvm/flow/edges/views/floating-edge";
 
 const edgeTypes: EdgeTypes = {
 	floating: FloatingEdge,
-	Error: ErrorEdge,
+	Error: FloatingErrorEdge,
 };
 
 export default edgeTypes;

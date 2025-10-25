@@ -13,8 +13,8 @@ import type {
 	ResourceTypeTarget,
 } from "@sealos-brain/k8s/shared/models";
 import { checkPorts } from "@sealos-brain/shared/network/api";
-import type { MonitorData } from "@sealos-brain/shared/resource/models";
-import { transformMonitorData } from "@sealos-brain/shared/resource/utils";
+import type { MonitorData } from "#resource/models/resource-monitor.model";
+import { transformMonitorData } from "#resource/utils/resource.utils";
 import { DEVBOX_LABELS } from "../constants/devbox-labels.constant";
 import { getDevbox, getDevboxMonitorData } from "./devbox.api";
 

@@ -127,7 +127,7 @@ export const DeploymentSpecSchema = z.object({
 // Main deployment resource schema
 export const DeploymentResourceSchema = z.object({
 	apiVersion: z.literal("apps/v1").optional().default("apps/v1"),
-	kind: z.literal("Deployment").optional().default("Deployment"),
+	kind: z.literal("Deployment"),
 	metadata: z.object({
 		name: z.string(),
 		namespace: z.string().optional(),

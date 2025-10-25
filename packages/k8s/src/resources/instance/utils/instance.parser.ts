@@ -1,5 +1,5 @@
 import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
-import { INSTANCE_DISPLAY_NAME_ANNOTATION_KEY } from "../constants";
+import { INSTANCE_ANNOTATIONS } from "../constants/instance-annotations.constant";
 import type { InstanceObject } from "../models/instance-object.model";
 import type { InstanceResource } from "../models/instance-resource.model";
 
@@ -9,8 +9,7 @@ const toObject = (instance: InstanceResource): InstanceObject => {
 
 	// Get display name from annotations or fallback to name
 	const displayName =
-		metadata.annotations?.[INSTANCE_DISPLAY_NAME_ANNOTATION_KEY] ||
-		metadata.name;
+		metadata.annotations?.[INSTANCE_ANNOTATIONS.DISPLAY_NAME] || metadata.name;
 
 	return {
 		name: metadata.name || "unknown",

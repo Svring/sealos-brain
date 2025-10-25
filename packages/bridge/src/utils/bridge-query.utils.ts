@@ -1,7 +1,7 @@
 import type { K8sResource } from "@sealos-brain/k8s/shared/models";
-import type { BridgeQueryItem } from "@sealos-brain/models/bridge";
 import _ from "lodash";
 import { z } from "zod";
+import type { BridgeQueryItem } from "../models/bridge-query.model";
 
 // ============================================================================
 // CORE UTILITY FUNCTIONS

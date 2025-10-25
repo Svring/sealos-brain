@@ -1,13 +1,13 @@
 "use server";
 
-import type { K8sContext, ResourceTarget } from "../../../shared/models/index";
+import { getResourcePods } from "#resources/pod/api/pod.api";
+import type { K8sContext, ResourceTarget } from "#shared/models";
 import {
 	addMissingFields,
 	getBuiltinApiClient,
 	getCurrentNamespace,
 	invokeApiMethod,
-} from "../../../shared/utils/index";
-import { getResourcePods } from "../../pod/api/pod.api";
+} from "#shared/utils";
 import { EVENT_FIELDS } from "../constants";
 import { eventParser } from "../utils/event.parser";
 

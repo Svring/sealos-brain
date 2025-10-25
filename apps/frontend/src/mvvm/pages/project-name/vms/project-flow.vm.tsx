@@ -1,8 +1,6 @@
 "use client";
 
 import type { Edge, Node } from "@xyflow/react";
-import { useProjectState } from "@/contexts/actor/spawns/project/project.context";
-import { useAddChat } from "@/hooks/copilot/use-add-chat";
 import { ProjectFlowView } from "../views/project-flow.view";
 
 interface ProjectFlowProps {
@@ -11,11 +9,8 @@ interface ProjectFlowProps {
 }
 
 export function ProjectFlow({ nodes = [], edges = [] }: ProjectFlowProps) {
-	const { project } = useProjectState();
-	const { handleAddChat } = useAddChat();
-
 	const handlePaneClick = () => {
-		handleAddChat(project?.uid);
+		// TODO: Implement handle pane click logic
 	};
 
 	const handleEdgeClick = (event: React.MouseEvent) => {

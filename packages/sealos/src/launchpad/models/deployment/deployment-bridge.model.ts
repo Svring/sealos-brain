@@ -1,10 +1,4 @@
 import {
-	getCurrentNamespace,
-	getRegionUrlFromKubeconfig,
-} from "@sealos-brain/k8s/shared/utils";
-import { composePortsFromResources } from "@sealos-brain/shared/network/utils";
-import { z } from "zod";
-import {
 	determineLaunchpadStatus,
 	transformConfigMap,
 	transformDeploymentEnv,
@@ -14,7 +8,13 @@ import {
 	transformOperationalStatus,
 	transformPods,
 	transformStrategy,
-} from "@/launchpad/utils/launchpad.utils";
+} from "#launchpad/utils/launchpad.utils";
+import {
+	getCurrentNamespace,
+	getRegionUrlFromKubeconfig,
+} from "@sealos-brain/k8s/shared/utils";
+import { composePortsFromResources } from "@sealos-brain/shared/network/utils";
+import { z } from "zod";
 import { LAUNCHPAD_LABELS } from "../../constants/launchpad-labels.constant";
 
 // Deployment object query schema

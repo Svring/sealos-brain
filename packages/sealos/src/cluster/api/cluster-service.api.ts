@@ -11,9 +11,9 @@ import type {
 	K8sResource,
 	ResourceTypeTarget,
 } from "@sealos-brain/k8s/shared/models";
-import type { MonitorData } from "@sealos-brain/shared/resource/models";
-import { transformMonitorData } from "@sealos-brain/shared/resource/utils";
-import { CLUSTER_LABELS } from "@/cluster/constants/cluster-labels.constant";
+import { CLUSTER_LABELS } from "#cluster/constants/cluster-labels.constant";
+import type { MonitorData } from "#resource/models/resource-monitor.model";
+import { transformMonitorData } from "#resource/utils/resource.utils";
 import { getClusterMonitorData } from "./cluster.api";
 
 // ============================================================================

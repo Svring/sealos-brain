@@ -1,5 +1,5 @@
-import type { EventObject } from "@/resources/event/models/event-object.model";
-import type { EventResource } from "@/resources/event/models/event-resource.model";
+import type { EventObject } from "../models/event-object.model";
+import type { EventResource } from "../models/event-resource.model";
 
 // Convert EventResource to EventObject
 const toObject = (event: EventResource): EventObject => {

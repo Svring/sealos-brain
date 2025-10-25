@@ -48,7 +48,7 @@ export const copilotMachine = createMachine({
 						const isSameChat =
 							latestChat && isEqual(latestChat.metadata, event.chat.metadata);
 
-						return isSameChat
+						return isSameChat && context.opened
 							? { ...context, opened: false }
 							: {
 									...context,

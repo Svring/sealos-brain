@@ -1,18 +1,26 @@
 "use client";
 
-import { GroupNode } from "@/components/flow/nodes/group-node.comp";
-import { useProjectState } from "@/contexts/actor/spawns/project/project.context";
-import { useAddChat } from "@/hooks/copilot/use-add-chat";
+interface DevGroupNodeBlockProps {
+	data: {
+		label?: string;
+	};
+}
 
-export function DevGroupNodeBlock() {
-	const { project } = useProjectState();
-	const { handleAddChat } = useAddChat();
-
+export function DevGroupNodeBlock({ data }: DevGroupNodeBlockProps) {
 	const handleClick = () => {
-		handleAddChat(project?.uid);
+		// TODO: Implement handle click logic
+		console.log("Dev group clicked:", data.label);
 	};
 
 	return (
-		<GroupNode label="Dev" labelPosition="bottom-left" onClick={handleClick} />
+		<button
+			type="button"
+			className="relative w-full h-full bg-transparent border border-muted-foreground/45 border-dashed rounded-xl cursor-grab"
+			onClick={handleClick}
+		>
+			<div className="absolute bottom-2 left-2 text-sm font-medium text-muted-foreground">
+				Dev
+			</div>
+		</button>
 	);
 }

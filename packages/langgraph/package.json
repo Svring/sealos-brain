@@ -2,6 +2,9 @@
   "name": "@sealos-brain/langgraph",
   "type": "module",
   "scripts": {},
+  "imports": {
+    "#*": "./src/*"
+  },
   "exports": {
     "./api": "./src/api/langgraph.api.ts",
     "./utils": "./src/utils/langgraph.utils.ts"

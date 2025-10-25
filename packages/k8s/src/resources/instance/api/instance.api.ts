@@ -1,4 +1,6 @@
 import https from "node:https";
+import axios from "axios";
+import _ from "lodash";
 import {
 	getResource,
 	listResources,
@@ -8,17 +10,15 @@ import {
 	removeCustomResourceMetadata,
 	selectResources,
 	upsertCustomResource,
-} from "@sealos-brain/k8s/shared/api";
+} from "#shared/api";
 import type {
 	BuiltinResourceTarget,
 	CustomResourceTarget,
 	K8sContext,
 	K8sItem,
 	ResourceTarget,
-} from "@sealos-brain/k8s/shared/models";
-import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
-import axios from "axios";
-import _ from "lodash";
+} from "#shared/models";
+import { getRegionUrlFromKubeconfig } from "#shared/utils";
 import { INSTANCE_ANNOTATIONS, INSTANCE_LABELS } from "../constants";
 import type { InstanceObject } from "../models/instance-object.model";
 import { InstanceResourceSchema } from "../models/instance-resource.model";

@@ -2,30 +2,42 @@
 
 import { Client, type Metadata, type Thread } from "@langchain/langgraph-sdk";
 
-const createClient = () => {
-	const apiUrl = process.env.LANGGRAPH_DEPLOYMENT_URL;
+const createClient = (apiUrl: string) => {
 	return new Client({
 		apiUrl,
 	});
 };
 
 export const createThread = async ({
+	apiUrl,
+	graphId,
 	metadata,
 	supersteps,
 }: {
+	apiUrl: string;
+	graphId: string;
 	metadata: Metadata;
 	supersteps?: Array<{
 		updates: Array<{
-			values: Record<string, any>;
+			values: Record<string, unknown>;
 			asNode: string;
 		}>;
 	}>;
 }) => {
-	const client = createClient();
+	const client = createClient(apiUrl);
 
-	const createOptions: any = {
+	const createOptions: {
+		metadata: Metadata;
+		graphId: string;
+		supersteps?: Array<{
+			updates: Array<{
+				values: Record<string, unknown>;
+				asNode: string;
+			}>;
+		}>;
+	} = {
 		metadata,
-		graphId: process.env.LANGGRAPH_GRAPH_ID,
+		graphId,
 	};
 
 	// Add supersteps if provided
@@ -36,32 +48,35 @@ export const createThread = async ({
 	return await client.threads.create(createOptions);
 };
 
-export const listThreads = async () => {
-	const client = createClient();
+export const listThreads = async (apiUrl: string) => {
+	const client = createClient(apiUrl);
 	return await client.threads.search({ limit: 10 });
 };
 
-export const getThread = async (threadId: string) => {
-	const client = createClient();
+export const getThread = async (apiUrl: string, threadId: string) => {
+	const client = createClient(apiUrl);
 	return await client.threads.get(threadId);
 };
 
-export const updateThreadState = async (threadId: string, values: any) => {
-	const client = createClient();
+export const updateThreadState = async (
+	apiUrl: string,
+	threadId: string,
+	values: Record<string, unknown>,
+) => {
+	const client = createClient(apiUrl);
 	return await client.threads.updateState(threadId, { values });
 };
 
-export const deleteThread = async (threadId: string) => {
-	const client = createClient();
+export const deleteThread = async (apiUrl: string, threadId: string) => {
+	const client = createClient(apiUrl);
 	return await client.threads.delete(threadId);
 };
 
-export const patchThread = async (threadId: string, metadata: Metadata) => {
-	const apiUrl = process.env.LANGGRAPH_DEPLOYMENT_URL;
-	if (!apiUrl) {
-		throw new Error("LANGGRAPH_DEPLOYMENT_URL environment variable is not set");
-	}
-
+export const patchThread = async (
+	apiUrl: string,
+	threadId: string,
+	metadata: Metadata,
+) => {
 	try {
 		const response = await fetch(`${apiUrl}/threads/${threadId}`, {
 			method: "PATCH",
@@ -86,9 +101,10 @@ export const patchThread = async (threadId: string, metadata: Metadata) => {
 };
 
 export const searchThreads = async (
-	metadata: Record<string, any>,
+	apiUrl: string,
+	metadata: Record<string, unknown>,
 ): Promise<Thread[]> => {
-	const client = createClient();
+	const client = createClient(apiUrl);
 
 	const res = await client.threads
 		.search({
@@ -104,7 +120,7 @@ export const searchThreads = async (
 	return res;
 };
 
-export const getThreadState = async (threadId: string) => {
-	const client = createClient();
+export const getThreadState = async (apiUrl: string, threadId: string) => {
+	const client = createClient(apiUrl);
 	return await client.threads.getState(threadId);
 };

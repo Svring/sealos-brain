@@ -15,7 +15,7 @@ export function SelectUserView({ users, onUserSelect }: SelectUserViewProps) {
 		<div className="flex min-h-screen items-center justify-center p-4">
 			<div className="w-full max-w-sm space-y-3">
 				<h2 className="text-center text-lg font-semibold">Select User</h2>
-				<ItemGroup>
+				<ItemGroup className="gap-2">
 					{users.map((u) => (
 						<Item
 							size="sm"

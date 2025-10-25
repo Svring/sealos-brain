@@ -2,6 +2,9 @@
   "name": "@sealos-brain/shared",
   "type": "module",
   "scripts": {},
+  "imports": {
+    "#*": "./src/*"
+  },
   "exports": {
     "./date/utils": "./src/date/utils/index.ts",
     "./misc/utils": "./src/misc/utils/index.ts",
@@ -21,7 +24,7 @@
     "is-port-reachable": "^4.0.0",
     "nanoid": "^5.1.6",
     "tailwind-merge": "^2.5.5",
-    "zod": "^4.1.12",
+    "zod": "^3.24.1",
     "@sealos-brain/k8s": "workspace:*"
   }
 }

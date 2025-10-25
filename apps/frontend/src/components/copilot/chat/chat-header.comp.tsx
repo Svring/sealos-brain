@@ -2,7 +2,6 @@
 
 import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@sealos-brain/shared/misc/utils";
-import { getResourceIcon } from "@sealos-brain/shared/resource/utils";
 import {
 	ChevronRight,
 	History as HistoryIcon,
@@ -24,6 +23,7 @@ import {
 	useCopilotState,
 } from "@/contexts/actor/spawns/copilot/copilot.context";
 import { useProjectState } from "@/contexts/actor/spawns/project/project.context";
+import { getResourceIcon } from "@/lib/resource/utils/resource.utils";
 
 // Header section
 export const Header = ({

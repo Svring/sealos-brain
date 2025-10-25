@@ -1,6 +1,6 @@
 "use server";
 
-import { composeObjectFromTarget } from "@sealos-brain/bridge";
+import { composeObjectFromTarget } from "@sealos-brain/bridge/api";
 import type {
 	CustomResourceTarget,
 	K8sContext,

@@ -1,16 +1,16 @@
 "use server";
 
+import { getResourcePods } from "#resources/pod/api/pod.api";
 import type {
 	BuiltinResourceTarget,
 	K8sContext,
 	ResourceTarget,
-} from "../../../shared/models/index";
+} from "#shared/models";
 import {
 	getApiClients,
 	getCurrentNamespace,
 	invokeApiMethod,
-} from "../../../shared/utils/index";
-import { getResourcePods } from "../../pod/api/pod.api";
+} from "#shared/utils";
 
 /**
  * Get logs for all pods associated with a resource.

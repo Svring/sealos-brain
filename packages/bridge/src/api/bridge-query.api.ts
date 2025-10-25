@@ -1,21 +1,20 @@
 "use server";
 
+import { getResource, listResources } from "@sealos-brain/k8s/shared/api";
 import type {
 	K8sContext,
 	K8sResource,
 	ResourceTarget,
 } from "@sealos-brain/k8s/shared/models";
-import { k8sParser } from "@sealos-brain/lib/k8s-parser";
-import { getResource, listResources } from "@sealos-brain/lib/k8s-service";
-import type { BridgeQueryItem } from "@sealos-brain/models/bridge";
-import type { z } from "zod";
+import { k8sParser } from "@sealos-brain/k8s/shared/utils";
+import type { BridgeQueryItem } from "#models/bridge-query.model";
 import {
 	createResourceLocatorKey,
 	extractDataFromResources,
 	filterResourcesByName,
 	parseFieldDescriptions,
 	reconstructArrayResults,
-} from "./bridge-query.utils";
+} from "#utils/bridge-query.utils";
 
 // ============================================================================
 // RESOURCE FETCHING FUNCTIONS
@@ -232,12 +231,12 @@ async function getResourcesByFieldDescriptions(
 /**
  * Composes an object from a target by determining the appropriate schema and parsing its descriptions
  */
-// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
 export async function composeObjectFromTarget(
 	context: K8sContext,
 	target: ResourceTarget,
 	// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
 	bridgeSchema: any,
+	// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
 	objectSchema: any,
 	// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
 ): Promise<any> {

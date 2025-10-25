@@ -13,7 +13,7 @@ import { z } from "zod";
 import type {
 	ClusterResource,
 	ComponentSpec,
-} from "@/cluster/models/cluster-resource.model";
+} from "#cluster/models/cluster-resource.model";
 
 export const ClusterBridgeSchema = z.object({
 	name: z.any().describe(

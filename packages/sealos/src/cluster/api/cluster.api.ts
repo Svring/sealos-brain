@@ -1,17 +1,17 @@
 "use server";
 
 import https from "node:https";
-import { composeObjectFromTarget } from "@sealos-brain/bridge";
+import { composeObjectFromTarget } from "@sealos-brain/bridge/api";
 import type {
 	CustomResourceTarget,
 	K8sContext,
 } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import axios from "axios";
-import { ClusterBridgeSchema } from "@/cluster/models/cluster-bridge.model";
-import type { ClusterCreateData } from "@/cluster/models/cluster-create.model";
-import { ClusterObjectSchema } from "@/cluster/models/cluster-object.model";
-import type { ClusterUpdateData } from "@/cluster/models/cluster-update.model";
+import { ClusterBridgeSchema } from "#cluster/models/cluster-bridge.model";
+import type { ClusterCreateData } from "#cluster/models/cluster-create.model";
+import { ClusterObjectSchema } from "#cluster/models/cluster-object.model";
+import type { ClusterUpdateData } from "#cluster/models/cluster-update.model";
 
 /**
  * Creates axios instance for cluster API calls

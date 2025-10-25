@@ -150,7 +150,7 @@ export const StatefulSetSpecSchema = z.object({
 // Main statefulset resource schema
 export const StatefulSetResourceSchema = z.object({
 	apiVersion: z.literal("apps/v1").optional().default("apps/v1"),
-	kind: z.literal("StatefulSet").optional().default("StatefulSet"),
+	kind: z.literal("StatefulSet"),
 	metadata: z.object({
 		name: z.string(),
 		namespace: z.string().optional(),

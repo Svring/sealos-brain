@@ -1,5 +1,5 @@
 import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
-import type { ObjectStorageBucketResource } from "@/osb/models";
+import type { ObjectStorageBucketResource } from "#osb/models";
 
 export interface OsbItem extends Record<string, unknown> {
 	name: string;

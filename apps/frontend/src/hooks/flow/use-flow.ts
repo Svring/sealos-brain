@@ -1,5 +1,6 @@
 "use client";
 
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
 import { useMemo } from "react";
 import {
 	applyLayout,
@@ -9,7 +10,6 @@ import {
 	deriveNetworkNodesAndEdges,
 	inferObjectsReliances,
 } from "@/flow/utils/flow.utils";
-import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models/models/k8s-custom.model";
 import { useInstanceResources } from "../sealos/instance/use-instance-resources";
 import { useResourceObjects } from "../shared/resource/use-resource-objects";
 

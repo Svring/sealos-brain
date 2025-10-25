@@ -1,4 +1,4 @@
-import type { CustomResourceConfig } from "../models/k8s.model";
+import type { CustomResourceConfig } from "#shared/models/k8s.model";
 
 // Custom resources
 export const CUSTOM_RESOURCES: Record<string, CustomResourceConfig> = {
