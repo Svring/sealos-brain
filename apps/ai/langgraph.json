@@ -2,7 +2,11 @@
   "node_version": "22",
   "graphs": {
     "ai": "./src/graphs/ai/ai.graph.ts:graph",
-    "new": "./src/graphs/new/new.graph.ts:graph"
+    "new": "./src/graphs/new/new.graph.ts:graph",
+    "cluster": "./src/graphs/cluster/cluster.graph.ts:graph",
+    "launchpad": "./src/graphs/launchpad/launchpad.graph.ts:graph",
+    "project": "./src/graphs/project/project.graph.ts:graph",
+    "devbox": "./src/graphs/devbox/devbox.graph.ts:graph"
   },
   "env": ".env",
   "dependencies": ["."],

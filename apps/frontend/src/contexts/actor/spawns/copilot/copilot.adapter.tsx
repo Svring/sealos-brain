@@ -49,6 +49,8 @@ export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 	const { data: threads } = useSearchThreads(metadata);
 	const { mutate: createThread } = useCreateThread();
 
+	console.log("metadata", metadata);
+
 	// Create new thread function
 	const createNewThread = () => {
 		createThread(

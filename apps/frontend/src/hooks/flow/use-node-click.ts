@@ -29,7 +29,11 @@ export function useNodeClick({ id, resourceUid, target }: UseNodeClickProps) {
 					kubeconfigEncoded: auth?.kubeconfigEncoded || "",
 					projectUid: project?.uid || "",
 					resourceUid: resourceUid || "",
-					graphId: target.resourceType,
+					graphId:
+						target.resourceType === "deployment" ||
+						target.resourceType === "statefulset"
+							? "launchpad"
+							: target.resourceType,
 				}),
 			},
 		);

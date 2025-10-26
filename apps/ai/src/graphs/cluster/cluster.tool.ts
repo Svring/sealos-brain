@@ -2,10 +2,10 @@ import { getCurrentTaskInput } from "@langchain/langgraph";
 import { tool } from "langchain";
 import * as z from "zod";
 
-const welsome = tool(
+const welcome = tool(
 	({ joke }, config) => {
 		const currentTaskInput = getCurrentTaskInput();
-		return `Welcome the user to the new agent. \n\n Joke: ${joke} \n\n State: ${JSON.stringify(config.context)} \n\n Current Task Input: ${JSON.stringify(currentTaskInput)}`;
+		return `Welcome the user to the cluster agent. \n\n Joke: ${joke} \n\n State: ${JSON.stringify(config.context)} \n\n Current Task Input: ${JSON.stringify(currentTaskInput)}`;
 	},
 	{
 		name: "welcome",
@@ -16,4 +16,4 @@ const welsome = tool(
 	},
 );
 
-export const newTools = [welsome];
+export const clusterTools = [welcome];
