@@ -7,26 +7,22 @@ import { useCopilotAdapterContext } from "@/contexts/actor/spawns/copilot/copilo
 
 interface ChatBlockProps {
 	metadata?: Record<string, string>;
-	index?: number;
-	totalChats?: number;
+	invertedIndex?: number;
 }
 
 export function ChatBlock({
 	metadata = {},
-	index = 0,
-	totalChats = 1,
+	invertedIndex = 0,
 }: ChatBlockProps) {
-	const { submitWithContext, stop, isLoading, threadId } =
-		useCopilotAdapterContext();
+	const { submitWithContext, stop, isLoading } = useCopilotAdapterContext();
 	const [mounted, setMounted] = useState(false);
 
 	useMount(() => setMounted(true));
 
-	const computedIndex = totalChats - index - 1;
-	const scaleValue = 1 - computedIndex * 0.02;
-	const translateValue = `${computedIndex * -3}%`;
+	const scaleValue = 1 - invertedIndex * 0.02;
+	const translateValue = `${invertedIndex * -3}%`;
 
-	if (computedIndex > 1) {
+	if (invertedIndex > 1) {
 		return null;
 	}
 
@@ -42,7 +38,7 @@ export function ChatBlock({
 		<div
 			className={`absolute inset-2 grid-area-[1/1] transition-all duration-150 ${
 				mounted ? "opacity-100" : "opacity-0 translate-x-full"
-			} [--index:${computedIndex}]`}
+			} [--index:${invertedIndex}]`}
 			data-mounted={mounted}
 			style={
 				{
@@ -53,7 +49,7 @@ export function ChatBlock({
 			}
 		>
 			<Chat.Root metadata={metadata}>
-				<Chat.Container>
+				<Chat.Vessel>
 					{/* Header Section */}
 					<Chat.Header>
 						<div className="flex items-center">
@@ -85,7 +81,7 @@ export function ChatBlock({
 							<Chat.Send onSend={handleSend} disabled={isLoading} />
 						</div>
 					</Chat.Footer>
-				</Chat.Container>
+				</Chat.Vessel>
 			</Chat.Root>
 		</div>
 	);

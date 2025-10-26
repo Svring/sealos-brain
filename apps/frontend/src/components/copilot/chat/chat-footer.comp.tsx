@@ -4,6 +4,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@sealos-brain/shared/misc/utils";
 import { SendHorizonal } from "lucide-react";
 import type { ComponentProps } from "react";
+import { useEffect, useRef } from "react";
 import { useChatInput } from "@/components/copilot/chat.comp";
 
 // Footer section
@@ -27,25 +28,45 @@ export const TextArea = ({
 	className,
 	asChild = false,
 	placeholder = "",
-	onKeyDown,
 	disabled = false,
 	...props
 }: ComponentProps<"textarea"> & {
 	asChild?: boolean;
 	placeholder?: string;
-	onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 	disabled?: boolean;
 }) => {
 	const Comp = asChild ? Slot : "textarea";
 	const { value, setValue } = useChatInput();
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
 		setValue(e.target.value);
 	};
 
+	// Auto-focus when any character is pressed anywhere on the page
+	useEffect(() => {
+		const handleKeyPress = (e: KeyboardEvent) => {
+			// Only focus if typing a regular character (not special keys)
+			if (
+				!disabled &&
+				textareaRef.current &&
+				e.key.length === 1 &&
+				!e.ctrlKey &&
+				!e.metaKey &&
+				!e.altKey
+			) {
+				textareaRef.current.focus();
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyPress);
+		return () => window.removeEventListener("keydown", handleKeyPress);
+	}, [disabled]);
+
 	return (
 		<div className="flex-1 relative">
 			<Comp
+				ref={textareaRef}
 				className={cn(
 					"flex min-h-[44px] w-full resize-none rounded-md border-none bg-transparent px-3 py-2.5 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
 					className,
@@ -53,7 +74,6 @@ export const TextArea = ({
 				placeholder={placeholder}
 				value={value}
 				onChange={handleChange}
-				onKeyDown={onKeyDown}
 				disabled={disabled}
 				rows={1}
 				{...props}

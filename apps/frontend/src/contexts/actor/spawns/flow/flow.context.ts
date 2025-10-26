@@ -81,7 +81,7 @@ export function useFlowEvents() {
 			[send],
 		),
 		selectNode: useCallback(
-			(nodeId: string | null, resource?: Resource, chat?: Chat) =>
+			(nodeId: string | null, resource?: Resource, chat?: Omit<Chat, "uid">) =>
 				send({ type: "SELECT_NODE", nodeId, resource, chat }),
 			[send],
 		),

@@ -75,7 +75,7 @@ export const Provider = ({ children }: { children: React.ReactNode }) => {
 	);
 };
 
-export const Container = ({
+export const Vessel = ({
 	className,
 	asChild = false,
 	...props

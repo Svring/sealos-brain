@@ -25,7 +25,7 @@ export type FlowEvent =
 			type: "SELECT_NODE";
 			nodeId: string | null;
 			resource?: Resource;
-			chat?: Chat;
+			chat?: Omit<Chat, "uid">;
 	  }
 	| { type: "SELECT_EDGE"; edgeId: string | null }
 	| { type: "CLEAR_FLOW" }

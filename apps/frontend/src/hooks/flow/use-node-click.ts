@@ -14,7 +14,7 @@ interface UseNodeClickProps {
 export function useNodeClick({ id, resourceUid, target }: UseNodeClickProps) {
 	const { selectNode } = useFlowEvents();
 	const { auth } = useAuthState();
-	const { project, activeResource } = useProjectState();
+	const { project } = useProjectState();
 
 	const handleNodeClick = () => {
 		selectNode(
@@ -27,7 +27,7 @@ export function useNodeClick({ id, resourceUid, target }: UseNodeClickProps) {
 				metadata: {
 					kubeconfigEncoded: auth?.kubeconfigEncoded || "",
 					projectUid: project?.uid || "",
-					resourceUid: activeResource?.uid || "",
+					resourceUid: resourceUid || "",
 				},
 			},
 		);

@@ -27,7 +27,7 @@ export function CopilotBlock() {
 			<Copilot.Root context={context}>
 				<Copilot.Content>
 					<CopilotAdapter metadata={{}}>
-						<ChatBlock />
+						<ChatBlock invertedIndex={0} />
 					</CopilotAdapter>
 				</Copilot.Content>
 			</Copilot.Root>
@@ -39,22 +39,21 @@ export function CopilotBlock() {
 		<Copilot.Root context={context}>
 			<Copilot.Content>
 				{chats.map((chat, index) => {
-					const computedIndex = chats.length - index - 1;
-					if (computedIndex === 0) {
+					const invertedIndex = chats.length - index - 1;
+					if (invertedIndex === 0) {
 						return (
 							<CopilotAdapter key={chat.uid} metadata={chat.metadata}>
 								<ChatBlock
 									metadata={chat.metadata}
-									index={index}
-									totalChats={chats.length}
+									invertedIndex={invertedIndex}
 								/>
 							</CopilotAdapter>
 						);
 					}
-					if (computedIndex < 2) {
+					if (invertedIndex < 2) {
 						return (
 							<Chat.Root key={chat.uid} metadata={chat.metadata}>
-								<Chat.Container></Chat.Container>
+								<Chat.Vessel></Chat.Vessel>
 							</Chat.Root>
 						);
 					}

@@ -25,6 +25,8 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
 
 	const state = useSelector(copilotRef, (s) => s);
 
+	console.log("state", state.context);
+
 	const send = useCallback(
 		(event: EventFrom<typeof copilotMachine>) => copilotRef.send(event),
 		[copilotRef],
