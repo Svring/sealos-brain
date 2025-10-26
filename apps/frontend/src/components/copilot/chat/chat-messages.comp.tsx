@@ -45,7 +45,7 @@ const messageBubbleVariants = cva(
 			role: {
 				ai: "text-foreground px-1 max-w-3xl",
 				human:
-					"bg-background-tertiary rounded-2xl rounded-br-md text-foreground px-4 border border-border-primary max-w-2xl",
+					"bg-background-quaternary rounded-2xl rounded-br-md text-foreground px-4 border border-border-primary max-w-2xl",
 				tool: "text-foreground px-1 max-w-3xl",
 				system: "text-foreground px-1 max-w-3xl",
 			},

@@ -5,6 +5,7 @@ import { assign, createMachine } from "xstate";
 
 // Chat object interface
 export interface Chat {
+	uid: string;
 	metadata: Record<string, string>;
 }
 
@@ -21,7 +22,7 @@ export interface CopilotContext {
 }
 
 export type CopilotEvent =
-	| { type: "ADD_CHAT"; chat: Chat }
+	| { type: "ADD_CHAT"; chat: Omit<Chat, "uid"> }
 	| { type: "OPEN_COPILOT" }
 	| { type: "CLOSE_COPILOT" }
 	| { type: "SET_VIEW_TYPE"; viewType: "chat" | "info" }
@@ -48,11 +49,17 @@ export const copilotMachine = createMachine({
 						const isSameChat =
 							latestChat && isEqual(latestChat.metadata, event.chat.metadata);
 
+						// Generate unique ID for the new chat
+						const newChat: Chat = {
+							uid: crypto.randomUUID(),
+							metadata: event.chat.metadata,
+						};
+
 						return isSameChat && context.opened
 							? { ...context, opened: false }
 							: {
 									...context,
-									chats: [...context.chats, event.chat],
+									chats: [...context.chats, newChat],
 									opened: true,
 								};
 					}),

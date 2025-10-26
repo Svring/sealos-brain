@@ -13,17 +13,9 @@ export function composeMetadata(
 	projectUid?: string,
 	resourceUid?: string,
 ): Record<string, string> {
-	const metadata: Record<string, string> = {
+	return {
 		kubeconfigEncoded,
+		projectUid: projectUid ?? "",
+		resourceUid: resourceUid ?? "",
 	};
-
-	if (projectUid) {
-		metadata.projectUid = projectUid;
-	}
-
-	if (resourceUid) {
-		metadata.resourceUid = resourceUid;
-	}
-
-	return metadata;
 }

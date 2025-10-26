@@ -1,6 +1,8 @@
 "use client";
 
 import type { Interrupt, Message, Thread } from "@langchain/langgraph-sdk";
+import { useMount } from "@reactuses/core";
+import { searchThreads } from "@sealos-brain/langgraph/api";
 import { useQueryState } from "nuqs";
 import type { ReactNode } from "react";
 import { createContext, use } from "react";
@@ -9,7 +11,6 @@ import { useCopilotMount } from "@/hooks/copilot/use-copilot-mount";
 import { useCreateThread } from "@/hooks/langgraph/use-create-thread";
 import { useSearchThreads } from "@/hooks/langgraph/use-search-threads";
 import { useStreamContext } from "@/hooks/langgraph/use-stream-context";
-import { useEffectOnCondition } from "@/hooks/shared/misc/use-effect-on-condition";
 
 interface CopilotAdapterContextValue {
 	threads: Thread[];
@@ -43,7 +44,7 @@ export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 	useCopilotMount({ metadata });
 
 	// Search threads based on metadata
-	const { data: threads, isSuccess } = useSearchThreads(metadata);
+	const { data: threads } = useSearchThreads(metadata);
 	const { mutate: createThread } = useCreateThread();
 
 	// Create new thread function
@@ -58,16 +59,19 @@ export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 		);
 	};
 
-	// Auto-select first thread or create new thread when search is successful
-	useEffectOnCondition(() => {
-		console.log("threads", threads);
-		if (threads && threads.length > 0 && threads[0]?.thread_id) {
-			console.log("threads[0].thread_id", threads[0].thread_id);
-			setThreadId(threads[0].thread_id);
-		} else {
-			createNewThread();
-		}
-	}, isSuccess);
+	useMount(() => {
+		const getThreads = async () => {
+			const threads = await searchThreads(deploymentUrl, metadata);
+			// console.log("threads", threads);
+			if (threads && threads.length > 0 && threads[0]?.thread_id) {
+				console.log("threads[0].thread_id", threads[0].thread_id);
+				setThreadId(threads[0].thread_id);
+			} else {
+				createNewThread();
+			}
+		};
+		getThreads();
+	});
 
 	// Use stream context hook
 	const {

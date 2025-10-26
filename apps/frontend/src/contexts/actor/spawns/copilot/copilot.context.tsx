@@ -44,7 +44,7 @@ export function useCopilotEvents() {
 		open: useCallback(() => send({ type: "OPEN_COPILOT" }), [send]),
 		close: useCallback(() => send({ type: "CLOSE_COPILOT" }), [send]),
 		addChat: useCallback(
-			(chat: Chat) => send({ type: "ADD_CHAT", chat }),
+			(chat: Omit<Chat, "uid">) => send({ type: "ADD_CHAT", chat }),
 			[send],
 		),
 		setView: useCallback(

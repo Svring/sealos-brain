@@ -59,7 +59,6 @@ export function ChatBlock({
 						<div className="flex items-center">
 							<Chat.Title />
 							<Chat.ViewToggle />
-							<>{threadId}</>
 						</div>
 
 						<div className="flex items-center gap-1">

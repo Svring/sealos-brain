@@ -1,5 +1,6 @@
 "use client";
 
+import * as Chat from "@/components/copilot/chat.comp";
 import * as Copilot from "@/components/copilot/copilot.comp";
 import { CopilotAdapter } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 import {
@@ -38,18 +39,26 @@ export function CopilotBlock() {
 		<Copilot.Root context={context}>
 			<Copilot.Content>
 				{chats.map((chat, index) => {
-					if (chats.length - index - 1 > 2) {
-						return null;
+					const computedIndex = chats.length - index - 1;
+					if (computedIndex === 0) {
+						return (
+							<CopilotAdapter key={chat.uid} metadata={chat.metadata}>
+								<ChatBlock
+									metadata={chat.metadata}
+									index={index}
+									totalChats={chats.length}
+								/>
+							</CopilotAdapter>
+						);
 					}
-					return (
-						<CopilotAdapter key={index} metadata={chat.metadata}>
-							<ChatBlock
-								metadata={chat.metadata}
-								index={index}
-								totalChats={chats.length}
-							/>
-						</CopilotAdapter>
-					);
+					if (computedIndex < 2) {
+						return (
+							<Chat.Root key={chat.uid} metadata={chat.metadata}>
+								<Chat.Container></Chat.Container>
+							</Chat.Root>
+						);
+					}
+					return null;
 				})}
 			</Copilot.Content>
 		</Copilot.Root>

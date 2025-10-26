@@ -119,7 +119,16 @@ export const searchThreads = async (
 			return res.filter((obj) => obj.values);
 		});
 
-	console.log("res", res);
+	console.log(
+		"res",
+		res.map((obj) => {
+			return {
+				threadId: obj.thread_id,
+				projectUid: obj.metadata?.projectUid,
+				resourceUid: obj.metadata?.resourceUid,
+			};
+		}),
+	);
 
 	return res;
 };

@@ -27,7 +27,7 @@ function CopilotChat({ chat, index, totalChats }: CopilotChatProps) {
 
 	return (
 		<div
-			className={`absolute inset-2 grid-area-[1/1] transition-all duration-[0.15s] ${
+			className={`absolute inset-2 grid-area-[1/1] transition-all duration-150 ${
 				mounted ? "opacity-100" : "opacity-0 translate-x-full"
 			} [--index:${computedIndex}]`}
 			data-mounted={mounted}
@@ -64,10 +64,10 @@ export function ProjectCopilotView({ chats }: ProjectCopilotViewProps) {
 
 	// Render all chats with their metadata
 	return (
-		<div className="h-full w-full p-2 relative">
+		<div className="h-full w-full p-2 relative present:overflow-auto">
 			{chats.map((chat, index) => (
 				<CopilotChat
-					key={index}
+					key={chat.uid}
 					chat={chat}
 					index={index}
 					totalChats={chats.length}
