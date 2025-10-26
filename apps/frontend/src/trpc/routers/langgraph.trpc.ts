@@ -2,7 +2,6 @@ import {
 	createThread,
 	deleteThread,
 	getThread,
-	listThreads,
 	patchThread,
 	searchThreads,
 	updateThreadState,
@@ -41,14 +40,6 @@ const t = initTRPC.context<LanggraphContext>().create(createErrorFormatter());
 export const langgraphRouter = t.router({
 	// ===== QUERY PROCEDURES =====
 
-	// Thread Information
-	listThreads: t.procedure
-		.input(z.string().optional().default("threads"))
-		.query(async () => {
-			const { apiUrl } = getLanggraphConfig();
-			return await listThreads(apiUrl);
-		}),
-
 	getThread: t.procedure.input(z.string()).query(async ({ input }) => {
 		const { apiUrl } = getLanggraphConfig();
 		return await getThread(apiUrl, input);
@@ -71,11 +62,18 @@ export const langgraphRouter = t.router({
 	createThread: t.procedure
 		.input(
 			z.object({
-				metadata: z.record(z.string(), z.string()),
+				metadata: z
+					.record(z.string(), z.string())
+					.refine(
+						(data) => "graphId" in data && typeof data.graphId === "string",
+						{
+							message: "graphId is required in metadata",
+						},
+					),
 			}),
 		)
 		.mutation(async ({ input }) => {
-			const { apiUrl, graphId } = getLanggraphConfig();
+			const { apiUrl } = getLanggraphConfig();
 			const { metadata } = input;
 
 			// Default supersteps
@@ -92,7 +90,7 @@ export const langgraphRouter = t.router({
 
 			return await createThread({
 				apiUrl,
-				graphId,
+				graphId: metadata.graphId as string,
 				metadata: metadata,
 				supersteps,
 			});

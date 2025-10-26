@@ -48,11 +48,6 @@ export const createThread = async ({
 	return await client.threads.create(createOptions);
 };
 
-export const listThreads = async (apiUrl: string) => {
-	const client = createClient(apiUrl);
-	return await client.threads.search({ limit: 10 });
-};
-
 export const getThread = async (apiUrl: string, threadId: string) => {
 	const client = createClient(apiUrl);
 	return await client.threads.get(threadId);
@@ -106,8 +101,6 @@ export const searchThreads = async (
 ): Promise<Thread[]> => {
 	const client = createClient(apiUrl);
 
-	console.log("metadata", metadata);
-
 	const res = await client.threads
 		.search({
 			metadata,
@@ -118,17 +111,6 @@ export const searchThreads = async (
 		.then((res) => {
 			return res.filter((obj) => obj.values);
 		});
-
-	console.log(
-		"res",
-		res.map((obj) => {
-			return {
-				threadId: obj.thread_id,
-				projectUid: obj.metadata?.projectUid,
-				resourceUid: obj.metadata?.resourceUid,
-			};
-		}),
-	);
 
 	return res;
 };

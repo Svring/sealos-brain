@@ -20,7 +20,7 @@ export function LangGraphAdapter({
 	langgraphContext: LangGraphContext;
 }) {
 	const [state, send] = useMachine(langgraphMachine);
-	const { baseURL, apiKey, modelName } = useProxyState();
+	const { apiKey } = useProxyState();
 	const { auth } = useAuthState();
 
 	// Handle langgraph config updates in useEffect to avoid setState during render
@@ -36,20 +36,11 @@ export function LangGraphAdapter({
 		send({
 			type: "SET_GRAPH_STATE",
 			graphState: {
-				baseURL,
 				apiKey,
-				modelName,
 				kubeconfigEncoded: auth?.kubeconfigEncoded || "",
 			},
 		});
-	}, [
-		langgraphContext,
-		baseURL,
-		apiKey,
-		modelName,
-		send,
-		auth?.kubeconfigEncoded,
-	]);
+	}, [langgraphContext, apiKey, send, auth?.kubeconfigEncoded]);
 
 	if (state.matches("initializing") || !state.matches("ready")) {
 		return null;

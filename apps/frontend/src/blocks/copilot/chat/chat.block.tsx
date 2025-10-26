@@ -3,6 +3,7 @@
 import { useMount } from "@reactuses/core";
 import { useState } from "react";
 import * as Chat from "@/components/copilot/chat.comp";
+import { Spinner } from "@/components/ui/spinner";
 import { useCopilotAdapterContext } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 
 interface ChatBlockProps {
@@ -14,7 +15,8 @@ export function ChatBlock({
 	metadata = {},
 	invertedIndex = 0,
 }: ChatBlockProps) {
-	const { submitWithContext, stop, isLoading } = useCopilotAdapterContext();
+	const { submitWithContext, stop, isLoading, isMounting } =
+		useCopilotAdapterContext();
 	const [mounted, setMounted] = useState(false);
 
 	useMount(() => setMounted(true));
@@ -66,12 +68,18 @@ export function ChatBlock({
 
 					{/* Content Section - Messages */}
 					<Chat.Content>
-						<Chat.Messages>
-							<Chat.AIMessage data-message-role="ai" />
-							<Chat.HumanMessage data-message-role="human" />
-							<Chat.ToolMessage data-message-role="tool" />
-							<Chat.SystemMessage data-message-role="system" />
-						</Chat.Messages>
+						{isMounting ? (
+							<div className="flex items-center justify-center h-full">
+								<Spinner />
+							</div>
+						) : (
+							<Chat.Messages>
+								<Chat.AIMessage data-message-role="ai" />
+								<Chat.HumanMessage data-message-role="human" />
+								<Chat.ToolMessage data-message-role="tool" />
+								<Chat.SystemMessage data-message-role="system" />
+							</Chat.Messages>
+						)}
 					</Chat.Content>
 
 					{/* Footer Section - Input */}

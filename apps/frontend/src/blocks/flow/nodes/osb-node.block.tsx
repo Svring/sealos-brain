@@ -27,11 +27,11 @@ export function OsbNodeBlock({ data }: OsbNodeBlockProps) {
 	if (!object) {
 		return (
 			<BaseNode.Root target={target}>
-				<BaseNode.Vessel onClick={handleNodeClick}>
+				<BaseNode.Vessel>
 					<BaseNode.Header>
-						<BaseNode.Title />
+						<BaseNode.Title onClick={handleNodeClick} />
 					</BaseNode.Header>
-					<BaseNode.Content>
+					<BaseNode.Content onClick={handleNodeClick}>
 						<div className="flex items-center justify-center h-full text-muted-foreground text-sm">
 							No data available
 						</div>
@@ -63,12 +63,12 @@ export function OsbNodeBlock({ data }: OsbNodeBlockProps) {
 
 	return (
 		<BaseNode.Root target={target}>
-			<BaseNode.Vessel onClick={handleNodeClick}>
+			<BaseNode.Vessel>
 				<BaseNode.Header>
-					<BaseNode.Title />
+					<BaseNode.Title onClick={handleNodeClick} />
 				</BaseNode.Header>
 
-				<BaseNode.Content>
+				<BaseNode.Content onClick={handleNodeClick}>
 					{isPublic && (
 						<div className="flex items-center justify-between gap-2">
 							<div className="flex items-center gap-2">
@@ -95,7 +95,7 @@ export function OsbNodeBlock({ data }: OsbNodeBlockProps) {
 					)}
 				</BaseNode.Content>
 
-				<BaseNode.Footer>
+				<BaseNode.Footer onClick={handleNodeClick}>
 					<BaseNode.Status onClick={handleStatusClick} />
 					<BaseNode.Widget
 						icon={HardDrive}

@@ -15,7 +15,12 @@ export default function Layout({ children }: LayoutProps) {
 	const { auth } = useAuthState();
 
 	return (
-		<CopilotAdapter metadata={composeMetadata(auth?.kubeconfigEncoded)}>
+		<CopilotAdapter
+			metadata={composeMetadata({
+				kubeconfigEncoded: auth?.kubeconfigEncoded ?? "",
+				graphId: "new",
+			})}
+		>
 			{children}
 		</CopilotAdapter>
 	);

@@ -1,21 +1,31 @@
 import { ChatOpenAI } from "@langchain/openai";
 
 export const getModel = ({
-	modelName = "gpt-4.1",
-	baseURL = "https://aiproxy.usw.sealos.io/v1",
 	apiKey,
+	trial = false,
 }: {
-	modelName: string;
-	baseURL: string;
-	apiKey: string;
+	apiKey?: string;
+	trial?: boolean;
 }) => {
-	const resolvedBaseURL = process.env.baseURL || baseURL;
+	const baseURL = process.env.PROXY_BASE_URL;
+	const modelName = process.env.PROXY_MODEL_NAME;
+	const key = trial ? process.env.TRIAL_API_KEY : apiKey;
+
+	if (!baseURL) {
+		throw new Error("LANGGRAPH_BASE_URL environment variable is not set");
+	}
+	if (!modelName) {
+		throw new Error("LANGGRAPH_MODEL_NAME environment variable is not set");
+	}
+	if (!key) {
+		throw new Error("API key is required");
+	}
 
 	return new ChatOpenAI({
 		model: modelName,
-		apiKey: apiKey,
+		apiKey: key,
 		configuration: {
-			baseURL: resolvedBaseURL,
+			baseURL,
 		},
 	});
 };

@@ -8,12 +8,19 @@ export async function checkGraphStatus(apiUrl: string): Promise<boolean> {
 	}
 }
 
-export function composeMetadata(
-	kubeconfigEncoded: string,
-	projectUid?: string,
-	resourceUid?: string,
-): Record<string, string> {
+export function composeMetadata({
+	kubeconfigEncoded,
+	projectUid,
+	resourceUid,
+	graphId,
+}: {
+	kubeconfigEncoded: string;
+	projectUid?: string;
+	resourceUid?: string;
+	graphId: string;
+}): Record<string, string> {
 	return {
+		graphId,
 		kubeconfigEncoded,
 		projectUid: projectUid ?? "",
 		resourceUid: resourceUid ?? "",

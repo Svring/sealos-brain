@@ -32,10 +32,7 @@ export function useStreamContext({
 		return submit(
 			{
 				apiKey: graphState.apiKey,
-				baseURL: graphState.baseURL,
-				modelName: graphState.modelName,
 				kubeconfigEncoded: auth?.kubeconfigEncoded,
-				route: graphState.route,
 				messages: data.messages,
 			},
 			{

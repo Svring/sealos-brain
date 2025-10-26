@@ -1,7 +1,8 @@
 {
   "node_version": "22",
   "graphs": {
-    "ai": "./src/graphs/ai/ai.graph.ts:graph"
+    "ai": "./src/graphs/ai/ai.graph.ts:graph",
+    "new": "./src/graphs/new/new.graph.ts:graph"
   },
   "env": ".env",
   "dependencies": ["."],

@@ -82,22 +82,8 @@ export function useLangGraphEvents() {
 				send({ type: "UPDATE_GRAPH_STATE", graphState }),
 			[send],
 		),
-		setRoute: useCallback(
-			(route: GraphState["route"]) => send({ type: "SET_ROUTE", route }),
-			[send],
-		),
 		addMessage: useCallback(
 			(message: Message) => send({ type: "ADD_MESSAGE", message }),
-			[send],
-		),
-		setProjectContext: useCallback(
-			(projectContext: any) =>
-				send({ type: "SET_PROJECT_CONTEXT", projectContext }),
-			[send],
-		),
-		setResourceContext: useCallback(
-			(resourceContext: any) =>
-				send({ type: "SET_RESOURCE_CONTEXT", resourceContext }),
 			[send],
 		),
 		fail: useCallback(() => send({ type: "FAIL" }), [send]),

@@ -5,7 +5,7 @@ import { useMount } from "@reactuses/core";
 import { searchThreads } from "@sealos-brain/langgraph/api";
 import { useQueryState } from "nuqs";
 import type { ReactNode } from "react";
-import { createContext, use } from "react";
+import { createContext, use, useState } from "react";
 import { useLangGraphState } from "@/contexts/langgraph/langgraph.context";
 import { useCopilotMount } from "@/hooks/copilot/use-copilot-mount";
 import { useCreateThread } from "@/hooks/langgraph/use-create-thread";
@@ -25,6 +25,7 @@ interface CopilotAdapterContextValue {
 	hasMessages: boolean;
 	interrupt: Interrupt<unknown> | undefined;
 	joinStream: (runId: string) => Promise<void>;
+	isMounting: boolean;
 }
 
 export const copilotAdapterContext = createContext<
@@ -38,10 +39,11 @@ interface CopilotAdapterProps {
 
 export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 	const [threadId, setThreadId] = useQueryState("threadId");
-	const { deploymentUrl, graphId } = useLangGraphState();
+	const [isMounting, setIsMounting] = useState(true);
+	const { deploymentUrl } = useLangGraphState();
 
 	// Handle mount logic (health check and route setting)
-	useCopilotMount({ metadata });
+	// useCopilotMount({ metadata });
 
 	// Search threads based on metadata
 	const { data: threads } = useSearchThreads(metadata);
@@ -54,6 +56,7 @@ export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 			{
 				onSuccess: (data) => {
 					setThreadId(data.thread_id);
+					setIsMounting(false);
 				},
 			},
 		);
@@ -62,10 +65,9 @@ export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 	useMount(() => {
 		const getThreads = async () => {
 			const threads = await searchThreads(deploymentUrl, metadata);
-			// console.log("threads", threads);
 			if (threads && threads.length > 0 && threads[0]?.thread_id) {
-				console.log("threads[0].thread_id", threads[0].thread_id);
 				setThreadId(threads[0].thread_id);
+				setIsMounting(false);
 			} else {
 				createNewThread();
 			}
@@ -83,11 +85,9 @@ export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 		joinStream,
 	} = useStreamContext({
 		apiUrl: deploymentUrl,
-		assistantId: graphId,
+		assistantId: metadata.graphId ?? "",
 		threadId: threadId ?? undefined,
 	});
-
-	console.log("threadId in copilot adapter", threadId);
 
 	return (
 		<copilotAdapterContext.Provider
@@ -107,6 +107,7 @@ export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 				hasMessages: messages && messages.length > 0,
 				interrupt,
 				joinStream,
+				isMounting,
 			}}
 		>
 			{children}

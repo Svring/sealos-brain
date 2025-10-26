@@ -42,11 +42,11 @@ export function ClusterNodeBlock({ data }: ClusterNodeBlockProps) {
 	if (!object) {
 		return (
 			<BaseNode.Root target={target}>
-				<BaseNode.Vessel onClick={handleNodeClick}>
+				<BaseNode.Vessel>
 					<BaseNode.Header>
-						<BaseNode.Title />
+						<BaseNode.Title onClick={handleNodeClick} />
 					</BaseNode.Header>
-					<BaseNode.Content>
+					<BaseNode.Content onClick={handleNodeClick}>
 						<div className="flex items-center justify-center h-full text-muted-foreground text-sm">
 							No data available
 						</div>
@@ -90,9 +90,9 @@ export function ClusterNodeBlock({ data }: ClusterNodeBlockProps) {
 		<BaseNode.Root target={target}>
 			<BaseNode.Handle position={Position.Top} type="source" />
 			<BaseNode.Handle position={Position.Bottom} type="target" />
-			<BaseNode.Vessel onClick={handleNodeClick}>
+			<BaseNode.Vessel>
 				<BaseNode.Header>
-					<BaseNode.Title />
+					<BaseNode.Title onClick={handleNodeClick} />
 					<BaseNode.Menu>
 						{cluster.status !== "Running" && (
 							<DropdownMenuItem
@@ -133,7 +133,7 @@ export function ClusterNodeBlock({ data }: ClusterNodeBlockProps) {
 					</BaseNode.Menu>
 				</BaseNode.Header>
 
-				<BaseNode.Content>
+				<BaseNode.Content onClick={handleNodeClick}>
 					<div className="flex items-center gap-2">
 						<Globe
 							className={`h-4 w-4 ${
@@ -146,7 +146,7 @@ export function ClusterNodeBlock({ data }: ClusterNodeBlockProps) {
 					</div>
 				</BaseNode.Content>
 
-				<BaseNode.Footer>
+				<BaseNode.Footer onClick={handleNodeClick}>
 					<BaseNode.Status onClick={handleStatusClick} />
 					<div className="flex items-center gap-2">
 						<BaseNode.Widget

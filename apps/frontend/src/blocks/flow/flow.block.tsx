@@ -1,6 +1,7 @@
 "use client";
 
 import { instanceParser } from "@sealos-brain/k8s/resources/instance/utils";
+import { composeMetadata } from "@sealos-brain/langgraph/utils";
 import { ReactFlow } from "@xyflow/react";
 import * as Control from "@/components/control/control.comp";
 import FloatingConnectionLine from "@/components/flow/edges/floating-connection-line";
@@ -31,11 +32,11 @@ export function FlowBlock() {
 	const handlePaneClick = () => {
 		if (project?.uid && auth?.kubeconfigEncoded) {
 			addChat({
-				metadata: {
+				metadata: composeMetadata({
 					kubeconfigEncoded: auth.kubeconfigEncoded,
 					projectUid: project.uid,
-					resourceUid: "",
-				},
+					graphId: "project",
+				}),
 			});
 		}
 	};
