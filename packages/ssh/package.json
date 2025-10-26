@@ -1,0 +1,11 @@
+{
+  "name": "@sealos-brain/ssh",
+  "type": "module",
+  "scripts": {},
+  "exports": {
+    ".": "./src/ssh.api.ts"
+  },
+  "dependencies": {
+    "node-ssh": "^13.2.1"
+  }
+}
