@@ -8,10 +8,10 @@ import type {
 } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import axios from "axios";
-import { ClusterBridgeSchema } from "#cluster/models/cluster-bridge.model";
 import type { ClusterCreateData } from "#cluster/models/cluster-create.model";
 import { ClusterObjectSchema } from "#cluster/models/cluster-object.model";
 import type { ClusterUpdateData } from "#cluster/models/cluster-update.model";
+import { ClusterBridgeMetaSchema, ClusterBridgeTransSchema } from "../models";
 
 /**
  * Creates axios instance for cluster API calls
@@ -65,7 +65,8 @@ export const getCluster = async (
 	const clusterObject = await composeObjectFromTarget(
 		context,
 		target,
-		ClusterBridgeSchema,
+		ClusterBridgeMetaSchema,
+		ClusterBridgeTransSchema,
 		ClusterObjectSchema,
 	);
 	return ClusterObjectSchema.parse(clusterObject);

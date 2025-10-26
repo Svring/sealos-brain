@@ -16,6 +16,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useNodeClick } from "@/hooks/flow/use-node-click";
 import { useDevboxDelete } from "@/hooks/sealos/devbox/use-devbox-delete";
 import { useDevboxLifecycle } from "@/hooks/sealos/devbox/use-devbox-lifecycle";
+import { useDevboxObject } from "@/hooks/sealos/devbox/use-devbox-object";
 import { useResourceObject } from "@/hooks/shared/resource/use-resource-object";
 
 interface DevboxNodeBlockProps {
@@ -27,7 +28,7 @@ interface DevboxNodeBlockProps {
 
 export function DevboxNodeBlock({ data }: DevboxNodeBlockProps) {
 	const { id, target } = data;
-	const { data: object } = useResourceObject(target);
+	const { data: object } = useDevboxObject(target);
 	const { handleNodeClick } = useNodeClick({
 		id,
 		resourceUid: object?.uid || "",

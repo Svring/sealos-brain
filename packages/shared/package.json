@@ -24,7 +24,7 @@
     "is-port-reachable": "^4.0.0",
     "nanoid": "^5.1.6",
     "tailwind-merge": "^2.5.5",
-    "zod": "^3.24.1",
+    "zod": "^4.1.12",
     "@sealos-brain/k8s": "workspace:*"
   }
 }

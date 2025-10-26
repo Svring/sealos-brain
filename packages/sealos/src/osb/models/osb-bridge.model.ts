@@ -1,88 +1,73 @@
 import { z } from "zod";
 
-export const OsbBridgeSchema = z.object({
-	name: z.string().describe(
-		JSON.stringify({
+export const OsbBridgeMetaSchema = z.object({
+	name: z.string().meta({
+		resources: {
 			resourceType: "objectstoragebucket",
 			path: ["metadata.name"],
-		}),
-	),
-	uid: z.string().describe(
-		JSON.stringify({
+		},
+	}),
+	uid: z.string().meta({
+		resources: {
 			resourceType: "objectstoragebucket",
 			path: ["metadata.uid"],
-		}),
-	),
-	displayName: z.string().describe(
-		JSON.stringify({
+		},
+	}),
+	displayName: z.string().meta({
+		resources: {
 			resourceType: "objectstoragebucket",
 			path: ["status.name"],
-		}),
-	),
-	kind: z.string().describe(
-		JSON.stringify({
+		},
+	}),
+	kind: z.string().meta({
+		resources: {
 			resourceType: "objectstoragebucket",
 			path: ["kind"],
-		}),
-	),
-	policy: z.string().describe(
-		JSON.stringify({
+		},
+	}),
+	policy: z.string().meta({
+		resources: {
 			resourceType: "objectstoragebucket",
 			path: ["spec.policy"],
-		}),
-	),
+		},
+	}),
 	access: z.object({
-		accessKey: z
-			.string()
-			.describe(
-				JSON.stringify({
-					resourceType: "secret",
-					name: "^object-storage-key-.*-{{instanceName}}$",
-					path: ["data.accessKey"],
-				}),
-			)
-			.transform((val) => Buffer.from(val, "base64").toString("utf-8")),
-		bucket: z
-			.string()
-			.describe(
-				JSON.stringify({
-					resourceType: "secret",
-					name: "^object-storage-key-.*-{{instanceName}}$",
-					path: ["data.bucket"],
-				}),
-			)
-			.transform((val) => Buffer.from(val, "base64").toString("utf-8")),
-		external: z
-			.string()
-			.describe(
-				JSON.stringify({
-					resourceType: "secret",
-					name: "^object-storage-key-.*-{{instanceName}}$",
-					path: ["data.external"],
-				}),
-			)
-			.transform((val) => Buffer.from(val, "base64").toString("utf-8")),
-		internal: z
-			.string()
-			.describe(
-				JSON.stringify({
-					resourceType: "secret",
-					name: "^object-storage-key-.*-{{instanceName}}$",
-					path: ["data.internal"],
-				}),
-			)
-			.transform((val) => Buffer.from(val, "base64").toString("utf-8")),
-		secretKey: z
-			.string()
-			.describe(
-				JSON.stringify({
-					resourceType: "secret",
-					name: "^object-storage-key-.*-{{instanceName}}$",
-					path: ["data.secretKey"],
-				}),
-			)
-			.transform((val) => Buffer.from(val, "base64").toString("utf-8")),
+		accessKey: z.string().meta({
+			resources: {
+				resourceType: "secret",
+				name: "^object-storage-key-.*-{{instanceName}}$",
+				path: ["data.accessKey"],
+			},
+		}),
+		bucket: z.string().meta({
+			resources: {
+				resourceType: "secret",
+				name: "^object-storage-key-.*-{{instanceName}}$",
+				path: ["data.bucket"],
+			},
+		}),
+		external: z.string().meta({
+			resources: {
+				resourceType: "secret",
+				name: "^object-storage-key-.*-{{instanceName}}$",
+				path: ["data.external"],
+			},
+		}),
+		internal: z.string().meta({
+			resources: {
+				resourceType: "secret",
+				name: "^object-storage-key-.*-{{instanceName}}$",
+				path: ["data.internal"],
+			},
+		}),
+		secretKey: z.string().meta({
+			resources: {
+				resourceType: "secret",
+				name: "^object-storage-key-.*-{{instanceName}}$",
+				path: ["data.secretKey"],
+			},
+		}),
 	}),
 });
 
-export type OsbObjectQuery = z.infer<typeof OsbBridgeSchema>;
+export type OsbBridgeMeta = z.infer<typeof OsbBridgeMetaSchema>;

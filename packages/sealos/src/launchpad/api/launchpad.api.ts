@@ -8,13 +8,19 @@ import type {
 } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import axios from "axios";
-import { DeploymentBridgeSchema } from "../models/deployment/deployment-bridge.model";
-import { DeploymentObjectSchema } from "../models/deployment/deployment-object.model";
+import {
+	DeploymentBridgeMetaSchema,
+	DeploymentBridgeTransSchema,
+	StatefulsetBridgeMetaSchema,
+	StatefulsetBridgeTransSchema,
+} from "../models";
 import type { LaunchpadCreateData } from "../models/launchpad-create.model";
-import { LaunchpadObjectSchema } from "../models/launchpad-object.model";
+import {
+	DeploymentObjectSchema,
+	LaunchpadObjectSchema,
+	StatefulsetObjectSchema,
+} from "../models/launchpad-object.model";
 import type { LaunchpadUpdateData } from "../models/launchpad-update.model";
-import { StatefulsetBridgeSchema } from "../models/statefulset/statefulset-bridge.model";
-import { StatefulsetObjectSchema } from "../models/statefulset/statefulset-object.model";
 
 /**
  * Creates axios instance for launchpad API calls
@@ -68,10 +74,17 @@ export const getLaunchpad = async (
 	// Choose the appropriate schema based on resource type
 	const bridgeSchema =
 		target.resourceType === "deployment"
-			? DeploymentBridgeSchema
+			? DeploymentBridgeMetaSchema
 			: target.resourceType === "statefulset"
-				? StatefulsetBridgeSchema
-				: DeploymentBridgeSchema; // Default to deployment
+				? StatefulsetBridgeMetaSchema
+				: DeploymentBridgeMetaSchema; // Default to deployment
+
+	const transformSchema =
+		target.resourceType === "deployment"
+			? DeploymentBridgeTransSchema
+			: target.resourceType === "statefulset"
+				? StatefulsetBridgeTransSchema
+				: DeploymentBridgeTransSchema;
 
 	const objectSchema =
 		target.resourceType === "deployment"
@@ -84,6 +97,7 @@ export const getLaunchpad = async (
 		context,
 		target,
 		bridgeSchema,
+		transformSchema,
 		objectSchema,
 	);
 

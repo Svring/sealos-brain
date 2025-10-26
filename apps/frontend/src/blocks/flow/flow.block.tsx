@@ -17,14 +17,18 @@ import { useFlow } from "@/hooks/flow/use-flow";
 
 import "@xyflow/react/dist/style.css";
 
-export function FlowBlock() {
+interface FlowBlockProps {
+	name: string;
+}
+
+export function FlowBlock({ name }: FlowBlockProps) {
 	const { state, send } = useFlowContext();
 	const { project } = useProjectState();
 	const { auth } = useAuthState();
 	const { addChat } = useCopilotEvents();
 
-	// Create instance target from project name using instanceParser
-	const instance = instanceParser.toTarget(project?.object?.name || "");
+	// Create instance target from name passed in
+	const instance = instanceParser.toTarget(name);
 
 	// Use flow hook with instance to get nodes and edges
 	const { nodes, edges } = useFlow(instance);

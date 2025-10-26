@@ -1,14 +1,16 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import * as Control from "@/components/control/control.comp";
 import * as Project from "@/components/project/project.comp";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useProjectContext } from "@/contexts/actor/spawns/project/project.context";
 import { useInstances } from "@/hooks/sealos/instance/use-instances";
 
 export function ProjectBlock() {
+	const router = useRouter();
 	const { state, send } = useProjectContext();
 	const { data: projects = [], isLoading } = useInstances();
 	const [searchTerm, setSearchTerm] = useState("");
@@ -33,6 +35,10 @@ export function ProjectBlock() {
 		}
 	};
 
+	const openProject = (projectName: string) => {
+		router.push(`/project/${projectName}`);
+	};
+
 	const filteredProjects = projects.filter((project) =>
 		(project.displayName || project.name)
 			.toLowerCase()
@@ -40,44 +46,41 @@ export function ProjectBlock() {
 	);
 
 	return (
-		<Project.Root context={{ project: state.context, state, send }}>
-			<Project.Dashboard>
-				<Project.DashboardHeader>
-					<Project.DashboardHeaderTitle title="Projects" />
-					<div className="flex items-center gap-2">
-						<Project.DashboardHeaderSearchBar
-							searchValue={searchTerm}
-							onSearchChange={handleSearchChange}
-						/>
-						<Project.DashboardHeaderNew onCreateClick={handleCreateProject} />
-					</div>
-				</Project.DashboardHeader>
-
-				<Project.DashboardContent>
-					{isLoading ? (
-						<Project.Loading message="Loading projects..." />
-					) : filteredProjects.length === 0 ? (
-						searchTerm ? (
-							<Project.Empty type="search-empty" searchTerm={searchTerm} />
-						) : (
-							<Project.Empty
-								type="no-projects"
-								onCreateProject={handleCreateProject}
+		<Control.Root>
+			<Project.Root context={{ project: state.context, state, send }}>
+				<Project.Dashboard>
+					<Project.DashboardHeader>
+						<Project.DashboardHeaderTitle title="Projects" />
+						<div className="flex items-center gap-2">
+							<Project.DashboardHeaderSearchBar
+								searchValue={searchTerm}
+								onSearchChange={handleSearchChange}
 							/>
-						)
-					) : (
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-							{filteredProjects.map((project) => (
-								<Project.Card
-									asChild
-									key={project.name}
-									className="cursor-pointer"
-								>
-									<Link href={`/project/${project.name}`}>
+							<Project.DashboardHeaderNew onCreateClick={handleCreateProject} />
+						</div>
+					</Project.DashboardHeader>
+
+					<Project.DashboardContent>
+						{isLoading ? (
+							<Project.Loading message="Loading projects..." />
+						) : filteredProjects.length === 0 ? (
+							searchTerm ? (
+								<Project.Empty type="search-empty" searchTerm={searchTerm} />
+							) : (
+								<Project.Empty
+									type="no-projects"
+									onCreateProject={handleCreateProject}
+								/>
+							)
+						) : (
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+								{filteredProjects.map((project) => (
+									<Project.Card key={project.name} className="cursor-pointer">
 										<Project.CardHeader>
 											<Project.CardTitle
 												displayName={project.displayName}
 												name={project.name}
+												onClick={() => openProject(project.name)}
 											/>
 											<Project.CardMenu>
 												<DropdownMenuItem
@@ -90,17 +93,25 @@ export function ProjectBlock() {
 											</Project.CardMenu>
 										</Project.CardHeader>
 
-										<Project.CardFooter>
+										<Project.CardFooter
+											onClick={() => openProject(project.name)}
+										>
 											<Project.CardDate date={project.createdAt} />
 											<Project.CardWidget avatarUrls={[]} numPeople={0} />
 										</Project.CardFooter>
-									</Link>
-								</Project.Card>
-							))}
-						</div>
-					)}
-				</Project.DashboardContent>
-			</Project.Dashboard>
-		</Project.Root>
+									</Project.Card>
+								))}
+							</div>
+						)}
+					</Project.DashboardContent>
+				</Project.Dashboard>
+			</Project.Root>
+
+			<Control.Overlay>
+				<Control.Pad className="top-2 left-2">
+					<Control.SidebarTrigger />
+				</Control.Pad>
+			</Control.Overlay>
+		</Control.Root>
 	);
 }

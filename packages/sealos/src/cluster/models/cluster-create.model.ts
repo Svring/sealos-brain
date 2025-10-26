@@ -19,7 +19,7 @@ export const ClusterVersionSchema = z
 	.string()
 	.min(1, "Cluster version is required");
 
-export const ClusterResourceSchema = z.object({
+export const ClusterCreateResourceSchema = z.object({
 	replicas: createNumberUnionSchema(CLUSTER_REPLICAS_OPTIONS),
 	cpu: createNumberUnionSchema(CLUSTER_CPU_OPTIONS),
 	memory: createNumberUnionSchema(CLUSTER_MEMORY_OPTIONS),
@@ -33,7 +33,7 @@ export const clusterCreateSchema = z.object({
 	name: NameSchema.default(() => `cluster-${nanoid()}`),
 	type: ClusterTypeSchema.default("postgresql"),
 	version: ClusterVersionSchema.default("postgresql-14.8.0"),
-	resource: ClusterResourceSchema.default({
+	resource: ClusterCreateResourceSchema.default({
 		replicas: 1,
 		cpu: 0.5,
 		memory: 0.5,

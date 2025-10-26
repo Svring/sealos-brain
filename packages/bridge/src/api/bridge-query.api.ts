@@ -153,7 +153,11 @@ async function getResourcesByFieldDescriptions(
 	instanceName: string,
 	// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
 ): Promise<Record<string, any>> {
-	const flattenedDescriptions: Record<string, BridgeQueryItem> = {};
+	// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
+	const flattenedDescriptions: Record<
+		string,
+		BridgeQueryItem | BridgeQueryItem[]
+	> = {};
 
 	// Flatten descriptions
 	function flatten(obj: Record<string, unknown>, prefix = "") {
@@ -163,12 +167,17 @@ async function getResourcesByFieldDescriptions(
 				flattenedDescriptions[fullKey] = value as BridgeQueryItem;
 			} else if (value && typeof value === "object" && !Array.isArray(value)) {
 				flatten(value as Record<string, unknown>, fullKey);
+			} else if (Array.isArray(value)) {
+				// Handle arrays of resources (e.g., ssh, connection fields)
+				flattenedDescriptions[fullKey] = value as BridgeQueryItem[];
 			}
 		}
 	}
 	flatten(schemaDescriptions as Record<string, unknown>);
 
-	const entries = Object.entries(flattenedDescriptions);
+	// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
+	const entries: [string, BridgeQueryItem | BridgeQueryItem[]][] =
+		Object.entries(flattenedDescriptions);
 
 	// Cache to store fetched resources by their locator key (includes K8sResource, K8sContext, etc.)
 	const resourceCache = new Map<
@@ -176,49 +185,51 @@ async function getResourcesByFieldDescriptions(
 		K8sResource | K8sResource[] | K8sContext | null
 	>();
 
-	// Group fields by their resource locator to identify duplicates
-	const fieldsByLocator = new Map<string, string[]>();
-
-	for (const [fieldName, description] of entries) {
-		const locatorKey = createResourceLocatorKey(description, instanceName);
-		if (!fieldsByLocator.has(locatorKey)) {
-			fieldsByLocator.set(locatorKey, []);
-		}
-		const fields = fieldsByLocator.get(locatorKey);
-		if (fields) {
-			fields.push(fieldName);
-		}
-	}
-
-	// Fetch resources only once per unique locator
-	const uniqueLocators = Array.from(fieldsByLocator.keys());
-	const fetchPromises = uniqueLocators.map(async (locatorKey) => {
-		// Get the first field with this locator to extract the description
-		const fields = fieldsByLocator.get(locatorKey);
-		if (!fields || fields.length === 0) return [locatorKey, null] as const;
-		const firstFieldName = fields[0];
-		if (!firstFieldName) return [locatorKey, null] as const;
-		const description = flattenedDescriptions[firstFieldName];
-		if (!description) return [locatorKey, null] as const;
-
-		const resource = await getResourceByFieldValue(
-			context,
-			description,
-			instanceName,
-		);
-
-		resourceCache.set(locatorKey, resource);
-		return [locatorKey, resource] as const;
-	});
-
-	await Promise.all(fetchPromises);
-
-	// Map each field to its corresponding cached resource
 	// biome-ignore lint/suspicious/noExplicitAny: Generic resource mapping
 	const results: Record<string, any> = {};
+
+	// Process entries to fetch resources
 	for (const [fieldName, description] of entries) {
-		const locatorKey = createResourceLocatorKey(description, instanceName);
-		results[fieldName] = resourceCache.get(locatorKey);
+		if (Array.isArray(description)) {
+			// Handle array of resources (e.g., ssh field with multiple resources)
+			const resourcePromises = description.map(async (item) => {
+				const locatorKey = createResourceLocatorKey(item, instanceName);
+
+				// Check cache first
+				if (resourceCache.has(locatorKey)) {
+					return resourceCache.get(locatorKey);
+				}
+
+				// Fetch resource
+				const resource = await getResourceByFieldValue(
+					context,
+					item,
+					instanceName,
+				);
+
+				resourceCache.set(locatorKey, resource);
+				return resource;
+			});
+
+			// Store array of resources for this field
+			results[fieldName] = await Promise.all(resourcePromises);
+		} else {
+			// Handle single resource
+			const locatorKey = createResourceLocatorKey(description, instanceName);
+
+			// Check cache first
+			if (resourceCache.has(locatorKey)) {
+				results[fieldName] = resourceCache.get(locatorKey);
+			} else {
+				const resource = await getResourceByFieldValue(
+					context,
+					description,
+					instanceName,
+				);
+				resourceCache.set(locatorKey, resource);
+				results[fieldName] = resource;
+			}
+		}
 	}
 
 	return results;
@@ -235,7 +246,9 @@ export async function composeObjectFromTarget(
 	context: K8sContext,
 	target: ResourceTarget,
 	// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
-	bridgeSchema: any,
+	metaSchema: any,
+	// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
+	transformSchema: any,
 	// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
 	objectSchema: any,
 	// biome-ignore lint/suspicious/noExplicitAny: Generic schema processing
@@ -246,7 +259,7 @@ export async function composeObjectFromTarget(
 		);
 	}
 
-	const schemaDescriptions = parseFieldDescriptions(bridgeSchema);
+	const schemaDescriptions = parseFieldDescriptions(metaSchema);
 
 	const resources = await getResourcesByFieldDescriptions(
 		context,
@@ -266,7 +279,7 @@ export async function composeObjectFromTarget(
 
 	// Apply Zod schema parsing to handle transforms and validation (supports async transforms)
 	try {
-		const parsedData = await bridgeSchema.parseAsync(reconstructedData);
+		const parsedData = await transformSchema.parseAsync(reconstructedData);
 		return objectSchema.parse(parsedData);
 	} catch (error) {
 		console.warn("Schema parsing failed, returning raw extracted data:", error);

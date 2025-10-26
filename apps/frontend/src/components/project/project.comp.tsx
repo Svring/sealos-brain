@@ -228,11 +228,13 @@ export const CardTitle = ({
 	asChild = false,
 	displayName,
 	name,
+	onClick,
 	...props
 }: ComponentProps<"div"> & {
 	asChild?: boolean;
 	displayName?: string;
 	name?: string;
+	onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }) => {
 	const Comp = asChild ? Slot : "div";
 
@@ -243,6 +245,7 @@ export const CardTitle = ({
 				"flex flex-col items-start space-x-1 min-w-0 group flex-1",
 				className,
 			)}
+			onClick={onClick}
 			{...props}
 		>
 			<p className="text-foreground truncate transition-colors">
@@ -266,7 +269,7 @@ export const CardMenu = ({
 	return (
 		<Comp
 			data-slot="project-card-menu"
-			className={cn("flex flex-row items-start gap-2 flex-shrink-0", className)}
+			className={cn("flex flex-row items-start gap-2 shrink-0", className)}
 			{...props}
 		>
 			<DropdownMenu>
@@ -290,13 +293,18 @@ export const CardMenu = ({
 export const CardFooter = ({
 	className,
 	asChild = false,
+	onClick,
 	...props
-}: ComponentProps<"div"> & { asChild?: boolean }) => {
+}: ComponentProps<"div"> & {
+	asChild?: boolean;
+	onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+}) => {
 	const Comp = asChild ? Slot : "div";
 	return (
 		<Comp
 			data-slot="project-card-footer"
 			className={cn("mt-auto flex justify-between items-center", className)}
+			onClick={onClick}
 			{...props}
 		/>
 	);

@@ -91,44 +91,72 @@ export function extractDataFromObject(data: any, path: string[]): any {
  */
 // biome-ignore lint/suspicious/noExplicitAny: Schema parsing utility
 export function parseFieldDescriptions(schema: z.ZodObject<any>): any {
-	const shape = schema instanceof z.ZodObject ? schema.shape : {};
+	const jsonSchema = z.toJSONSchema(schema);
+	const properties = jsonSchema.properties || {};
 	const result: Record<string, unknown> = {};
 
-	for (const [key, zodValue] of Object.entries(shape)) {
-		const descriptionValue = _.get(zodValue, "_def.description");
-		const description = descriptionValue
-			? _.attempt(() => parseFieldDescription(descriptionValue as string))
-			: new Error("No description");
+	for (const [key, propertySchema] of Object.entries(properties)) {
+		if (!propertySchema || typeof propertySchema !== "object") continue;
 
-		let nestedResult = {};
-		if (zodValue instanceof z.ZodObject) {
-			nestedResult = parseFieldDescriptions(zodValue);
-		} else if (
-			zodValue instanceof z.ZodArray &&
-			zodValue.element instanceof z.ZodObject
-		) {
-			nestedResult = {
-				_isArray: true,
-				...parseFieldDescriptions(zodValue.element),
-			};
+		// Extract metadata fields (now stored in 'resources' field)
+		// Filter out JSON schema specific properties
+		const jsonSchemaKeys = [
+			"type",
+			"description",
+			"anyOf",
+			"oneOf",
+			"allOf",
+			"enum",
+			"default",
+			"const",
+			"items",
+			"properties",
+			"required",
+			"additionalProperties",
+		];
+		const metadata = Object.fromEntries(
+			Object.entries(propertySchema).filter(
+				([propKey]) => !jsonSchemaKeys.includes(propKey),
+			),
+		);
+
+		// Check if 'resources' field exists (new structure)
+		if ("resources" in metadata && metadata.resources) {
+			result[key] = metadata.resources;
+		} else {
+			result[key] = metadata;
 		}
 
-		// Handle array descriptions - expand them with indexed keys
-		if (!_.isError(description) && Array.isArray(description)) {
-			const expandedDescription: Record<string, unknown> = {};
-			// biome-ignore lint/suspicious/noExplicitAny: Schema description processing
-			description.forEach((desc: any, index: number) => {
-				expandedDescription[`${key}_${index}`] = desc;
-			});
-
-			Object.assign(result, expandedDescription);
-			if (!_.isEmpty(nestedResult)) {
-				result[key] = nestedResult;
+		let nestedResult = {};
+		// Handle nested objects in JSON schema
+		if (propertySchema.type === "object" && propertySchema.properties) {
+			nestedResult = parseFieldDescriptions(
+				z.object(Object.fromEntries(Object.entries(propertySchema.properties))),
+			);
+		} else if (propertySchema.type === "array" && propertySchema.items) {
+			const items = propertySchema.items;
+			if (
+				items &&
+				typeof items === "object" &&
+				"type" in items &&
+				items.type === "object" &&
+				"properties" in items &&
+				items.properties
+			) {
+				nestedResult = {
+					_isArray: true,
+					...parseFieldDescriptions(
+						z.object(Object.fromEntries(Object.entries(items.properties))),
+					),
+				};
 			}
-		} else {
+		}
+
+		// Merge nested results if they exist
+		if (Object.keys(nestedResult).length > 0) {
 			result[key] = {
-				...(_.isError(description) ? {} : (description as object)),
-				...(_.isEmpty(nestedResult) ? {} : nestedResult),
+				...(typeof result[key] === "object" ? result[key] : {}),
+				...nestedResult,
 			};
 		}
 	}

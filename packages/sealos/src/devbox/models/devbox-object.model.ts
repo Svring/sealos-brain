@@ -1,20 +1,20 @@
 import { EnvSchema } from "@sealos-brain/k8s/shared/models";
 import { z } from "zod";
 
-export const ResourceSchema = z.object({
+export const DevboxObjectResourceSchema = z.object({
 	cpu: z.number(),
 	memory: z.number(),
 });
 
 export const SshSchema = z.object({
-	host: z.string(),
-	port: z.number(),
-	user: z.string(),
-	workingDir: z.string(),
-	privateKey: z.string().optional(),
+	host: z.string().nullable(),
+	port: z.number().nullable(),
+	user: z.string().nullable(),
+	workingDir: z.string().nullable(),
+	privateKey: z.string().nullable().optional(),
 });
 
-export const PortSchema = z.object({
+export const DevboxObjectPortSchema = z.object({
 	number: z.number(),
 	portName: z.string().optional(),
 	protocol: z.string().optional(),
@@ -39,15 +39,15 @@ export const DevboxObjectSchema = z.object({
 	runtime: z.string(),
 	image: z.string(),
 	status: z.string(),
-	resource: ResourceSchema,
+	resource: DevboxObjectResourceSchema,
 	ssh: SshSchema,
 	env: z.array(EnvSchema).optional(),
-	ports: z.array(PortSchema),
+	ports: z.array(DevboxObjectPortSchema),
 	pods: z.array(PodSchema).optional(),
 	operationalStatus: z.any().optional(),
 });
 
-export type Resource = z.infer<typeof ResourceSchema>;
+export type DevboxObjectResource = z.infer<typeof DevboxObjectResourceSchema>;
 export type Ssh = z.infer<typeof SshSchema>;
-export type Port = z.infer<typeof PortSchema>;
+export type DevboxObjectPort = z.infer<typeof DevboxObjectPortSchema>;
 export type DevboxObject = z.infer<typeof DevboxObjectSchema>;

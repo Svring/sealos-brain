@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ClusterResourceSchema = z.object({
+export const ClusterObjectResourceSchema = z.object({
 	cpu: z.number(),
 	memory: z.number(),
 	storage: z.number(),
@@ -10,7 +10,7 @@ export const ClusterResourceSchema = z.object({
 export const ClusterComponentSchema = z.object({
 	name: z.string().nullable().optional(),
 	status: z.string().nullable().optional(),
-	resource: ClusterResourceSchema.nullable().optional(),
+	resource: ClusterObjectResourceSchema.nullable().optional(),
 });
 
 export const ClusterConnectionSchema = z.object({
@@ -71,7 +71,7 @@ export const ClusterObjectSchema = z.object({
 	version: z.string(),
 	operationalStatus: z.any(),
 	status: z.string(),
-	resource: ClusterResourceSchema,
+	resource: ClusterObjectResourceSchema,
 	components: z
 		.union([z.array(ClusterComponentSchema), z.object({}).passthrough()])
 		.optional()
@@ -81,7 +81,7 @@ export const ClusterObjectSchema = z.object({
 	pods: z.array(PodSchema).optional().nullable(),
 });
 
-export type ClusterResource = z.infer<typeof ClusterResourceSchema>;
+export type ClusterObjectResource = z.infer<typeof ClusterObjectResourceSchema>;
 export type ClusterComponent = z.infer<typeof ClusterComponentSchema>;
 export type ClusterConnection = z.infer<typeof ClusterConnectionSchema>;
 export type ClusterBackup = z.infer<typeof ClusterBackupSchema>;

@@ -8,7 +8,7 @@ import type {
 } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import axios from "axios";
-import { DevboxBridgeSchema } from "../models/devbox-bridge.model";
+import { DevboxBridgeMetaSchema, DevboxBridgeTransSchema } from "../models";
 import type { DevboxCreateData } from "../models/devbox-create.model";
 import { DevboxObjectSchema } from "../models/devbox-object.model";
 import type { DevboxUpdateData } from "../models/devbox-update.model";
@@ -65,7 +65,8 @@ export const getDevbox = async (
 	const devboxObject = await composeObjectFromTarget(
 		context,
 		target,
-		DevboxBridgeSchema,
+		DevboxBridgeMetaSchema,
+		DevboxBridgeTransSchema,
 		DevboxObjectSchema,
 	);
 	return DevboxObjectSchema.parse(devboxObject);

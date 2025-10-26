@@ -111,6 +111,7 @@ export const getInstanceResources = async (
 	context: K8sContext,
 	target: CustomResourceTarget,
 ): Promise<K8sItem[]> => {
+	console.log("target in instance resources", target);
 	const targets = [
 		{
 			type: "builtin" as const,
@@ -145,6 +146,8 @@ export const getInstanceResources = async (
 	];
 
 	const selectedResources = await selectResources(context, targets);
+
+	console.log("selectedResources in instance resources", selectedResources);
 
 	// Convert resources to items
 	return selectedResources.map((resource) => ({
