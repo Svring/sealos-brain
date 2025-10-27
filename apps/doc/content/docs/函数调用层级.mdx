@@ -1,0 +1,458 @@
+---
+title: 函数调用层级
+description: "API函数、功能函数、AI工具、Query/Mutation函数、Hooks"
+---
+
+项目中的函数可以按封装程度进行分层，封装程度越高，层级越高，依赖越多。
+
+![1-hierarchy.png](/docs/函数调用层级/1-hierarchy.png)
+
+所有API调用函数会先封装为功能函数以适应Brain的功能需求，功能函数再向上分别封装为前端专用的Hooks和AI专用的AI工具。
+## API函数
+
+### 纯函数
+API函数会封装Sealos桌面/Kubernetes的官方API，负责发起请求、解析响应并处理报错，以Devbox为例。
+```tsx
+export const getDevboxTemplates = async (context: K8sContext) => {
+	const api = await createDevboxAxios(context, "v1/devbox"); // 构建请求地址和请求头
+	const response = await api.get("/templates"); // 发送请求、接受响应
+	return response.data.data; // 返回响应
+};
+```
+
+API函数的内部实现通常很简短，也就是上图所示的构建请求、发送请求、返回响应三步，API函数不应该包含这三步以外的副作用，比如`console.log`报错信息、进行请求参数或返回响应转换等，也就是接近“[纯函数](https://zh-hans.react.dev/learn/keeping-components-pure)”的定义，不包含除“发送网络请求”之外的任何副作用，所以不能出现`console.log`.
+
+避免“进行请求参数或返回响应转换”意味着API函数在声明自己的参数和返回值时需要严格参照目标API接口的Openapi定义，参考下面这个错误实现的API函数:
+
+```tsx
+export const authCname = async (
+	context: K8sContext,
+	publicDomain: string,
+	customDomain: string,
+) => {
+	const api = await createDevboxAxios(context);
+	const cleanPublicDomain = publicDomain?.replace(/^https?:\/\//, "") || "";
+	const response = await api.post("/platform/authCname", {
+		publicDomain: cleanPublicDomain, // cleanPublicDomain与接口的参数名publicDomain不匹配
+		customDomain,
+	});
+	return response.data;
+};
+```
+publicDomain和customDomain确实是目标接口需要的数据名称，但这个函数在传递参数前将publicDomain转换为了cleanPublicDomain，违反了API函数的开发原则。
+
+总结：**API函数的唯一作用是将参数发送到目标API接口，并返回响应。**
+
+### 参数设计
+在保持函数体纯粹的前提下，API函数还应该确保参数包含两个字段：context和params，context提供域名、密钥等附加信息，params提供路径、body等请求参数，参考下面这个假想函数：
+```tsx
+interface Context {
+  regionalUrl: string;
+  token: string;
+}
+
+interface Parameters {
+  path: {
+    name: string;
+    operation: string;
+  };
+  search: {
+    queryKey: string;
+  };
+  body: Record<string, any>;
+}
+
+async function ohMyBrain(context: Context, parameters: Parameters): Promise<any> {
+  const baseURL = `${context.regionalUrl}/api`; // 通过regionUrl确定可用区地址
+  
+  const httpsAgent = new https.Agent({
+    keepAlive: true,
+  });
+
+  const api = axios.create({
+    baseURL,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${context.token}`, // token填入header
+    },
+    httpsAgent,
+  });
+
+	// 添加路径参数
+  const response = await api.get(`/${parameters.path.name}/${parameters.path.operation}`, {
+    params: parameters.search, // 添加查询参数
+    data: parameters.body, // 添加body参数
+  });
+
+  return response.data;
+}
+```
+
+这个假想函数是API函数最复杂的形式，同时包含路径、查询、body三种参数，实际项目里的API函数都属于它的子集，比如下面这个函数：
+
+```tsx title="API函数：部署Devbox"
+export const deployDevbox = async (
+	context: K8sContext,
+	devboxName: string, // 不规范，devboxName和tag应该包含在一个parameters对象中
+	tag: string,
+) => {
+	const api = await createDevboxAxios(context, "v1/devbox");
+	const response = await api.post(`/${devboxName}/release/${tag}/deploy`, {}); // 传入devboxName和tag两个路径参数
+	return response.data;
+};
+```
+
+## 功能函数
+### AI可读
+有时API函数从接口拿到的数据需要进一步处理以符合前端hook和AI工具的要求，有时前端hook需要的数据API并没有提供，功能函数负责补全这些内容。
+
+前端和AI共用一层功能函数意味着一个功能如果对前端开放，那么它对AI也开放，为了最大程度确保可复用性，功能函数在设计时需要两种用法都考虑。
+
+举例来说，如果前端现在需要获得devbox端资源占用率信息来绘制图表，那么假设时间轴固定为一小时，数据间隔为两分钟，那么前端绘制图表时可以用这段数据：
+
+```
+cpu: [0.08, 0.02, 0.13...]
+```
+
+0.08会出现在图标最左侧，代表一小时前cpu占用率为8%，而0.02代表58分钟前cpu占用率为2%，只要ui组件的预设值正确，程序就可以读懂这段数据并正确绘制图表。
+
+但如果这段数据工具是返回给AI的结果，那么AI是没法读懂[0.08, 0.02, 0.13...]这串数据对应的时间节点的，在提示词里声明“时间轴固定为一小时，数据间隔为两分钟”也没用，因为AI并不知道当前的时间，即使知道，让AI自己通过索引计算时间节点也会影响回复时的准确率。
+
+因此，这个功能函数在设计时就应该将返回值设定为：
+```json title="前端可读数据"
+cpu: [
+  {
+    "timestamp": 1760510280, // 程序可读的时间戳
+    "readableTime": "2025/10/15 14:38", // AI可读的时间戳
+    "cpu": 1.08, // 直接以%为单位
+    "memory": 10.32 // 内存用量和cpu一起返回，以便于AI通过一次工具调用获取所有数据
+  },
+  {
+    "timestamp": 1760510340,
+    "readableTime": "2025/10/15 14:39",
+    "cpu": 1.18,
+    "memory": 10.37
+  }
+]
+```
+总结：**所有功能函数的参数和返回值不仅要程序可读，还要AI可读。**
+> AI可读的函数，对程序来说也更易处理。
+
+## 对API功能的扩展
+举例来说，Devbox旧API的资源占用率接口每次只能查询cpu/memory其中一个，所以同时绘制cpu和memory图表时需要调用两次接口，对于AI工具不友好，Brain为此添加了一个功能函数以便于同时请求所有资源类型并转换数据：
+```tsx
+export const getDevboxMonitor = async (
+	context: K8sContext,
+	target: CustomResourceTarget,
+) => {
+	const [cpuResult, memoryResult] = await Promise.allSettled([
+		getDevboxMonitorData(context, "average_cpu", target.name),
+		getDevboxMonitorData(context, "average_memory", target.name),
+	]);
+
+	const cpuData =
+		cpuResult.status === "fulfilled" ? cpuResult.value : undefined;
+	const memoryData =
+		memoryResult.status === "fulfilled" ? memoryResult.value : undefined;
+
+	// Transform combined monitor data
+	const monitorData: MonitorData = {
+		cpu: cpuData ? { data: cpuData } : undefined,
+		memory: memoryData ? { data: memoryData } : undefined,
+	};
+
+	return transformMonitorData(monitorData);
+};
+```
+扩展API这里没有什么设计要点，随机应变就行，只是记得尽量把功能集成到API里。
+
+## AI工具
+AI工具层的封装是针对语言模型和AI框架（Langgraph）的特别优化，与常规的前端函数封装相比，AI工具有以下几个特征：
+1. AI调用函数的过程可以是连续的，也可以是中断的；
+2. AI调用函数时需要自行生成除context（请求地址、鉴权信息）以外的参数；
+3. AI工具需要有十分明确的使用说明；
+
+这三个特征的带来的问题和可能性都很多，下面会逐个解释。
+
+### 中断
+一个常规的函数调用过程看起来像下面这样，向一个函数输入参数，函数会执行既定的步骤并输出结果。
+
+![2-normal-call](/docs/函数调用层级/2-normal-call.png)
+
+AI在连续调用函数时也是同样的流程，但AI工具存在“人工介入(Human-In-The-Loop)”的概念，通过人为审查/修改AI提供的参数来减轻AI出错的影响，Langgraph中实现这一概念的机制叫做“[中断](https://docs.langchain.com/oss/javascript/langgraph/interrupts)”。
+
+中断的时间点并不是固定的，Langgraph允许在任意一行代码里插入中断点并设置特定的恢复条件（比如获得用户的“准许执行”指令，表现形式可能是一段json数据`{ user_approved: true }）`设置好中断点后，程序会在运行到中断点时暂停执行，广播程序当前的状态，并等待用户传入新的数据，可以类比一下Vscode中Debug断点的概念，程序执行 -> 到达断点 -> 暂行执行，在面板中展示所有变量信息 -> 得到“继续执行”或“终止执行”的指令。区别在于Langgraph中断点允许向程序中插入新数据，比如前面提到的`{ user_approved: true }，`而Debug断点只是展示程序在特定时刻的状态，但不允许修改程序状态。
+
+![3-interrupt-call](/docs/函数调用层级/3-interrupt-call.png)
+
+如图，假定功能函数有四行代码，中断点放在第二和第三行代码之间，那么当程序执行完第二行代码后就会中断，并广播*任意信息*，人工介入时可以修改这段信息为*任意结构*，程序恢复时会根据用户修改后的状态执行后续逻辑。
+纯文字看起来还是太抽象了，下面是Langgraph官网里Interrupt的示例：
+
+```tsx title="包含中断点的程序"
+import { interrupt, Command } from "@langchain/langgraph";
+
+function approvalNode(state: State): Command {
+  // Pause execution; payload surfaces in result.__interrupt__
+  const isApproved = interrupt({
+    question: "Do you want to proceed?",
+    details: state.actionDetails
+  }); // 中断，interrupt包含的数据就是会被广播出去的数据
+
+  // Route based on the response
+  if (isApproved) {
+    return new Command({ goto: "proceed" }); // Runs after the resume payload is provided
+  } else {
+    return new Command({ goto: "cancel" });
+  }
+}
+```
+
+包含中断点的程序要将需要广播的数据传入*interrupt*函数中，传入的数据就是可以被客户端读到的数据，也就是说这个程序中断后，客户端可以看到“程序中断”的状态和以下数据：
+
+```tsx title="中断信息"
+{
+	question: "Do you want to proceed?",
+	details: state.actionDetails
+}
+```
+
+> Langgraph分为服务端和客户端，服务端负责制定AI运行的逻辑（中断点、模型调用）客户端负责发送请求（传入用户请求、恢复中断）可以类比Openapi的后端接口和前端调用函数。
+
+```tsx title="恢复中断点的程序"
+// To approve
+await graph.invoke(new Command({ resume: true }), config);
+
+// To reject
+await graph.invoke(new Command({ resume: false }), config);
+```
+
+恢复中断点的函数可以读取中断信息并传入`Command({ resume: true })`作为恢复执行的信号，resume中的数据就是被传入程序的新数据，也就是说：
+
+```tsx title="中断前后的状态变化"
+// 中断前的状态，isApproved是中断点，程序执行到这里后会中断
+const isApproved = interrupt({
+	question: "Do you want to proceed?",
+	details: state.actionDetails
+});
+
+// 中断并收到指令new Command({ resume: true }后的状态，整个interrupt函数被替换成了resume指令的值'true'，并赋值给变量'isApproved'，这一变量会用于后续执行中。
+const isApproved = true
+
+// 此时isApproved为true，进入第一个代码块
+if (isApproved) {
+	return new Command({ goto: "proceed" }); // Runs after the resume payload is provided
+} else {
+	return new Command({ goto: "cancel" });
+}
+```
+
+> Command是Langgraph的另一个特殊机制，和Langgraph节点图的架构强相关，不只局限于中断恢复的功能，有关Command的文档同样在[Interrupt](https://docs.langchain.com/oss/javascript/langgraph/interrupts)里，也可以看下[这一段](https://docs.langchain.com/oss/javascript/langgraph/graph-api#command)介绍了怎么用Command跳转节点和更新状态，这个功能在Brain里也是大范围使用的。
+
+其实上图的中断恢复代码是为了方便演示，和实际项目里的代码有不少差异，这部分差异会在开发模式目录下的文档里说明。
+另外，中断也是AGUI的核心机制，一个程序在中断前、中断时、恢复后都可能需要展示特定的AGUI，Brain中“创建数据库”这个AI工具就有两个AGUI分别用户展示中断数据和执行结果，执行结果又会分为成功/失败/拒绝执行这几种可能，but fret not，AGUI会有专门的设计模式和开发模式文档。
+
+### AI生成参数
+#### 参数结构
+AI（语言模型）的输出是纯文本，越长的文本输出时间越长，结构越负责的文本出错率越高，因此AI工具的参数需要尽可能简化，除此之外，AI工具的参数设计和功能函数十分相似，都接收context和parameters参数，只是实现细节需要根据AI框架(Langgraph)做调整。
+
+> 可以考虑先看看Langgraph官网文档中的[思维模型](https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph)介绍。
+
+Langgraph中的context被命名为State，形式表现为一个zod schema:
+
+```tsx
+import * as z from "zod";
+
+// Define the structure for email classification
+const EmailClassificationSchema = z.object({
+  intent: z.enum(["question", "bug", "billing", "feature", "complex"]),
+  urgency: z.enum(["low", "medium", "high", "critical"]),
+  topic: z.string(),
+  summary: z.string(),
+});
+```
+
+State是所有Langgraph节点的共有context，AI工具只能从State里获取context信息，而不能像API函数那样从参数里直接传入（因为AI工具的参数只能由AI传入），举例来说，假设现在有两个参数设计相同的API函数和AI工具：
+
+```tsx title="API函数"
+const welcome = (context, parameters): { context: any, parameters: any} => {
+	return `Welcome the user to the new agent. \n\n 
+		Joke: ${parameters.joke} \n\n 
+		State: ${JSON.stringify(context)}`;
+}
+```
+```tsx title="AI工具"
+import { getCurrentTaskInput } from "@langchain/langgraph";
+import { tool } from "langchain";
+import * as z from "zod";
+
+const welsome = tool(
+	({ joke }) => {
+		const state = getCurrentTaskInput();
+		return `Welcome the user to the new agent. \n\n 
+		Joke: ${joke} \n\n 
+		State: ${JSON.stringify(state)}`;
+	},
+	{
+		name: "welcome",
+		description: "Welcome the user with a joke.",
+		schema: z.object({
+			joke: z.string().describe("The joke to welcome the user with"),
+		}),
+	},
+);
+```
+
+在context/state和parameters相同的情况下，上面两个函数是等效的，区别在于AI工具需要调用函数*getCurrentTaskInput*来获取state，并强制要求name, description, schema等附加信息以确保AI输入的参数格式正确，而API函数就可以将context的类型设置为any，只要程序传入的参数结构正确，API函数就不会出错，但AI工具在没有schema的情况下会直接报错。
+
+#### AI可读的参数
+上文有提过AI可读性的问题，但用的例子比较和谐，还有一些功能的参数设计会导致AI工具和前端Hook产生较大分歧，比如更新网络端口的功能函数，在当前Devbox的API文档里，对ports参数的描述是这样的：
+
+```
+ports(可选)：端口配置数组
+- **包含portName**：更新现有端口
+- **不包含portName**：创建新端口
+- **未包含的现有端口**：将被删除
+```
+
+这意味着端口的创建、更新、删除被整合到了一个端口中，假设一个devbox有三个端口：
+
+```tsx title="现有数据"
+[
+  {
+    "portName": "a",
+    "number": "1"
+  },
+  {
+    "portName": "b",
+    "number": "2"
+  },
+  {
+    "portName": "c",
+    "number": "3"
+  }
+]
+```
+
+那么如果我想删除端口a,更新端口b的端口号为3000,并且新增端口d，此时需要传递的参数就是：
+
+```json title="更新参数"
+[
+  {
+    "portName": "b",
+    "number": "3000"
+  },
+  {
+    "portName": "c",
+  }，
+  {
+    "portName": "d",
+    "number": "4"
+  }，
+]
+```
+
+这个设计合理，将所有操作合并在一个接口里可以减少请求数量，如果创建、更新、删除三个操作分散在三个接口里，那么上述改动就需要发送三次请求，造成更高延迟，对AI来说也需要调用更多次工具。
+
+但AI工具沿用这个参数结构，那么即使AI只想新增一个3001端口，AI也需要生成其余所有端口的名称以确保其他端口不会被删除，这就违反了参数简短的要求，而且这不是唯一的问题。
+
+以AI工具为出发点，参数需要符合两条要求：
+1. 参数简短，不要引入无关数据；
+2. 工具调用次数尽可能少。
+
+为了符合第一条要求，AI应该有三个操作端口的工具：
+1. 创建：只传入端口号列表，如[1, 2, 3];
+2. 更新：只传入旧端口号和新端口号，如`[{1, 2}, {3, 4}]`;
+3. 删除：只传入端口号列表，如[1, 2, 3].
+
+为了符合第二条要求，这三个工具需要合并，所以应该只提供一个工具，参数包含create, update, delete三个字段，每个字段包含对应的数据类型，这时参数是：
+
+```json title="合并后的更新端口参数"
+{
+	create: [1, 2, 3],
+	update: [{1, 2}, {3, 4}],
+	delete: [1, 2, 3]
+}
+```
+
+这不是完整的参数，因为端口的协议和公网访问也是可以修改的，如果加上这些参数，复杂度还会上升：
+
+```json
+{
+  "create": [
+    { "number": 1, "protocol": "HTTP", "exposesPublicDomain": true },
+    { "number": 2, "protocol": "HTTP", "exposesPublicDomain": true },
+    { "number": 3, "protocol": "HTTP", "exposesPublicDomain": true }
+  ],
+  "update": [
+    { "oldNumber": 2, "number": 1, "protocol": "HTTP", "exposesPublicDomain": true },
+    { "oldNumber": 1, "number": 3, "protocol": "HTTP", "exposesPublicDomain": true }
+  ],
+  "delete": [
+    { "number": 1 },
+    { "number": 2 },
+    { "number": 3 }
+  ]
+}
+```
+
+到这一步，“参数简短”的原则实际上已经维持不了了，上述这种以”AI可读”为目的设计出的参数偏离了底层功能函数的参数结构，也增加了schema维护的工作量，但其实并没有削减很多复杂度，从结果来看得不偿失，不如沿用现在API函数的参数结构：
+
+```json title="回到原点"
+[
+  {
+    "portName": "b",
+    "number": "3000"
+  },
+  {
+    "portName": "c",
+    "number": "3"
+  }，
+  {
+    "portName": "d",
+    "number": "4"
+  }，
+]
+```
+其实看起来也不是很复杂，但在AI眼中，这种参数的问题在于“不直观”，当参数被分为*create*, *update*, *delete*时，即使不传入额外的使用说明，AI输出正确参数的概率也很高，但对于包含隐藏规则的参数（传入portName代表更新，省略portName代表删除）详细的使用说明和示例是必须的，这些可以在工具description和模型系统提示词里提供。
+
+这一节的结论：**API和AI工具的参数设计冲突时，考虑让AI工具适配API。从经验来说，一个API接口如果自身的参数设计优秀，那么同样的参数沿用到AI工具中是没问题的，如果API接口参数包含隐藏规则，那么转换到AI工具时需要附加使用说明和示例**。
+
+### 工具使用说明
+“工具使用说明”这个名词有点长，但我暂时也没找到更简短的名词，具体来说，使用说明由三部分组成：
+1. 系统提示词中的文本描述；
+2. 工具定义中的文本描述；
+3. 工具定义中的参数schema.
+
+以下面这个工具为例：
+```tsx
+const welsome = tool(
+	({ joke }, config) => {
+		const currentTaskInput = getCurrentTaskInput();
+		return `Welcome the user to the new agent. \n\n Joke: ${joke} \n\n State: ${JSON.stringify(config.context)} \n\n Current Task Input: ${JSON.stringify(currentTaskInput)}`;
+	},
+	{
+		name: "welcome",
+		description: "Welcome the user with a joke.", // 工具定义中的文本描述
+		schema: z.object({
+			joke: z.string().describe("The joke to welcome the user with"),
+		}), // 工具定义中的参数schema
+	},
+);
+```
+可以看到工具的最后一个参数是一个包含name, description和schema的对象，这个对象对于AI来说是完全可见的，也是AI对于工具的**唯一认知来源**，AI在运行中不会看到任何工具内部的底层逻辑，如`return “Welcome the...”`这些内容都看不见，当AI接收到用户请求时，它会检查所有工具的name和description字段，判断需要调用的工具是哪个，然后根据schema生成对应的参数，如在welcome工具里声明了一个名为joke的字符串参数，那么AI就会生成：
+```json
+{
+	joke: "Why did the developer go broke? Because he used up all his cache"
+}
+```
+这就是AI在调用工具时会做的一切，工具的具体执行仍然是由程序负责的，当程序执行完成后，结果（在welcome工具中，结果就是return返回的字符串）会添加到Langgraph State的消息记录中，AI可以再完整读取一次包含工具调用结果的消息来进行总结，但这其实已经算是新一轮对话了，上一轮对话在AI生成参数后就结束了。
+
+Schema不仅可以声明参数的数据类型，也可以通过格式验证来确保AI生成正确的数据结构，带有`joke: z.string()`声明的字段只会是字符串类型，但`joke: z.any()`有可能是字符串数组，因此明确schema定义是确保AI工具正确调用的底线，理论上z.any()或者typescript自带的any类型是不允许在项目里使用的。
+
+> 我在代码库里留了不少any类型的参数，方便大家看完文档后用作练习素材。
+
+Description和系统提示词是AI获取认知的主要来源，模型的大部分行为都可以通过这两种文本描述来进行引导，这里不需要太多说明。
+# Query/Mutation函数
+
+
+

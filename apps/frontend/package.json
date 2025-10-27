@@ -2,7 +2,7 @@
   "name": "@sealos-brain/frontend",
   "scripts": {
     "dev": "next dev",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "tag-image": "docker tag $IMAGEID puddlecat/sealos-brain-frontend:$VERSION",
