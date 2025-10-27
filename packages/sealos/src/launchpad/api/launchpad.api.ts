@@ -14,13 +14,13 @@ import {
 	StatefulsetBridgeMetaSchema,
 	StatefulsetBridgeTransSchema,
 } from "../models";
-import type { LaunchpadCreateData } from "../models/launchpad-create.model";
+import type { LaunchpadCreate } from "../models/launchpad-create.model";
 import {
 	DeploymentObjectSchema,
 	LaunchpadObjectSchema,
 	StatefulsetObjectSchema,
 } from "../models/launchpad-object.model";
-import type { LaunchpadUpdateData } from "../models/launchpad-update.model";
+import type { LaunchpadUpdate } from "../models/launchpad-update.model";
 
 /**
  * Creates axios instance for launchpad API calls
@@ -53,19 +53,11 @@ async function createLaunchpadAxios(context: K8sContext, apiVersion?: string) {
 }
 
 // ============================================================================
-// Launchpad API Functions
+// Query Operations
 // ============================================================================
 
 /**
- * List all launchpads
- */
-export const listLaunchpads = async (_context: K8sContext) => {
-	// TODO: Implement list launchpads
-	throw new Error("Not implemented");
-};
-
-/**
- * Get a specific launchpad by BuiltinResourceTarget
+ * Get launchpad by BuiltinResourceTarget
  */
 export const getLaunchpad = async (
 	context: K8sContext,
@@ -105,92 +97,92 @@ export const getLaunchpad = async (
 };
 
 /**
- * Get launchpad monitor data
+ * Get application details by name
  */
-export const getLaunchpadMonitorData = async (
+export const getLaunchpadByName = async (
 	context: K8sContext,
-	queryKey: string,
-	queryName: string,
-	step: string = "2m",
+	params: { path: { name: string } },
 ) => {
-	const api = await createLaunchpadAxios(context);
-	const response = await api.get("/monitor/getMonitorData", {
-		params: {
-			queryKey,
-			queryName,
-			step,
-		},
-	});
+	const api = await createLaunchpadAxios(context, "v1");
+	const response = await api.get(`/app/${params.path.name}`);
 	return response.data.data;
 };
 
-/**
- * Get launchpad logs
- */
-export const getLaunchpadLogs = async (
-	_context: K8sContext,
-	_target: BuiltinResourceTarget,
-) => {
-	// TODO: Implement get launchpad logs
-	throw new Error("Not implemented");
-};
+// ============================================================================
+// Mutation Operations
+// ============================================================================
 
 /**
- * Create launchpad
+ * Create launchpad application
  */
 export const createLaunchpad = async (
 	context: K8sContext,
-	input: LaunchpadCreateData,
+	params: { body: LaunchpadCreate },
 ) => {
 	const api = await createLaunchpadAxios(context, "v1");
-	const response = await api.post("/app", input);
+	const response = await api.post("/app", params.body);
 	return response.data;
 };
 
 /**
- * Update launchpad
+ * Update launchpad application
  */
 export const updateLaunchpad = async (
 	context: K8sContext,
-	input: LaunchpadUpdateData,
+	params: {
+		path: { name: string };
+		body?: Omit<LaunchpadUpdate, "name">;
+	},
 ) => {
 	const api = await createLaunchpadAxios(context, "v1");
-	const response = await api.patch(`/app/${input.name}`, input);
+	const response = await api.patch(`/app/${params.path.name}`, params.body);
 	return response.data;
 };
 
 /**
- * Start launchpad
+ * Delete launchpad application
  */
-export const startLaunchpad = async (context: K8sContext, name: string) => {
+export const deleteLaunchpad = async (
+	context: K8sContext,
+	params: { path: { name: string } },
+) => {
 	const api = await createLaunchpadAxios(context, "v1");
-	const response = await api.post(`/app/${name}/start`, {});
+	const response = await api.delete(`/app/${params.path.name}`);
 	return response.data;
 };
 
 /**
- * Pause launchpad
+ * Start launchpad application
  */
-export const pauseLaunchpad = async (context: K8sContext, name: string) => {
+export const startLaunchpad = async (
+	context: K8sContext,
+	params: { path: { name: string } },
+) => {
 	const api = await createLaunchpadAxios(context, "v1");
-	const response = await api.post(`/app/${name}/pause`, {});
+	const response = await api.post(`/app/${params.path.name}/start`, {});
 	return response.data;
 };
 
 /**
- * Restart launchpad
+ * Pause launchpad application
  */
-export const restartLaunchpad = async (context: K8sContext, name: string) => {
+export const pauseLaunchpad = async (
+	context: K8sContext,
+	params: { path: { name: string } },
+) => {
 	const api = await createLaunchpadAxios(context, "v1");
-	const response = await api.post(`/app/${name}/restart`, {});
+	const response = await api.post(`/app/${params.path.name}/pause`, {});
 	return response.data;
 };
 
 /**
- * Delete launchpad
+ * Restart launchpad application
  */
-export const deleteLaunchpad = async (context: K8sContext, name: string) => {
+export const restartLaunchpad = async (
+	context: K8sContext,
+	params: { path: { name: string } },
+) => {
 	const api = await createLaunchpadAxios(context, "v1");
-	const response = await api.delete(`/app/${name}`);
+	const response = await api.post(`/app/${params.path.name}/restart`, {});
 	return response.data;
 };

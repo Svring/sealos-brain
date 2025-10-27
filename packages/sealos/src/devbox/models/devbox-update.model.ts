@@ -22,4 +22,4 @@ export const devboxUpdateSchema = z.object({
 		.optional(),
 });
 
-export type DevboxUpdateData = z.infer<typeof devboxUpdateSchema>;
+export type DevboxUpdate = z.infer<typeof devboxUpdateSchema>;

@@ -48,4 +48,4 @@ export const devboxCreateSchema = z.object({
 });
 
 // Export types
-export type DevboxCreateData = z.infer<typeof devboxCreateSchema>;
+export type DevboxCreate = z.infer<typeof devboxCreateSchema>;

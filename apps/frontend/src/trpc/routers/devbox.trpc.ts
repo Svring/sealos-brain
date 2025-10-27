@@ -1,7 +1,6 @@
 import type { K8sContext } from "@sealos-brain/k8s/shared/models";
 import { CustomResourceTargetSchema } from "@sealos-brain/k8s/shared/models";
 import {
-	authCname,
 	autostartDevbox,
 	createDevbox,
 	deleteDevbox,
@@ -61,7 +60,7 @@ export const devboxRouter = t.router({
 	get: t.procedure
 		.input(CustomResourceTargetSchema)
 		.query(async ({ input, ctx }) => {
-			return await getDevbox(ctx, input);
+			return await getDevbox(ctx, { path: { name: input.name } });
 		}),
 
 	monitor: t.procedure
@@ -99,7 +98,7 @@ export const devboxRouter = t.router({
 
 	// Release Information
 	releases: t.procedure.input(z.string()).query(async ({ ctx, input }) => {
-		return await getDevboxReleases(ctx, input);
+		return await getDevboxReleases(ctx, { path: { name: input } });
 	}),
 
 	deployments: t.procedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -111,73 +110,62 @@ export const devboxRouter = t.router({
 		return await getDevboxTemplates(ctx);
 	}),
 
-	// Domain Authentication
-	authCname: t.procedure
-		.input(
-			z.object({
-				publicDomain: z.string().min(1, "Public domain is required"),
-				customDomain: z.string().min(1, "Custom domain is required"),
-			}),
-		)
-		.query(async ({ ctx, input }) => {
-			return await authCname(ctx, input.publicDomain, input.customDomain);
-		}),
-
 	// ===== MUTATION PROCEDURES =====
 
 	// DevBox Lifecycle Management
 	create: t.procedure
 		.input(devboxCreateSchema)
 		.mutation(async ({ ctx, input }) => {
-			return await createDevbox(ctx, input);
+			return await createDevbox(ctx, { body: input });
 		}),
 
 	update: t.procedure
 		.input(devboxUpdateSchema)
 		.mutation(async ({ ctx, input }) => {
-			return await updateDevbox(ctx, input);
+			const { name, ...body } = input;
+			return await updateDevbox(ctx, { path: { name }, body });
 		}),
 
 	start: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ ctx, input }) => {
 			if (!input.name) throw new Error("DevBox name is required");
-			return await startDevbox(ctx, input.name);
+			return await startDevbox(ctx, { path: { name: input.name } });
 		}),
 
 	pause: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ ctx, input }) => {
 			if (!input.name) throw new Error("DevBox name is required");
-			return await pauseDevbox(ctx, input.name);
+			return await pauseDevbox(ctx, { path: { name: input.name } });
 		}),
 
 	shutdown: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ ctx, input }) => {
 			if (!input.name) throw new Error("DevBox name is required");
-			return await shutdownDevbox(ctx, input.name);
+			return await shutdownDevbox(ctx, { path: { name: input.name } });
 		}),
 
 	restart: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ ctx, input }) => {
 			if (!input.name) throw new Error("DevBox name is required");
-			return await restartDevbox(ctx, input.name);
+			return await restartDevbox(ctx, { path: { name: input.name } });
 		}),
 
 	autostart: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ ctx, input }) => {
 			if (!input.name) throw new Error("DevBox name is required");
-			return await autostartDevbox(ctx, input.name);
+			return await autostartDevbox(ctx, { path: { name: input.name } });
 		}),
 
 	delete: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ ctx, input }) => {
 			if (!input.name) throw new Error("DevBox name is required");
-			return await deleteDevbox(ctx, input.name);
+			return await deleteDevbox(ctx, { path: { name: input.name } });
 		}),
 
 	// Release Management
@@ -191,13 +179,23 @@ export const devboxRouter = t.router({
 		)
 		.mutation(async ({ ctx, input }) => {
 			const { devboxName, tag, releaseDes } = input;
-			return await releaseDevbox(ctx, devboxName, tag, releaseDes);
+			return await releaseDevbox(ctx, {
+				path: { name: devboxName },
+				body: { tag, releaseDes },
+			});
 		}),
 
 	deleteRelease: t.procedure
-		.input(z.string())
+		.input(
+			z.object({
+				name: z.string().min(1, "DevBox name is required"),
+				tag: z.string().min(1, "Release tag is required"),
+			}),
+		)
 		.mutation(async ({ ctx, input }) => {
-			return await deleteDevboxRelease(ctx, input);
+			return await deleteDevboxRelease(ctx, {
+				path: { name: input.name, tag: input.tag },
+			});
 		}),
 
 	deploy: t.procedure
@@ -209,7 +207,7 @@ export const devboxRouter = t.router({
 		)
 		.mutation(async ({ ctx, input }) => {
 			const { devboxName, tag } = input;
-			return await deployDevbox(ctx, devboxName, tag);
+			return await deployDevbox(ctx, { path: { name: devboxName, tag } });
 		}),
 });
 

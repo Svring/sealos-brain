@@ -84,4 +84,4 @@ export const launchpadCreateSchema = z.object({
 });
 
 // Export types
-export type LaunchpadCreateData = z.infer<typeof launchpadCreateSchema>;
+export type LaunchpadCreate = z.infer<typeof launchpadCreateSchema>;

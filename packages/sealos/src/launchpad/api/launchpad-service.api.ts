@@ -12,41 +12,12 @@ import type {
 	ResourceTypeTarget,
 } from "@sealos-brain/k8s/shared/models";
 import { checkPorts } from "@sealos-brain/shared/network/api";
-import type { MonitorData } from "#resource/models/resource-monitor.model";
-import { transformMonitorData } from "#resource/utils/resource.utils";
 import { LAUNCHPAD_LABELS } from "../constants/launchpad-labels.constant";
-import { getLaunchpad, getLaunchpadMonitorData } from "./launchpad.api";
+import { getLaunchpad } from "./launchpad.api";
 
 // ============================================================================
 // Launchpad Service Functions (Higher-level business logic)
 // ============================================================================
-
-/**
- * Get launchpad combined monitor
- */
-export const getLaunchpadMonitor = async (
-	context: K8sContext,
-	queryName: string,
-	step: string = "2m",
-) => {
-	const [cpuResult, memoryResult] = await Promise.allSettled([
-		getLaunchpadMonitorData(context, "average_cpu", queryName, step),
-		getLaunchpadMonitorData(context, "average_memory", queryName, step),
-	]);
-
-	const cpuData =
-		cpuResult.status === "fulfilled" ? cpuResult.value : undefined;
-	const memoryData =
-		memoryResult.status === "fulfilled" ? memoryResult.value : undefined;
-
-	// Transform combined monitor data
-	const monitorData: MonitorData = {
-		cpu: cpuData ? { data: cpuData } : undefined,
-		memory: memoryData ? { data: memoryData } : undefined,
-	};
-
-	return transformMonitorData(monitorData);
-};
 
 /**
  * Get launchpad related resources

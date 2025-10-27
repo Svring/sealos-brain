@@ -16,6 +16,7 @@ import { checkPorts } from "@sealos-brain/shared/network/api";
 import type { MonitorData } from "#resource/models/resource-monitor.model";
 import { transformMonitorData } from "#resource/utils/resource.utils";
 import { DEVBOX_LABELS } from "../constants/devbox-labels.constant";
+import type { DevboxObjectPort } from "../models/devbox-object.model";
 import { getDevbox, getDevboxMonitorData } from "./devbox.api";
 
 // ============================================================================
@@ -30,8 +31,8 @@ export const getDevboxMonitor = async (
 	target: CustomResourceTarget,
 ) => {
 	const [cpuResult, memoryResult] = await Promise.allSettled([
-		getDevboxMonitorData(context, "average_cpu", target.name),
-		getDevboxMonitorData(context, "average_memory", target.name),
+		getDevboxMonitorData(context, { path: { name: target.name } }),
+		getDevboxMonitorData(context, { path: { name: target.name } }),
 	]);
 
 	const cpuData =
@@ -146,14 +147,14 @@ export const getDevboxNetwork = async (
 	target: CustomResourceTarget,
 ) => {
 	// Get the devbox object first
-	const devbox = await getDevbox(context, target);
+	const devbox = await getDevbox(context, { path: { name: target.name } });
 
 	// Extract ports from the devbox object
-	const ports = devbox.ports || [];
+	const ports: DevboxObjectPort[] = devbox.ports || [];
 
 	// Check reachability for each port
 	const portChecks = await Promise.all(
-		ports.map(async (port) => {
+		ports.map(async (port: DevboxObjectPort) => {
 			const results: {
 				port: typeof port;
 				publicReachable?: boolean;

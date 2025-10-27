@@ -8,9 +8,6 @@ import {
 	disableClusterPublicAccess,
 	enableClusterPublicAccess,
 	getCluster,
-	getClusterBackups,
-	getClusterLogs,
-	getClusterMonitor,
 	getClusterResources,
 	getClusterVersions,
 	listClusters,
@@ -53,7 +50,7 @@ export const clusterRouter = t.router({
 	get: t.procedure
 		.input(CustomResourceTargetSchema)
 		.query(async ({ input, ctx }) => {
-			return await getCluster(ctx, input);
+			return await getCluster(ctx, { path: { databaseName: input.name } });
 		}),
 
 	list: t.procedure
@@ -62,32 +59,9 @@ export const clusterRouter = t.router({
 			return await listClusters(ctx);
 		}),
 
-	backups: t.procedure
-		.input(CustomResourceTargetSchema)
-		.query(async ({ input, ctx }) => {
-			return await getClusterBackups(ctx, input);
-		}),
-
-	logs: t.procedure
-		.input(CustomResourceTargetSchema)
-		.query(async ({ input, ctx }) => {
-			return await getClusterLogs(ctx, input);
-		}),
-
 	versions: t.procedure.query(async ({ ctx }) => {
 		return await getClusterVersions(ctx);
 	}),
-
-	// Monitoring
-	monitor: t.procedure
-		.input(
-			CustomResourceTargetSchema.extend({
-				dbType: z.string(),
-			}),
-		)
-		.query(async ({ input, ctx }) => {
-			return await getClusterMonitor(ctx, input.name, input.dbType);
-		}),
 
 	resources: t.procedure
 		.input(
@@ -117,31 +91,32 @@ export const clusterRouter = t.router({
 	create: t.procedure
 		.input(clusterCreateSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await createCluster(ctx, input);
+			return await createCluster(ctx, { body: input });
 		}),
 
 	start: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await startCluster(ctx, input.name);
+			return await startCluster(ctx, { path: { databaseName: input.name } });
 		}),
 
 	pause: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await pauseCluster(ctx, input.name);
+			return await pauseCluster(ctx, { path: { databaseName: input.name } });
 		}),
 
 	restart: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await restartCluster(ctx, input.name);
+			return await restartCluster(ctx, { path: { databaseName: input.name } });
 		}),
 
 	update: t.procedure
 		.input(clusterUpdateSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await updateCluster(ctx, input);
+			const { name, ...body } = input;
+			return await updateCluster(ctx, { path: { databaseName: name }, body });
 		}),
 
 	delete: t.procedure
@@ -151,7 +126,9 @@ export const clusterRouter = t.router({
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
-			return await deleteCluster(ctx, input.clusterName);
+			return await deleteCluster(ctx, {
+				path: { databaseName: input.clusterName },
+			});
 		}),
 
 	deleteBackup: t.procedure
@@ -162,11 +139,9 @@ export const clusterRouter = t.router({
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
-			return await deleteClusterBackup(
-				ctx,
-				input.clusterName,
-				input.backupName,
-			);
+			return await deleteClusterBackup(ctx, {
+				path: { databaseName: input.clusterName, backupName: input.backupName },
+			});
 		}),
 
 	// Backup Management
@@ -178,7 +153,10 @@ export const clusterRouter = t.router({
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
-			return await createClusterBackup(ctx, input.databaseName, input.remark);
+			return await createClusterBackup(ctx, {
+				path: { databaseName: input.databaseName },
+				body: { remark: input.remark },
+			});
 		}),
 
 	restoreBackup: t.procedure
@@ -186,14 +164,17 @@ export const clusterRouter = t.router({
 			z.object({
 				databaseName: z.string(),
 				backupName: z.string(),
+				newDbName: z.string(),
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
-			return await restoreClusterBackup(
-				ctx,
-				input.databaseName,
-				input.backupName,
-			);
+			return await restoreClusterBackup(ctx, {
+				path: {
+					databaseName: input.databaseName,
+					backupName: input.backupName,
+				},
+				body: { newDbName: input.newDbName },
+			});
 		}),
 
 	// Public Access Management
@@ -204,7 +185,9 @@ export const clusterRouter = t.router({
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
-			return await enableClusterPublicAccess(ctx, input.databaseName);
+			return await enableClusterPublicAccess(ctx, {
+				path: { databaseName: input.databaseName },
+			});
 		}),
 
 	disablePublic: t.procedure
@@ -214,7 +197,9 @@ export const clusterRouter = t.router({
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
-			return await disableClusterPublicAccess(ctx, input.databaseName);
+			return await disableClusterPublicAccess(ctx, {
+				path: { databaseName: input.databaseName },
+			});
 		}),
 });
 

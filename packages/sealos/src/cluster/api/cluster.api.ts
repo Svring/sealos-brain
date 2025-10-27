@@ -1,17 +1,11 @@
 "use server";
 
 import https from "node:https";
-import { composeObjectFromTarget } from "@sealos-brain/bridge/api";
-import type {
-	CustomResourceTarget,
-	K8sContext,
-} from "@sealos-brain/k8s/shared/models";
+import type { K8sContext } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import axios from "axios";
-import type { ClusterCreateData } from "#cluster/models/cluster-create.model";
-import { ClusterObjectSchema } from "#cluster/models/cluster-object.model";
-import type { ClusterUpdateData } from "#cluster/models/cluster-update.model";
-import { ClusterBridgeMetaSchema, ClusterBridgeTransSchema } from "../models";
+import type { ClusterCreate } from "../models/cluster-create.model";
+import type { ClusterUpdate } from "../models/cluster-update.model";
 
 /**
  * Creates axios instance for cluster API calls
@@ -44,209 +38,254 @@ async function createClusterAxios(context: K8sContext, apiVersion?: string) {
 }
 
 // ============================================================================
-// Cluster API Functions
+// Query Operations
 // ============================================================================
 
 /**
- * List all clusters
+ * List all databases
  */
-export const listClusters = async (_context: K8sContext) => {
-	// TODO: Implement list clusters
-	throw new Error("Not implemented");
+export const listClusters = async (context: K8sContext) => {
+	const api = await createClusterAxios(context, "v1/database");
+	const response = await api.get("/");
+	return response.data.data;
 };
 
 /**
- * Get a specific cluster by CustomResourceTarget
+ * Get database details
  */
 export const getCluster = async (
 	context: K8sContext,
-	target: CustomResourceTarget,
+	params: { path: { databaseName: string } },
 ) => {
-	const clusterObject = await composeObjectFromTarget(
-		context,
-		target,
-		ClusterBridgeMetaSchema,
-		ClusterBridgeTransSchema,
-		ClusterObjectSchema,
-	);
-	return ClusterObjectSchema.parse(clusterObject);
-};
-
-/**
- * Get cluster monitor data
- */
-export const getClusterMonitorData = async (
-	context: K8sContext,
-	dbName: string,
-	dbType: string,
-	queryKey: string,
-) => {
-	const api = await createClusterAxios(context);
-	const response = await api.get("/monitor/getMonitorData", {
-		params: {
-			dbName,
-			dbType,
-			queryKey,
-		},
-	});
+	const api = await createClusterAxios(context, "v1/database");
+	const response = await api.get(`/${params.path.databaseName}`);
 	return response.data.data;
 };
 
 /**
- * Get cluster backup list
- */
-export const getClusterBackups = async (
-	context: K8sContext,
-	target: CustomResourceTarget,
-) => {
-	const api = await createClusterAxios(context);
-	const response = await api.get("/backup/getBackupList", {
-		params: {
-			dbName: target.name,
-		},
-	});
-	return response.data.data;
-};
-
-/**
- * Get cluster logs
- */
-export const getClusterLogs = async (
-	_context: K8sContext,
-	_target: CustomResourceTarget,
-) => {
-	// TODO: Implement get cluster logs
-	throw new Error("Not implemented");
-};
-
-/**
- * Get cluster versions
+ * Get database versions
  */
 export const getClusterVersions = async (context: K8sContext) => {
 	const api = await createClusterAxios(context, "v1/database");
 	const response = await api.get("/version/list");
-	return response.data;
+	return response.data.data;
 };
 
 /**
- * Create cluster
+ * Get database logs data
+ */
+export const getClusterLogsData = async (
+	context: K8sContext,
+	params: {
+		search: {
+			podName: string;
+			dbType: "mysql" | "mongodb" | "redis" | "postgresql";
+			logType: string;
+			logPath: string;
+			page?: number;
+			pageSize?: number;
+		};
+	},
+) => {
+	const api = await createClusterAxios(context);
+	const response = await api.get("/logs/data", {
+		params: params.search,
+	});
+	return response.data.data;
+};
+
+/**
+ * List database log files
+ */
+export const listClusterLogFiles = async (
+	context: K8sContext,
+	params: {
+		search: {
+			podName: string;
+			dbType: "mysql" | "mongodb" | "redis" | "postgresql";
+			logType: string;
+		};
+	},
+) => {
+	const api = await createClusterAxios(context);
+	const response = await api.get("/logs/files", {
+		params: params.search,
+	});
+	return response.data.data;
+};
+
+// ============================================================================
+// Mutation Operations
+// ============================================================================
+
+/**
+ * Create database
  */
 export const createCluster = async (
 	context: K8sContext,
-	input: ClusterCreateData,
+	params: {
+		body: ClusterCreate & {
+			autoBackup?: {
+				start?: boolean;
+				type?: "day" | "week";
+				week?: string[];
+				hour?: string;
+				minute?: string;
+				saveTime?: number;
+				saveType?: "days" | "weeks" | "months";
+			};
+			parameterConfig?: {
+				maxConnections?: string;
+				timeZone?: string;
+				lowerCaseTableNames?: string;
+			};
+		};
+	},
 ) => {
 	const api = await createClusterAxios(context, "v1/database");
-	const response = await api.post("/", input);
+	const response = await api.post("/", params.body);
 	return response.data;
 };
 
 /**
- * Update cluster
+ * Update database resources
  */
 export const updateCluster = async (
 	context: K8sContext,
-	input: ClusterUpdateData,
+	params: {
+		path: { databaseName: string };
+		body: Omit<ClusterUpdate, "name">;
+	},
 ) => {
 	const api = await createClusterAxios(context, "v1/database");
-	const response = await api.patch(`/${input.name}`, input);
+	const response = await api.patch(`/${params.path.databaseName}`, params.body);
 	return response.data;
 };
 
 /**
- * Start cluster
+ * Delete database
  */
-export const startCluster = async (context: K8sContext, name: string) => {
+export const deleteCluster = async (
+	context: K8sContext,
+	params: { path: { databaseName: string } },
+) => {
 	const api = await createClusterAxios(context, "v1/database");
-	const response = await api.post(`/${name}/start`, {});
+	const response = await api.delete(`/${params.path.databaseName}`);
 	return response.data;
 };
 
 /**
- * Pause cluster
+ * Start database
  */
-export const pauseCluster = async (context: K8sContext, name: string) => {
+export const startCluster = async (
+	context: K8sContext,
+	params: { path: { databaseName: string } },
+) => {
 	const api = await createClusterAxios(context, "v1/database");
-	const response = await api.post(`/${name}/pause`, {});
+	const response = await api.post(`/${params.path.databaseName}/start`, {});
 	return response.data;
 };
 
 /**
- * Restart cluster
+ * Pause database
  */
-export const restartCluster = async (context: K8sContext, name: string) => {
+export const pauseCluster = async (
+	context: K8sContext,
+	params: { path: { databaseName: string } },
+) => {
 	const api = await createClusterAxios(context, "v1/database");
-	const response = await api.post(`/${name}/restart`, {});
+	const response = await api.post(`/${params.path.databaseName}/pause`, {});
 	return response.data;
 };
 
 /**
- * Delete cluster
+ * Restart database
  */
-export const deleteCluster = async (context: K8sContext, name: string) => {
-	const api = await createClusterAxios(context);
-	const response = await api.delete("/delete", { data: { name } });
+export const restartCluster = async (
+	context: K8sContext,
+	params: { path: { databaseName: string } },
+) => {
+	const api = await createClusterAxios(context, "v1/database");
+	const response = await api.post(`/${params.path.databaseName}/restart`, {});
 	return response.data;
 };
 
 /**
- * Create cluster backup
+ * Create database backup
  */
 export const createClusterBackup = async (
 	context: K8sContext,
-	databaseName: string,
-	remark?: string,
+	params: {
+		path: { databaseName: string };
+		body?: { remark?: string };
+	},
 ) => {
 	const api = await createClusterAxios(context, "v1/database");
-	const response = await api.post(`/${databaseName}/backup`, { remark });
+	const response = await api.post(
+		`/${params.path.databaseName}/backup`,
+		params.body,
+	);
 	return response.data;
 };
 
 /**
- * Delete cluster backup
- */
-export const deleteClusterBackup = async (
-	context: K8sContext,
-	clusterName: string,
-	backupName: string,
-) => {
-	const api = await createClusterAxios(context, "v1/database");
-	const response = await api.delete(`/${clusterName}/backup/${backupName}`);
-	return response.data;
-};
-
-/**
- * Restore cluster backup
+ * Restore database from backup
  */
 export const restoreClusterBackup = async (
 	context: K8sContext,
-	databaseName: string,
-	backupName: string,
+	params: {
+		path: { databaseName: string; backupName: string };
+		body: { newDbName: string };
+	},
 ) => {
 	const api = await createClusterAxios(context, "v1/database");
-	const response = await api.post(`/${databaseName}/backup/${backupName}`);
+	const response = await api.post(
+		`/${params.path.databaseName}/backup/${params.path.backupName}`,
+		params.body,
+	);
 	return response.data;
 };
 
 /**
- * Enable cluster public access
+ * Delete database backup
+ */
+export const deleteClusterBackup = async (
+	context: K8sContext,
+	params: { path: { databaseName: string; backupName: string } },
+) => {
+	const api = await createClusterAxios(context, "v1/database");
+	const response = await api.delete(
+		`/${params.path.databaseName}/backup/${params.path.backupName}`,
+	);
+	return response.data;
+};
+
+/**
+ * Enable database public access
  */
 export const enableClusterPublicAccess = async (
 	context: K8sContext,
-	databaseName: string,
+	params: { path: { databaseName: string } },
 ) => {
 	const api = await createClusterAxios(context, "v1/database");
-	const response = await api.post(`/${databaseName}/enablePublic`);
+	const response = await api.post(
+		`/${params.path.databaseName}/enablePublic`,
+		{},
+	);
 	return response.data;
 };
 
 /**
- * Disable cluster public access
+ * Disable database public access
  */
 export const disableClusterPublicAccess = async (
 	context: K8sContext,
-	databaseName: string,
+	params: { path: { databaseName: string } },
 ) => {
 	const api = await createClusterAxios(context, "v1/database");
-	const response = await api.post(`/${databaseName}/disablePublic`);
+	const response = await api.post(
+		`/${params.path.databaseName}/disablePublic`,
+		{},
+	);
 	return response.data;
 };

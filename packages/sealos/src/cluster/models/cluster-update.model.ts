@@ -22,4 +22,4 @@ export const clusterUpdateSchema = z.object({
 	resource: ClusterResourceUpdateSchema.optional(),
 });
 
-export type ClusterUpdateData = z.infer<typeof clusterUpdateSchema>;
+export type ClusterUpdate = z.infer<typeof clusterUpdateSchema>;

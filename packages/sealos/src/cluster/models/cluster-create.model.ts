@@ -43,4 +43,4 @@ export const clusterCreateSchema = z.object({
 });
 
 // Export types
-export type ClusterCreateData = z.infer<typeof clusterCreateSchema>;
+export type ClusterCreate = z.infer<typeof clusterCreateSchema>;

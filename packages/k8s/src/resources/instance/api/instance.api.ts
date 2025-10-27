@@ -147,8 +147,6 @@ export const getInstanceResources = async (
 
 	const selectedResources = await selectResources(context, targets);
 
-	console.log("selectedResources in instance resources", selectedResources);
-
 	// Convert resources to items
 	return selectedResources.map((resource) => ({
 		name: resource.metadata?.name || "unknown",

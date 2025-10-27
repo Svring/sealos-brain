@@ -4,11 +4,8 @@ import {
 	createLaunchpad,
 	deleteLaunchpad,
 	getLaunchpad,
-	getLaunchpadLogs,
-	getLaunchpadMonitor,
 	getLaunchpadNetwork,
 	getLaunchpadResources,
-	listLaunchpads,
 	pauseLaunchpad,
 	restartLaunchpad,
 	startLaunchpad,
@@ -50,33 +47,10 @@ export const launchpadRouter = t.router({
 			return await getLaunchpad(ctx, input);
 		}),
 
-	list: t.procedure
-		.input(z.string().optional().default("launchpad"))
-		.query(async ({ ctx, input: _input }) => {
-			return await listLaunchpads(ctx);
-		}),
-
-	logs: t.procedure
-		.input(BuiltinResourceTargetSchema)
-		.query(async ({ ctx, input }) => {
-			return await getLaunchpadLogs(ctx, input);
-		}),
-
 	network: t.procedure
 		.input(BuiltinResourceTargetSchema)
 		.query(async ({ input, ctx }) => {
 			return await getLaunchpadNetwork(ctx, input);
-		}),
-
-	// Monitoring
-	monitor: t.procedure
-		.input(
-			BuiltinResourceTargetSchema.extend({
-				step: z.string().optional().default("2m"),
-			}),
-		)
-		.query(async ({ input, ctx }) => {
-			return await getLaunchpadMonitor(ctx, input.name, input.step);
 		}),
 
 	resources: t.procedure
@@ -113,37 +87,38 @@ export const launchpadRouter = t.router({
 	create: t.procedure
 		.input(launchpadCreateSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await createLaunchpad(ctx, input);
+			return await createLaunchpad(ctx, { body: input });
 		}),
 
 	update: t.procedure
 		.input(launchpadUpdateSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await updateLaunchpad(ctx, input);
+			const { name, ...body } = input;
+			return await updateLaunchpad(ctx, { path: { name }, body });
 		}),
 
 	start: t.procedure
 		.input(BuiltinResourceTargetSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await startLaunchpad(ctx, input.name);
+			return await startLaunchpad(ctx, { path: { name: input.name } });
 		}),
 
 	pause: t.procedure
 		.input(BuiltinResourceTargetSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await pauseLaunchpad(ctx, input.name);
+			return await pauseLaunchpad(ctx, { path: { name: input.name } });
 		}),
 
 	restart: t.procedure
 		.input(BuiltinResourceTargetSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await restartLaunchpad(ctx, input.name);
+			return await restartLaunchpad(ctx, { path: { name: input.name } });
 		}),
 
 	delete: t.procedure
 		.input(BuiltinResourceTargetSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await deleteLaunchpad(ctx, input.name);
+			return await deleteLaunchpad(ctx, { path: { name: input.name } });
 		}),
 });
 
