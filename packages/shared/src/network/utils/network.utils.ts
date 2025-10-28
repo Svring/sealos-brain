@@ -1,5 +1,8 @@
+import https from "node:https";
 import type { IngressResource } from "@sealos-brain/k8s/resources/ingress/models";
 import type { ServiceResource } from "@sealos-brain/k8s/resources/service/models";
+import type { AxiosInstance } from "axios";
+import axios from "axios";
 import type { ObjectPort } from "../models/network-ports.model";
 
 /**
@@ -150,4 +153,29 @@ export async function composePortsFromResources(
 	const mergedPorts = mergeIngressPorts(ingresses, servicePorts);
 
 	return Array.from(mergedPorts.values());
+}
+
+/**
+ * Creates an axios client for API calls to Sealos services
+ * @param options - Configuration options for the axios client
+ * @param options.baseURL - The complete base URL for the API
+ * @param options.headers - Additional headers to include in requests
+ * @returns Configured axios instance
+ */
+export function createAxiosClient(options: {
+	baseURL: string;
+	headers?: Record<string, string>;
+}): AxiosInstance {
+	const httpsAgent = new https.Agent({
+		keepAlive: true,
+	});
+
+	return axios.create({
+		baseURL: options.baseURL,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
+		httpsAgent,
+	});
 }

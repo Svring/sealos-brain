@@ -1,39 +1,27 @@
 "use server";
 
-import https from "node:https";
 import type { K8sContext } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
-import axios from "axios";
+import { createAxiosClient } from "@sealos-brain/shared/network/utils";
 import type { DevboxCreate } from "../models/devbox-create.model";
 import type { DevboxUpdate } from "../models/devbox-update.model";
 
 /**
  * Creates axios instance for devbox API calls
  */
-async function createDevboxAxios(context: K8sContext, apiVersion?: string) {
+async function createDevboxAxios(context: K8sContext) {
 	const regionUrl = await getRegionUrlFromKubeconfig(context.kubeconfig);
 	if (!regionUrl) {
 		throw new Error("Failed to extract region URL from kubeconfig");
 	}
 
-	const serviceSubdomain = "devbox";
-	const baseURL = `http://${serviceSubdomain}.${regionUrl}/api${
-		apiVersion ? `/${apiVersion}` : ""
-	}`;
+	const baseURL = `http://devbox.${regionUrl}/api/v1/devbox`;
 
-	const isDevelopment = process.env.MODE === "development";
-	const httpsAgent = new https.Agent({
-		keepAlive: true,
-		rejectUnauthorized: !isDevelopment,
-	});
-
-	return axios.create({
+	return createAxiosClient({
 		baseURL,
 		headers: {
-			"Content-Type": "application/json",
 			Authorization: encodeURIComponent(context.kubeconfig),
 		},
-		httpsAgent,
 	});
 }
 
@@ -45,7 +33,7 @@ async function createDevboxAxios(context: K8sContext, apiVersion?: string) {
  * List all devboxes
  */
 export const listDevboxes = async (context: K8sContext) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.get("/");
 	return response.data.data;
 };
@@ -57,7 +45,7 @@ export const getDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.get(`/${params.path.name}`);
 	return response.data.data;
 };
@@ -66,7 +54,7 @@ export const getDevbox = async (
  * Get devbox templates
  */
 export const getDevboxTemplates = async (context: K8sContext) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.get("/templates");
 	return response.data.data;
 };
@@ -78,7 +66,7 @@ export const getDevboxReleases = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.get(`/${params.path.name}/release`);
 	return response.data.data;
 };
@@ -90,7 +78,7 @@ export const getDeployedDevboxReleases = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.get(`/${params.path.name}/deploy`);
 	return response.data.data;
 };
@@ -105,7 +93,7 @@ export const getDevboxMonitorData = async (
 		search?: { start?: string; end?: string; step?: string };
 	},
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.get(`/${params.path.name}/monitor`, {
 		params: params.search,
 	});
@@ -119,7 +107,7 @@ export const getDevboxPrivateKey = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.get(`/${params.path.name}/privatekey`);
 	return response.data.data;
 };
@@ -135,7 +123,7 @@ export const createDevbox = async (
 	context: K8sContext,
 	params: { body: DevboxCreate },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.post("/", params.body);
 	return response.data;
 };
@@ -150,7 +138,7 @@ export const updateDevbox = async (
 		body?: Omit<DevboxUpdate, "name">;
 	},
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.patch(`/${params.path.name}`, params.body);
 	return response.data;
 };
@@ -162,7 +150,7 @@ export const deleteDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.delete(`/${params.path.name}`);
 	return response.data;
 };
@@ -174,7 +162,7 @@ export const startDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.post(`/${params.path.name}/start`, {});
 	return response.data;
 };
@@ -186,7 +174,7 @@ export const pauseDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.post(`/${params.path.name}/pause`, {});
 	return response.data;
 };
@@ -198,7 +186,7 @@ export const shutdownDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.post(`/${params.path.name}/shutdown`, {});
 	return response.data;
 };
@@ -210,7 +198,7 @@ export const restartDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.post(`/${params.path.name}/restart`, {});
 	return response.data;
 };
@@ -225,7 +213,7 @@ export const autostartDevbox = async (
 		body?: { execCommand?: string };
 	},
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.post(
 		`/${params.path.name}/autostart`,
 		params.body,
@@ -243,7 +231,7 @@ export const releaseDevbox = async (
 		body: { tag: string; releaseDes?: string };
 	},
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.post(`/${params.path.name}/release`, params.body);
 	return response.data;
 };
@@ -255,7 +243,7 @@ export const deleteDevboxRelease = async (
 	context: K8sContext,
 	params: { path: { name: string; tag: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.delete(
 		`/${params.path.name}/release/${params.path.tag}`,
 	);
@@ -269,7 +257,7 @@ export const deployDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string; tag: string } },
 ) => {
-	const api = await createDevboxAxios(context, "v1/devbox");
+	const api = await createDevboxAxios(context);
 	const response = await api.post(
 		`/${params.path.name}/release/${params.path.tag}/deploy`,
 		{},

@@ -1,39 +1,27 @@
 "use server";
 
-import https from "node:https";
 import type { K8sContext } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
-import axios from "axios";
+import { createAxiosClient } from "@sealos-brain/shared/network/utils";
 import type { ClusterCreate } from "../models/cluster-create.model";
 import type { ClusterUpdate } from "../models/cluster-update.model";
 
 /**
  * Creates axios instance for cluster API calls
  */
-async function createClusterAxios(context: K8sContext, apiVersion?: string) {
+async function createClusterAxios(context: K8sContext) {
 	const regionUrl = await getRegionUrlFromKubeconfig(context.kubeconfig);
 	if (!regionUrl) {
 		throw new Error("Failed to extract region URL from kubeconfig");
 	}
 
-	const serviceSubdomain = "dbprovider";
-	const baseURL = `http://${serviceSubdomain}.${regionUrl}/api${
-		apiVersion ? `/${apiVersion}` : ""
-	}`;
+	const baseURL = `http://dbprovider.${regionUrl}/api/v1/database`;
 
-	const isDevelopment = process.env.MODE === "development";
-	const httpsAgent = new https.Agent({
-		keepAlive: true,
-		rejectUnauthorized: !isDevelopment,
-	});
-
-	return axios.create({
+	return createAxiosClient({
 		baseURL,
 		headers: {
-			"Content-Type": "application/json",
 			Authorization: encodeURIComponent(context.kubeconfig),
 		},
-		httpsAgent,
 	});
 }
 
@@ -45,7 +33,7 @@ async function createClusterAxios(context: K8sContext, apiVersion?: string) {
  * List all databases
  */
 export const listClusters = async (context: K8sContext) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.get("/");
 	return response.data.data;
 };
@@ -57,7 +45,7 @@ export const getCluster = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.get(`/${params.path.databaseName}`);
 	return response.data.data;
 };
@@ -66,7 +54,7 @@ export const getCluster = async (
  * Get database versions
  */
 export const getClusterVersions = async (context: K8sContext) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.get("/version/list");
 	return response.data.data;
 };
@@ -142,7 +130,7 @@ export const createCluster = async (
 		};
 	},
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.post("/", params.body);
 	return response.data;
 };
@@ -157,7 +145,7 @@ export const updateCluster = async (
 		body: Omit<ClusterUpdate, "name">;
 	},
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.patch(`/${params.path.databaseName}`, params.body);
 	return response.data;
 };
@@ -169,7 +157,7 @@ export const deleteCluster = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.delete(`/${params.path.databaseName}`);
 	return response.data;
 };
@@ -181,7 +169,7 @@ export const startCluster = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.post(`/${params.path.databaseName}/start`, {});
 	return response.data;
 };
@@ -193,7 +181,7 @@ export const pauseCluster = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.post(`/${params.path.databaseName}/pause`, {});
 	return response.data;
 };
@@ -205,7 +193,7 @@ export const restartCluster = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.post(`/${params.path.databaseName}/restart`, {});
 	return response.data;
 };
@@ -220,7 +208,7 @@ export const createClusterBackup = async (
 		body?: { remark?: string };
 	},
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.post(
 		`/${params.path.databaseName}/backup`,
 		params.body,
@@ -238,7 +226,7 @@ export const restoreClusterBackup = async (
 		body: { newDbName: string };
 	},
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.post(
 		`/${params.path.databaseName}/backup/${params.path.backupName}`,
 		params.body,
@@ -253,7 +241,7 @@ export const deleteClusterBackup = async (
 	context: K8sContext,
 	params: { path: { databaseName: string; backupName: string } },
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.delete(
 		`/${params.path.databaseName}/backup/${params.path.backupName}`,
 	);
@@ -267,7 +255,7 @@ export const enableClusterPublicAccess = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.post(
 		`/${params.path.databaseName}/enablePublic`,
 		{},
@@ -282,7 +270,7 @@ export const disableClusterPublicAccess = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
 ) => {
-	const api = await createClusterAxios(context, "v1/database");
+	const api = await createClusterAxios(context);
 	const response = await api.post(
 		`/${params.path.databaseName}/disablePublic`,
 		{},

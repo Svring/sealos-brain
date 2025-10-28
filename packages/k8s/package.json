@@ -23,9 +23,6 @@
     "./resources/service/models": "./src/resources/service/models/index.ts",
     "./resources/configmap/models": "./src/resources/configmap/models/index.ts",
     "./resources/pvc/models": "./src/resources/pvc/models/index.ts",
-    "./resources/instance/api": "./src/resources/instance/api/index.ts",
-    "./resources/instance/constants": "./src/resources/instance/constants/index.ts",
-    "./resources/instance/models": "./src/resources/instance/models/index.ts",
     "./resources/instance/utils": "./src/resources/instance/utils/index.ts",
     "./resources/quota/models": "./src/resources/quota/models/index.ts",
     "./resources/quota/utils": "./src/resources/quota/utils/index.ts"

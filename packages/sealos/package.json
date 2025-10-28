@@ -26,14 +26,19 @@
     "./template/models": "./src/template/models/index.ts",
     "./ai-proxy/api": "./src/ai-proxy/api/index.ts",
     "./ai-proxy/models": "./src/ai-proxy/models/index.ts",
-    "./ai-proxy/utils": "./src/ai-proxy/utils/index.ts"
+    "./ai-proxy/utils": "./src/ai-proxy/utils/index.ts",
+    "./instance/api": "./src/instance/api/index.ts",
+    "./instance/constants": "./src/instance/constants/index.ts",
+    "./instance/models": "./src/instance/models/index.ts"
   },
   "dependencies": {
     "@sealos-brain/bridge": "workspace:*",
     "@sealos-brain/k8s": "workspace:*",
     "@sealos-brain/shared": "workspace:*",
+    "@types/lodash": "^4.17.20",
     "axios": "^1.12.2",
     "date-fns": "^4.1.0",
+    "lodash": "^4.17.21",
     "zod": "^4.1.12"
   }
 }

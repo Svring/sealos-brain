@@ -109,5 +109,3 @@ export const DevboxBridgeMetaSchema = z.object({
 });
 
 export type DevboxBridgeMeta = z.infer<typeof DevboxBridgeMetaSchema>;
-
-console.log(parseFieldDescriptions(DevboxBridgeMetaSchema));

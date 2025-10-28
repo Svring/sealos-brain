@@ -9,7 +9,9 @@ export const getModel = ({
 }) => {
 	const baseURL = process.env.PROXY_BASE_URL;
 	const modelName = process.env.PROXY_MODEL_NAME;
-	const key = trial ? process.env.TRIAL_API_KEY : apiKey;
+	const key = trial
+		? process.env.TRIAL_API_KEY
+		: (process.env.PROXY_API_KEY ?? apiKey);
 
 	if (!baseURL) {
 		throw new Error("LANGGRAPH_BASE_URL environment variable is not set");

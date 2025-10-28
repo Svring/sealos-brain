@@ -1,6 +1,3 @@
-import https from "node:https";
-import axios from "axios";
-import _ from "lodash";
 import {
 	getResource,
 	listResources,
@@ -10,47 +7,44 @@ import {
 	removeCustomResourceMetadata,
 	selectResources,
 	upsertCustomResource,
-} from "#shared/api";
+} from "@sealos-brain/k8s/shared/api";
 import type {
 	BuiltinResourceTarget,
 	CustomResourceTarget,
+	CustomResourceTypeTarget,
 	K8sContext,
 	K8sItem,
 	ResourceTarget,
-} from "#shared/models";
-import { getRegionUrlFromKubeconfig } from "#shared/utils";
-import { INSTANCE_ANNOTATIONS, INSTANCE_LABELS } from "../constants";
-import type { InstanceObject } from "../models/instance-object.model";
-import { InstanceResourceSchema } from "../models/instance-resource.model";
-import { instanceParser } from "../utils";
+} from "@sealos-brain/k8s/shared/models";
+import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
+import { createAxiosClient } from "@sealos-brain/shared/network/utils";
+import _ from "lodash";
+import { deleteDevbox } from "#devbox/api/devbox.api.js";
+import {
+	INSTANCE_ANNOTATIONS,
+	INSTANCE_FILTER_URLS,
+	INSTANCE_LABELS,
+} from "#instance/constants";
+import type { InstanceObject } from "#instance/models/instance-object.model";
+import { InstanceResourceSchema } from "#instance/models/instance-resource.model";
+import { instanceParser } from "#instance/utils";
 
 /**
  * Creates axios instance for instance API calls
  */
-async function createInstanceAxios(context: K8sContext, apiVersion?: string) {
+async function createInstanceAxios(context: K8sContext) {
 	const regionUrl = await getRegionUrlFromKubeconfig(context.kubeconfig);
 	if (!regionUrl) {
 		throw new Error("Failed to extract region URL from kubeconfig");
 	}
 
-	const serviceSubdomain = "template";
-	const baseURL = `https://${serviceSubdomain}.${regionUrl}/api${
-		apiVersion ? `/${apiVersion}` : ""
-	}`;
+	const baseURL = `https://template.${regionUrl}/api/v1/instance`;
 
-	const isDevelopment = process.env.MODE === "development";
-	const httpsAgent = new https.Agent({
-		keepAlive: true,
-		rejectUnauthorized: !isDevelopment,
-	});
-
-	return axios.create({
+	return createAxiosClient({
 		baseURL,
 		headers: {
-			"Content-Type": "application/json",
 			Authorization: encodeURIComponent(context.kubeconfig),
 		},
-		httpsAgent,
 	});
 }
 
@@ -62,10 +56,9 @@ async function createInstanceAxios(context: K8sContext, apiVersion?: string) {
  * List all instances
  */
 export const listInstances = async (context: K8sContext) => {
-	const instanceTarget: CustomResourceTarget = {
+	const instanceTarget: CustomResourceTypeTarget = {
 		type: "custom",
 		resourceType: "instance",
-		name: "",
 	};
 	const instanceList = await listResources(context, instanceTarget);
 
@@ -73,9 +66,7 @@ export const listInstances = async (context: K8sContext) => {
 	if (instanceList.items && instanceList.items.length > 0) {
 		const validatedInstances = _.filter(
 			instanceList.items,
-			(instance) =>
-				instance?.spec?.url !==
-				"https://github.com/nightwhite/own-sealos-templates",
+			(instance) => !INSTANCE_FILTER_URLS.includes(instance?.spec?.url),
 		).map((rawInstance: unknown) => {
 			// Validate and parse the instance using our schema
 			return InstanceResourceSchema.parse(rawInstance);
@@ -89,12 +80,17 @@ export const listInstances = async (context: K8sContext) => {
 };
 
 /**
- * Get a specific instance by CustomResourceTarget
+ * Get a specific instance by name
  */
 export const getInstance = async (
 	context: K8sContext,
-	target: CustomResourceTarget,
+	name: string,
 ): Promise<InstanceObject> => {
+	const target: CustomResourceTarget = {
+		type: "custom",
+		resourceType: "instance",
+		name,
+	};
 	const instanceResource = await getResource(context, target);
 
 	// Validate and parse the instance using our schema
@@ -109,38 +105,37 @@ export const getInstance = async (
  */
 export const getInstanceResources = async (
 	context: K8sContext,
-	target: CustomResourceTarget,
+	name: string,
 ): Promise<K8sItem[]> => {
-	console.log("target in instance resources", target);
 	const targets = [
 		{
 			type: "builtin" as const,
 			resourceType: "deployment" as const,
-			name: target.name,
+			name,
 			label: INSTANCE_LABELS.DEPLOY_ON_SEALOS,
 		},
 		{
 			type: "builtin" as const,
 			resourceType: "statefulset" as const,
-			name: target.name,
+			name,
 			label: INSTANCE_LABELS.DEPLOY_ON_SEALOS,
 		},
 		{
 			type: "custom" as const,
 			resourceType: "devbox" as const,
-			name: target.name,
+			name,
 			label: INSTANCE_LABELS.DEPLOY_ON_SEALOS,
 		},
 		{
 			type: "custom" as const,
 			resourceType: "cluster" as const,
-			name: target.name,
+			name,
 			label: INSTANCE_LABELS.DEPLOY_ON_SEALOS,
 		},
 		{
 			type: "custom" as const,
 			resourceType: "objectstoragebucket" as const,
-			name: target.name,
+			name,
 			label: INSTANCE_LABELS.DEPLOY_ON_SEALOS,
 		},
 	];
@@ -162,7 +157,15 @@ export const deleteInstance = async (
 	context: K8sContext,
 	instanceName: string,
 ) => {
-	const api = await createInstanceAxios(context, "v1/instance");
+	const api = await createInstanceAxios(context);
+
+	const instanceResource = await getInstanceResources(context, instanceName);
+	for (const resource of instanceResource) {
+		if (resource.resourceType === "devbox") {
+			await deleteDevbox(context, { path: { name: resource.name } });
+		}
+	}
+
 	const response = await api.delete(`/${instanceName}`, {});
 	return response.data;
 };
@@ -172,7 +175,7 @@ export const deleteInstance = async (
  */
 export const addResourcesToInstance = async (
 	context: K8sContext,
-	target: CustomResourceTarget,
+	name: string,
 	resources: ResourceTarget[],
 ): Promise<{ success: boolean }> => {
 	// Add labels to all resources
@@ -183,7 +186,7 @@ export const addResourcesToInstance = async (
 				resource,
 				"labels",
 				INSTANCE_LABELS.DEPLOY_ON_SEALOS,
-				target.name,
+				name,
 			);
 		} else {
 			await patchBuiltinResourceMetadata(
@@ -191,7 +194,7 @@ export const addResourcesToInstance = async (
 				resource,
 				"labels",
 				INSTANCE_LABELS.DEPLOY_ON_SEALOS,
-				target.name,
+				name,
 			);
 		}
 	}

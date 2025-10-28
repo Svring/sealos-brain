@@ -2,7 +2,7 @@ import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import {
 	createAiProxyToken,
 	deleteAiProxyToken,
-	getAiProxyTokens,
+	listTokens,
 } from "@sealos-brain/sealos/ai-proxy/api";
 import { AiProxyTokenSchema } from "@sealos-brain/sealos/ai-proxy/models";
 import { initTRPC } from "@trpc/server";
@@ -47,7 +47,7 @@ export const aiProxyRouter = t.router({
 		.input(z.string().optional().default("tokens"))
 		.output(z.array(AiProxyTokenSchema))
 		.query(async ({ ctx, input: _input }) => {
-			const result = await getAiProxyTokens(ctx);
+			const result = await listTokens(ctx);
 			return result;
 		}),
 

@@ -1,13 +1,12 @@
 "use server";
 
-import https from "node:https";
 import { composeObjectFromTarget } from "@sealos-brain/bridge/api";
 import type {
 	BuiltinResourceTarget,
 	K8sContext,
 } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
-import axios from "axios";
+import { createAxiosClient } from "@sealos-brain/shared/network/utils";
 import {
 	DeploymentBridgeMetaSchema,
 	DeploymentBridgeTransSchema,
@@ -25,30 +24,19 @@ import type { LaunchpadUpdate } from "../models/launchpad-update.model";
 /**
  * Creates axios instance for launchpad API calls
  */
-async function createLaunchpadAxios(context: K8sContext, apiVersion?: string) {
+async function createLaunchpadAxios(context: K8sContext) {
 	const regionUrl = await getRegionUrlFromKubeconfig(context.kubeconfig);
 	if (!regionUrl) {
 		throw new Error("Failed to extract region URL from kubeconfig");
 	}
 
-	const serviceSubdomain = "applaunchpad";
-	const baseURL = `http://${serviceSubdomain}.${regionUrl}/api${
-		apiVersion ? `/${apiVersion}` : ""
-	}`;
+	const baseURL = `http://applaunchpad.${regionUrl}/api/v1`;
 
-	const isDevelopment = process.env.MODE === "development";
-	const httpsAgent = new https.Agent({
-		keepAlive: true,
-		rejectUnauthorized: !isDevelopment,
-	});
-
-	return axios.create({
+	return createAxiosClient({
 		baseURL,
 		headers: {
-			"Content-Type": "application/json",
 			Authorization: encodeURIComponent(context.kubeconfig),
 		},
-		httpsAgent,
 	});
 }
 
@@ -103,7 +91,7 @@ export const getLaunchpadByName = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createLaunchpadAxios(context, "v1");
+	const api = await createLaunchpadAxios(context);
 	const response = await api.get(`/app/${params.path.name}`);
 	return response.data.data;
 };
@@ -119,7 +107,7 @@ export const createLaunchpad = async (
 	context: K8sContext,
 	params: { body: LaunchpadCreate },
 ) => {
-	const api = await createLaunchpadAxios(context, "v1");
+	const api = await createLaunchpadAxios(context);
 	const response = await api.post("/app", params.body);
 	return response.data;
 };
@@ -134,7 +122,7 @@ export const updateLaunchpad = async (
 		body?: Omit<LaunchpadUpdate, "name">;
 	},
 ) => {
-	const api = await createLaunchpadAxios(context, "v1");
+	const api = await createLaunchpadAxios(context);
 	const response = await api.patch(`/app/${params.path.name}`, params.body);
 	return response.data;
 };
@@ -146,7 +134,7 @@ export const deleteLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createLaunchpadAxios(context, "v1");
+	const api = await createLaunchpadAxios(context);
 	const response = await api.delete(`/app/${params.path.name}`);
 	return response.data;
 };
@@ -158,7 +146,7 @@ export const startLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createLaunchpadAxios(context, "v1");
+	const api = await createLaunchpadAxios(context);
 	const response = await api.post(`/app/${params.path.name}/start`, {});
 	return response.data;
 };
@@ -170,7 +158,7 @@ export const pauseLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createLaunchpadAxios(context, "v1");
+	const api = await createLaunchpadAxios(context);
 	const response = await api.post(`/app/${params.path.name}/pause`, {});
 	return response.data;
 };
@@ -182,7 +170,7 @@ export const restartLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
-	const api = await createLaunchpadAxios(context, "v1");
+	const api = await createLaunchpadAxios(context);
 	const response = await api.post(`/app/${params.path.name}/restart`, {});
 	return response.data;
 };

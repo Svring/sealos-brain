@@ -1,3 +1,9 @@
+import type { K8sContext } from "@sealos-brain/k8s/shared/models";
+import {
+	CustomResourceTargetSchema,
+	K8sItemSchema,
+	ResourceTargetSchema,
+} from "@sealos-brain/k8s/shared/models";
 import {
 	addResourcesToInstance,
 	createInstance,
@@ -7,18 +13,12 @@ import {
 	listInstances,
 	removeResourcesFromInstance,
 	updateInstanceName,
-} from "@sealos-brain/k8s/resources/instance/api";
+} from "@sealos-brain/sealos/instance/api";
 import {
 	InstanceCreateSchema,
 	InstanceObjectSchema,
 	InstanceUpdateSchema,
-} from "@sealos-brain/k8s/resources/instance/models";
-import type { K8sContext } from "@sealos-brain/k8s/shared/models";
-import {
-	CustomResourceTargetSchema,
-	K8sItemSchema,
-	ResourceTargetSchema,
-} from "@sealos-brain/k8s/shared/models";
+} from "@sealos-brain/sealos/instance/models";
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import { createErrorFormatter } from "@/trpc/utils/trpc.utils";
@@ -56,14 +56,14 @@ export const instanceRouter = t.router({
 		.input(CustomResourceTargetSchema)
 		.output(InstanceObjectSchema)
 		.query(async ({ ctx, input }) => {
-			return await getInstance(ctx, input);
+			return await getInstance(ctx, input.name);
 		}),
 
 	resources: t.procedure
 		.input(CustomResourceTargetSchema)
 		.output(z.array(K8sItemSchema))
 		.query(async ({ ctx, input }) => {
-			return await getInstanceResources(ctx, input);
+			return await getInstanceResources(ctx, input.name);
 		}),
 
 	// ===== MUTATION PROCEDURES =====
@@ -104,7 +104,11 @@ export const instanceRouter = t.router({
 		)
 		.output(z.object({ success: z.boolean() }))
 		.mutation(async ({ ctx, input }) => {
-			return await addResourcesToInstance(ctx, input.target, input.resources);
+			return await addResourcesToInstance(
+				ctx,
+				input.target.name,
+				input.resources,
+			);
 		}),
 
 	removeResources: t.procedure

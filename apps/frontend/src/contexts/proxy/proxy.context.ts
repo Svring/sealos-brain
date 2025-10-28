@@ -55,10 +55,15 @@ export function useProxyEvents() {
 	const { send } = useProxyContext();
 
 	return {
-		setConfig: useCallback((baseURL: string, apiKey: string, modelName: string) =>
-			send({ type: "SET_CONFIG", baseURL, apiKey, modelName }), [send]),
-		setModelName: useCallback((modelName: string) =>
-			send({ type: "SET_MODEL_NAME", modelName }), [send]),
+		setConfig: useCallback(
+			(baseURL: string, apiKey: string, modelName: string) =>
+				send({ type: "SET_CONFIG", baseURL, apiKey, modelName }),
+			[send],
+		),
+		setModelName: useCallback(
+			(modelName: string) => send({ type: "SET_MODEL_NAME", modelName }),
+			[send],
+		),
 		fail: useCallback(() => send({ type: "FAIL" }), [send]),
 		retry: useCallback(() => send({ type: "RETRY" }), [send]),
 	};

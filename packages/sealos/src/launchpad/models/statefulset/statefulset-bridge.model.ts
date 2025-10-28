@@ -127,5 +127,3 @@ export const StatefulsetBridgeMetaSchema = z.object({
 });
 
 export type StatefulsetBridgeMeta = z.infer<typeof StatefulsetBridgeMetaSchema>;
-
-console.log(parseFieldDescriptions(StatefulsetBridgeMetaSchema));

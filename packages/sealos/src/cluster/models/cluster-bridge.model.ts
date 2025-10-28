@@ -94,5 +94,3 @@ export const ClusterBridgeMetaSchema = z.object({
 });
 
 export type ClusterBridgeMeta = z.infer<typeof ClusterBridgeMetaSchema>;
-
-console.log(parseFieldDescriptions(ClusterBridgeMetaSchema));

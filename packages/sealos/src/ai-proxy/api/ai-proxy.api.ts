@@ -1,7 +1,7 @@
 "use server";
 
-import https from "node:https";
-import axios, { type AxiosInstance } from "axios";
+import { createAxiosClient } from "@sealos-brain/shared/network/utils";
+import type { AxiosInstance } from "axios";
 import type { AiProxyCreateData } from "../models";
 import { composeAiProxyBaseUrl } from "../utils/ai-proxy-utils";
 
@@ -28,16 +28,11 @@ export async function createAiProxyApi(
 	baseUrl: string,
 	authorization?: string,
 ): Promise<AxiosInstance> {
-	const isDevelopment = process.env.MODE === "development";
-	return axios.create({
+	return createAxiosClient({
 		baseURL: composeAiProxyBaseUrl(baseUrl),
 		headers: {
-			"Content-Type": "application/json",
 			...(authorization ? { Authorization: authorization } : {}),
 		},
-		httpsAgent: isDevelopment
-			? new https.Agent({ rejectUnauthorized: false })
-			: undefined,
 	});
 }
 
@@ -65,7 +60,7 @@ export async function deleteAiProxyToken(
 // ===== QUERY OPERATIONS =====
 
 // Token Listing
-export async function getAiProxyTokens(ctx: {
+export async function listTokens(ctx: {
 	regionUrl: string;
 	authorization: string;
 }) {
