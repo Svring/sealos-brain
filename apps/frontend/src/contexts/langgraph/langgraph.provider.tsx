@@ -8,12 +8,10 @@ interface LangGraphProviderProps {
 export function LangGraphProvider({ children }: LangGraphProviderProps) {
 	// Read environment variables (server-side)
 	const deploymentUrl = process.env.LANGGRAPH_DEPLOYMENT_URL || "";
-	const graphId = process.env.LANGGRAPH_GRAPH_ID || "";
 
 	// Create the LangGraph context from environment variables
 	const langgraphContext = {
 		deploymentUrl,
-		graphId,
 	};
 
 	return (

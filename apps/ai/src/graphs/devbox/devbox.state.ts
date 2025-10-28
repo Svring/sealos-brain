@@ -6,6 +6,8 @@ import { z } from "zod/v4-mini";
 export const State = z.object({
 	kubeconfig: z.string(),
 	apiKey: z.string(),
+	baseURL: z.string(),
+	modelName: z.string(),
 	messages: z
 		.array(z.custom<BaseMessage>())
 		.register(registry, MessagesZodMeta),

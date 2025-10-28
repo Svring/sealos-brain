@@ -11,11 +11,11 @@ import { newTools } from "./new.tool";
  */
 export async function newNode(state: State) {
 	try {
-		const { messages, apiKey, trial } = state;
+		const { messages, apiKey, trial, baseURL, modelName } = state;
 
 		const messageList = [systemPrompt, ...messages];
 
-		const response = await getModel({ apiKey, trial })
+		const response = await getModel({ apiKey, trial, baseURL, modelName })
 			.bindTools(newTools)
 			.invoke(messageList);
 

@@ -9,6 +9,8 @@ export type { Message };
 // Graph State interface based on the Python TypedDict
 export interface GraphState {
 	apiKey?: string | null;
+	baseURL?: string | null;
+	modelName?: string | null;
 	kubeconfigEncoded?: string | null;
 	messages: Message[];
 }
@@ -17,7 +19,6 @@ export interface GraphState {
 export interface LangGraphContext {
 	graphState: GraphState;
 	deploymentUrl: string;
-	graphId: string;
 }
 
 export type LangGraphEvent =
@@ -26,8 +27,11 @@ export type LangGraphEvent =
 			graphState: Partial<GraphState>;
 	  }
 	| { type: "SET_DEPLOYMENT_URL"; deploymentUrl: string }
-	| { type: "SET_GRAPH_ID"; graphId: string }
-	| { type: "SET_DEPLOYMENT"; deploymentUrl: string; graphId: string }
+	| {
+			type: "SET_CONFIG";
+			deploymentUrl: string;
+			graphState: Partial<GraphState>;
+	  }
 	| { type: "UPDATE_GRAPH_STATE"; graphState: Partial<GraphState> }
 	| { type: "ADD_MESSAGE"; message: Message }
 	| { type: "FAIL" }
@@ -43,11 +47,12 @@ export const langgraphMachine = createMachine({
 	context: {
 		graphState: {
 			apiKey: null,
+			baseURL: null,
+			modelName: null,
 			kubeconfigEncoded: null,
 			messages: [],
 		},
 		deploymentUrl: "",
-		graphId: "",
 	},
 	states: {
 		initializing: {
@@ -55,6 +60,16 @@ export const langgraphMachine = createMachine({
 				SET_GRAPH_STATE: {
 					target: "ready",
 					actions: assign({
+						graphState: ({ context, event }) => ({
+							...context.graphState,
+							...event.graphState,
+						}),
+					}),
+				},
+				SET_CONFIG: {
+					target: "ready",
+					actions: assign({
+						deploymentUrl: ({ event }) => event.deploymentUrl,
 						graphState: ({ context, event }) => ({
 							...context.graphState,
 							...event.graphState,
@@ -81,15 +96,13 @@ export const langgraphMachine = createMachine({
 						deploymentUrl: ({ event }) => event.deploymentUrl,
 					}),
 				},
-				SET_GRAPH_ID: {
-					actions: assign({
-						graphId: ({ event }) => event.graphId,
-					}),
-				},
-				SET_DEPLOYMENT: {
+				SET_CONFIG: {
 					actions: assign({
 						deploymentUrl: ({ event }) => event.deploymentUrl,
-						graphId: ({ event }) => event.graphId,
+						graphState: ({ context, event }) => ({
+							...context.graphState,
+							...event.graphState,
+						}),
 					}),
 				},
 				UPDATE_GRAPH_STATE: {

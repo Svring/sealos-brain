@@ -1,7 +1,8 @@
 "use client";
 
+import { useMount } from "@reactuses/core";
 import { useMachine } from "@xstate/react";
-import { type ReactNode, useEffect } from "react";
+import type { ReactNode } from "react";
 import { useAuthState } from "@/contexts/auth/auth.context";
 import { useProxyState } from "@/contexts/proxy/proxy.context";
 import { langgraphMachineContext } from "./langgraph.context";
@@ -9,7 +10,6 @@ import { langgraphMachine } from "./langgraph.state";
 
 interface LangGraphContext {
 	deploymentUrl: string;
-	graphId: string;
 }
 
 export function LangGraphAdapter({
@@ -20,27 +20,23 @@ export function LangGraphAdapter({
 	langgraphContext: LangGraphContext;
 }) {
 	const [state, send] = useMachine(langgraphMachine);
-	const { apiKey } = useProxyState();
+	const { apiKey, baseURL, modelName } = useProxyState();
 	const { auth } = useAuthState();
 
-	// Handle langgraph config updates in useEffect to avoid setState during render
-	useEffect(() => {
-		// Set deployment URL and graph ID from environment in one event
+	// Handle langgraph config initialization on mount
+	useMount(() => {
+		// Set deployment URL and graph state in one go
 		send({
-			type: "SET_DEPLOYMENT",
+			type: "SET_CONFIG",
 			deploymentUrl: langgraphContext.deploymentUrl,
-			graphId: langgraphContext.graphId,
-		});
-
-		// Set config from proxy state
-		send({
-			type: "SET_GRAPH_STATE",
 			graphState: {
 				apiKey,
+				baseURL,
+				modelName,
 				kubeconfigEncoded: auth?.kubeconfigEncoded || "",
 			},
 		});
-	}, [langgraphContext, apiKey, send, auth?.kubeconfigEncoded]);
+	});
 
 	if (state.matches("initializing") || !state.matches("ready")) {
 		return null;
@@ -51,7 +47,6 @@ export function LangGraphAdapter({
 			value={{
 				graphState: state.context.graphState,
 				deploymentUrl: state.context.deploymentUrl,
-				graphId: state.context.graphId,
 				state,
 				send,
 			}}

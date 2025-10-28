@@ -11,11 +11,11 @@ import { devboxTools } from "./devbox.tool";
  */
 export async function devboxNode(state: State) {
 	try {
-		const { messages, apiKey } = state;
+		const { messages, apiKey, baseURL, modelName } = state;
 
 		const messageList = [systemPrompt, ...messages];
 
-		const response = await getModel({ apiKey })
+		const response = await getModel({ apiKey, baseURL, modelName })
 			.bindTools(devboxTools)
 			.invoke(messageList);
 

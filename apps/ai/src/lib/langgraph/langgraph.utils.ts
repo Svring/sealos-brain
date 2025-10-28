@@ -3,31 +3,35 @@ import { ChatOpenAI } from "@langchain/openai";
 export const getModel = ({
 	apiKey,
 	trial = false,
+	baseURL,
+	modelName,
 }: {
 	apiKey?: string;
 	trial?: boolean;
+	baseURL?: string;
+	modelName?: string;
 }) => {
-	const baseURL = process.env.PROXY_BASE_URL;
-	const modelName = process.env.PROXY_MODEL_NAME;
-	const key = trial
+	const resolvedBaseURL = process.env.PROXY_BASE_URL ?? baseURL;
+	const resolvedModelName = process.env.PROXY_MODEL_NAME ?? modelName;
+	const resolvedApiKey = trial
 		? process.env.TRIAL_API_KEY
 		: (process.env.PROXY_API_KEY ?? apiKey);
 
-	if (!baseURL) {
-		throw new Error("LANGGRAPH_BASE_URL environment variable is not set");
+	if (!resolvedBaseURL) {
+		throw new Error("baseURL is required");
 	}
-	if (!modelName) {
-		throw new Error("LANGGRAPH_MODEL_NAME environment variable is not set");
+	if (!resolvedModelName) {
+		throw new Error("modelName is required");
 	}
-	if (!key) {
+	if (!resolvedApiKey) {
 		throw new Error("API key is required");
 	}
 
 	return new ChatOpenAI({
-		model: modelName,
-		apiKey: key,
+		model: resolvedModelName,
+		apiKey: resolvedApiKey,
 		configuration: {
-			baseURL,
+			baseURL: resolvedBaseURL,
 		},
 	});
 };

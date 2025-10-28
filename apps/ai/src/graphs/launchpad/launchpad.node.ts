@@ -11,11 +11,11 @@ import { launchpadTools } from "./launchpad.tool";
  */
 export async function launchpadNode(state: State) {
 	try {
-		const { messages, apiKey } = state;
+		const { messages, apiKey, baseURL, modelName } = state;
 
 		const messageList = [systemPrompt, ...messages];
 
-		const response = await getModel({ apiKey })
+		const response = await getModel({ apiKey, baseURL, modelName })
 			.bindTools(launchpadTools)
 			.invoke(messageList);
 

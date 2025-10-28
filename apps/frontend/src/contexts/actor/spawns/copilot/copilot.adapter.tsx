@@ -42,14 +42,9 @@ export function CopilotAdapter({ children, metadata }: CopilotAdapterProps) {
 	const [isMounting, setIsMounting] = useState(true);
 	const { deploymentUrl } = useLangGraphState();
 
-	// Handle mount logic (health check and route setting)
-	// useCopilotMount({ metadata });
-
 	// Search threads based on metadata
 	const { data: threads } = useSearchThreads(metadata);
 	const { mutate: createThread } = useCreateThread();
-
-	console.log("metadata", metadata);
 
 	// Create new thread function
 	const createNewThread = () => {

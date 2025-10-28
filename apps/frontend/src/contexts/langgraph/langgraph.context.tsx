@@ -7,7 +7,6 @@ import type { GraphState, langgraphMachine, Message } from "./langgraph.state";
 interface LangGraphContextValue {
 	graphState: GraphState;
 	deploymentUrl: string;
-	graphId: string;
 	state: StateFrom<typeof langgraphMachine>;
 	send: (event: EventFrom<typeof langgraphMachine>) => void;
 }
@@ -44,7 +43,6 @@ export function useLangGraphState() {
 	return {
 		graphState: state.context.graphState,
 		deploymentUrl: state.context.deploymentUrl,
-		graphId: state.context.graphId,
 		isInitializing: state.matches("initializing"),
 		isReady: state.matches("ready"),
 		isFailed: state.matches("failed"),
@@ -68,13 +66,9 @@ export function useLangGraphEvents() {
 				send({ type: "SET_DEPLOYMENT_URL", deploymentUrl }),
 			[send],
 		),
-		setGraphId: useCallback(
-			(graphId: string) => send({ type: "SET_GRAPH_ID", graphId }),
-			[send],
-		),
-		setDeployment: useCallback(
-			(deploymentUrl: string, graphId: string) =>
-				send({ type: "SET_DEPLOYMENT", deploymentUrl, graphId }),
+		setConfig: useCallback(
+			(deploymentUrl: string, graphState: Partial<GraphState>) =>
+				send({ type: "SET_CONFIG", deploymentUrl, graphState }),
 			[send],
 		),
 		updateGraphState: useCallback(
