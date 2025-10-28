@@ -28,7 +28,9 @@ export function ProxyAdapter({ children }: { children: ReactNode }) {
 				return brainToken;
 			})
 			.then((brainToken) => {
+				console.log("brainToken", brainToken);
 				if (brainToken) {
+					console.log("Using existing 'brain' token");
 					// Use the existing 'brain' token
 					send({
 						type: "SET_CONFIG",
@@ -37,6 +39,7 @@ export function ProxyAdapter({ children }: { children: ReactNode }) {
 						modelName: "gpt-4.1",
 					});
 				} else {
+					console.log("No 'brain' token found, creating a new one");
 					// No 'brain' token found, create a new one
 					createProxy.mutate(
 						{ name: `brain` },

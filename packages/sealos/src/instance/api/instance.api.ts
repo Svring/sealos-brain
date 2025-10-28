@@ -19,7 +19,7 @@ import type {
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import { createAxiosClient } from "@sealos-brain/shared/network/utils";
 import _ from "lodash";
-import { deleteDevbox } from "#devbox/api/devbox.api.js";
+import { deleteDevbox } from "#devbox/api";
 import {
 	INSTANCE_ANNOTATIONS,
 	INSTANCE_FILTER_URLS,
@@ -38,7 +38,7 @@ async function createInstanceAxios(context: K8sContext) {
 		throw new Error("Failed to extract region URL from kubeconfig");
 	}
 
-	const baseURL = `https://template.${regionUrl}/api/v1/instance`;
+	const baseURL = `${process.env.MODE === "development" ? "http" : "https"}://template.${regionUrl}/api/v1/instance`;
 
 	return createAxiosClient({
 		baseURL,

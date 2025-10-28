@@ -168,6 +168,7 @@ export function createAxiosClient(options: {
 }): AxiosInstance {
 	const httpsAgent = new https.Agent({
 		keepAlive: true,
+		rejectUnauthorized: false,
 	});
 
 	return axios.create({
