@@ -1,5 +1,7 @@
 "use server";
 
+import https from "node:https";
+import axios from "axios";
 import isPortReachable from "is-port-reachable";
 
 /**
@@ -50,10 +52,16 @@ export async function checkPorts(
 if (import.meta.main) {
 	(async () => {
 		console.log("Running test...\n");
-		const openPortResult = await checkPort(443, "google.com");
-		console.log(
-			"Test - Open port (443 on google.com):",
-			openPortResult ? "PASS (reachable)" : "FAIL (not reachable)",
-		);
+		const httpsAgent = new https.Agent({
+			rejectUnauthorized: false,
+		});
+		const result = await axios.get("https://fvjwjrdl.usw.sealos.io", {
+			method: "HEAD",
+			httpsAgent,
+			headers: {
+				Referer: "https://brain.usw.sealos.io/",
+			},
+		});
+		console.log(JSON.stringify(result.headers, null, 2));
 	})();
 }

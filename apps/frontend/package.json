@@ -64,6 +64,7 @@
     "@trpc/server": "^11.6.0",
     "@trpc/tanstack-react-query": "^11.6.0",
     "@types/lodash": "^4.17.20",
+    "@types/three": "^0.180.0",
     "@xstate/react": "^6.0.0",
     "@xyflow/react": "^12.8.6",
     "@zjy365/sealos-desktop-sdk": "^0.1.20",
@@ -108,6 +109,7 @@
     "tailwind-animate": "^0.2.10",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.180.0",
     "vaul": "^0.9.6",
     "xstate": "^5.21.0",
     "zod": "^4.1.12"

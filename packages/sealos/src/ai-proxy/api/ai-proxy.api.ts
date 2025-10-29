@@ -70,3 +70,46 @@ export async function listTokens(ctx: {
 	});
 	return response.data.data.tokens;
 }
+
+// ===== TEST BLOCK =====
+/**
+ * Test block that only runs when file is directly executed
+ *
+ * Usage:
+ * ```bash
+ * TEST_REGION_URL=bja.sealos.run TEST_AUTHORIZATION=your_token bun packages/sealos/src/ai-proxy/api/ai-proxy.api.ts
+ * ```
+ *
+ * Environment variables:
+ * - TEST_REGION_URL: The region URL to test against (default: "bja.sealos.run")
+ * - TEST_AUTHORIZATION: The authorization token (required)
+ */
+if (import.meta.url === `file://${process.argv[1]}`) {
+	const testListTokens = async () => {
+		console.log("Testing listTokens...");
+
+		// Test parameters - replace with actual values for testing
+		const testCtx = {
+			regionUrl: process.env.TEST_REGION_URL || "bja.sealos.run",
+			authorization: process.env.TEST_AUTHORIZATION || "",
+		};
+
+		if (!testCtx.authorization) {
+			console.error(
+				"ERROR: TEST_AUTHORIZATION environment variable is required",
+			);
+			process.exit(1);
+		}
+
+		try {
+			const tokens = await listTokens(testCtx);
+			console.log("✅ listTokens test passed!");
+			console.log("Tokens:", JSON.stringify(tokens, null, 2));
+		} catch (error) {
+			console.error("❌ listTokens test failed:", error);
+			process.exit(1);
+		}
+	};
+
+	void testListTokens();
+}
