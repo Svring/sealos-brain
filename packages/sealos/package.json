@@ -29,7 +29,8 @@
     "./ai-proxy/utils": "./src/ai-proxy/utils/index.ts",
     "./instance/api": "./src/instance/api/index.ts",
     "./instance/constants": "./src/instance/constants/index.ts",
-    "./instance/models": "./src/instance/models/index.ts"
+    "./instance/models": "./src/instance/models/index.ts",
+    "./instance/utils": "./src/instance/utils/index.ts"
   },
   "dependencies": {
     "@sealos-brain/bridge": "workspace:*",

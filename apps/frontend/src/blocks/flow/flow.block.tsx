@@ -1,7 +1,7 @@
 "use client";
 
-import { instanceParser } from "@sealos-brain/k8s/resources/instance/utils";
 import { composeMetadata } from "@sealos-brain/langgraph/utils";
+import { instanceParser } from "@sealos-brain/sealos/instance/utils";
 import { ReactFlow } from "@xyflow/react";
 import * as Control from "@/components/control/control.comp";
 import FloatingConnectionLine from "@/components/flow/edges/floating-connection-line";

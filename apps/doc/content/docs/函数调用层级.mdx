@@ -15,7 +15,7 @@ API函数会封装Sealos桌面/Kubernetes的官方API，负责发起请求、解
 ```tsx
 export const getDevboxTemplates = async (context: K8sContext) => {
 	const api = await createDevboxAxios(context, "v1/devbox"); // 构建请求地址和请求头
-	const response = await api.get("/templates"); // 发送请求、接受响应
+	const response = await api.get("/templates"); // 发送请求、接收响应
 	return response.data.data; // 返回响应
 };
 ```
@@ -63,7 +63,7 @@ interface Parameters {
 }
 
 async function ohMyBrain(context: Context, parameters: Parameters): Promise<any> {
-  const baseURL = `${context.regionalUrl}/api`; // 通过regionUrl确定可用区地址
+  const baseURL = `${context.regionalUrl}/api`; // 通过regionalUrl确定可用区地址
   
   const httpsAgent = new https.Agent({
     keepAlive: true,
@@ -114,7 +114,7 @@ export const deployDevbox = async (
 cpu: [0.08, 0.02, 0.13...]
 ```
 
-0.08会出现在图标最左侧，代表一小时前cpu占用率为8%，而0.02代表58分钟前cpu占用率为2%，只要ui组件的预设值正确，程序就可以读懂这段数据并正确绘制图表。
+0.08会出现在图表最左侧，代表一小时前cpu占用率为8%，而0.02代表58分钟前cpu占用率为2%，只要ui组件的预设值正确，程序就可以读懂这段数据并正确绘制图表。
 
 但如果这段数据工具是返回给AI的结果，那么AI是没法读懂[0.08, 0.02, 0.13...]这串数据对应的时间节点的，在提示词里声明“时间轴固定为一小时，数据间隔为两分钟”也没用，因为AI并不知道当前的时间，即使知道，让AI自己通过索引计算时间节点也会影响回复时的准确率。
 
@@ -181,7 +181,7 @@ AI工具层的封装是针对语言模型和AI框架（Langgraph）的特别优�
 
 AI在连续调用函数时也是同样的流程，但AI工具存在“人工介入(Human-In-The-Loop)”的概念，通过人为审查/修改AI提供的参数来减轻AI出错的影响，Langgraph中实现这一概念的机制叫做“[中断](https://docs.langchain.com/oss/javascript/langgraph/interrupts)”。
 
-中断的时间点并不是固定的，Langgraph允许在任意一行代码里插入中断点并设置特定的恢复条件（比如获得用户的“准许执行”指令，表现形式可能是一段json数据`{ user_approved: true }）`设置好中断点后，程序会在运行到中断点时暂停执行，广播程序当前的状态，并等待用户传入新的数据，可以类比一下Vscode中Debug断点的概念，程序执行 -> 到达断点 -> 暂行执行，在面板中展示所有变量信息 -> 得到“继续执行”或“终止执行”的指令。区别在于Langgraph中断点允许向程序中插入新数据，比如前面提到的`{ user_approved: true }，`而Debug断点只是展示程序在特定时刻的状态，但不允许修改程序状态。
+中断的时间点并不是固定的，Langgraph允许在任意一行代码里插入中断点并设置特定的恢复条件（比如获得用户的"准许执行"指令，表现形式可能是一段json数据`{ user_approved: true }`）设置好中断点后，程序会在运行到中断点时暂停执行，广播程序当前的状态，并等待用户传入新的数据，可以类比一下Vscode中Debug断点的概念，程序执行 -> 到达断点 -> 暂停执行，在面板中展示所有变量信息 -> 得到"继续执行"或"终止执行"的指令。区别在于Langgraph中断点允许向程序中插入新数据，比如前面提到的`{ user_approved: true }`，而Debug断点只是展示程序在特定时刻的状态，但不允许修改程序状态。
 
 ![3-interrupt-call](/docs/函数调用层级/3-interrupt-call.png)
 
@@ -216,7 +216,7 @@ function approvalNode(state: State): Command {
 }
 ```
 
-> Langgraph分为服务端和客户端，服务端负责制定AI运行的逻辑（中断点、模型调用）客户端负责发送请求（传入用户请求、恢复中断）可以类比Openapi的后端接口和前端调用函数。
+Langgraph分为服务端和客户端，服务端负责制定AI运行的逻辑（中断点、模型调用）客户端负责发送请求（传入用户请求、恢复中断）可以类比Openapi的后端接口和前端调用函数。
 
 ```tsx title="恢复中断点的程序"
 // To approve
@@ -235,7 +235,7 @@ const isApproved = interrupt({
 	details: state.actionDetails
 });
 
-// 中断并收到指令new Command({ resume: true }后的状态，整个interrupt函数被替换成了resume指令的值'true'，并赋值给变量'isApproved'，这一变量会用于后续执行中。
+// 中断并收到指令new Command({ resume: true })后的状态，整个interrupt函数被替换成了resume指令的值'true'，并赋值给变量'isApproved'，这一变量会用于后续执行中。
 const isApproved = true
 
 // 此时isApproved为true，进入第一个代码块
@@ -246,16 +246,16 @@ if (isApproved) {
 }
 ```
 
-> Command是Langgraph的另一个特殊机制，和Langgraph节点图的架构强相关，不只局限于中断恢复的功能，有关Command的文档同样在[Interrupt](https://docs.langchain.com/oss/javascript/langgraph/interrupts)里，也可以看下[这一段](https://docs.langchain.com/oss/javascript/langgraph/graph-api#command)介绍了怎么用Command跳转节点和更新状态，这个功能在Brain里也是大范围使用的。
+Command是Langgraph的另一个特殊机制，和Langgraph节点图的架构强相关，不只局限于中断恢复的功能，有关Command的文档同样在[Interrupt](https://docs.langchain.com/oss/javascript/langgraph/interrupts)里，也可以看下[这一段](https://docs.langchain.com/oss/javascript/langgraph/graph-api#command)介绍了怎么用Command跳转节点和更新状态，这个功能在Brain里也是大范围使用的。
 
 其实上图的中断恢复代码是为了方便演示，和实际项目里的代码有不少差异，这部分差异会在开发模式目录下的文档里说明。
-另外，中断也是AGUI的核心机制，一个程序在中断前、中断时、恢复后都可能需要展示特定的AGUI，Brain中“创建数据库”这个AI工具就有两个AGUI分别用户展示中断数据和执行结果，执行结果又会分为成功/失败/拒绝执行这几种可能，but fret not，AGUI会有专门的设计模式和开发模式文档。
+另外，中断也是AGUI的核心机制，一个程序在中断前、中断时、恢复后都可能需要展示特定的AGUI，Brain中"创建数据库"这个AI工具就有两个AGUI分别用于展示中断数据和执行结果，执行结果又会分为成功/失败/拒绝执行这几种可能，but fret not，AGUI会有专门的设计模式和开发模式文档。
 
 ### AI生成参数
 #### 参数结构
-AI（语言模型）的输出是纯文本，越长的文本输出时间越长，结构越负责的文本出错率越高，因此AI工具的参数需要尽可能简化，除此之外，AI工具的参数设计和功能函数十分相似，都接收context和parameters参数，只是实现细节需要根据AI框架(Langgraph)做调整。
+AI（语言模型）的输出是纯文本，越长的文本输出时间越长，结构越复杂的文本出错率越高，因此AI工具的参数需要尽可能简化，除此之外，AI工具的参数设计和功能函数十分相似，都接收context和parameters参数，只是实现细节需要根据AI框架(Langgraph)做调整。
 
-> 可以考虑先看看Langgraph官网文档中的[思维模型](https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph)介绍。
+可以考虑先看看Langgraph官网文档中的[思维模型](https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph)介绍。
 
 Langgraph中的context被命名为State，形式表现为一个zod schema:
 
@@ -285,12 +285,12 @@ import { getCurrentTaskInput } from "@langchain/langgraph";
 import { tool } from "langchain";
 import * as z from "zod";
 
-const welsome = tool(
+const welcome = tool(
 	({ joke }) => {
 		const state = getCurrentTaskInput();
 		return `Welcome the user to the new agent. \n\n 
-		Joke: ${joke} \n\n 
-		State: ${JSON.stringify(state)}`;
+			Joke: ${joke} \n\n 
+			State: ${JSON.stringify(state)}`;
 	},
 	{
 		name: "welcome",
@@ -343,11 +343,11 @@ ports(可选)：端口配置数组
   },
   {
     "portName": "c",
-  }，
+  },
   {
     "portName": "d",
     "number": "4"
-  }，
+  }
 ]
 ```
 
@@ -406,11 +406,11 @@ ports(可选)：端口配置数组
   {
     "portName": "c",
     "number": "3"
-  }，
+  },
   {
     "portName": "d",
     "number": "4"
-  }，
+  }
 ]
 ```
 其实看起来也不是很复杂，但在AI眼中，这种参数的问题在于“不直观”，当参数被分为*create*, *update*, *delete*时，即使不传入额外的使用说明，AI输出正确参数的概率也很高，但对于包含隐藏规则的参数（传入portName代表更新，省略portName代表删除）详细的使用说明和示例是必须的，这些可以在工具description和模型系统提示词里提供。
@@ -425,7 +425,7 @@ ports(可选)：端口配置数组
 
 以下面这个工具为例：
 ```tsx
-const welsome = tool(
+const welcome = tool(
 	({ joke }, config) => {
 		const currentTaskInput = getCurrentTaskInput();
 		return `Welcome the user to the new agent. \n\n Joke: ${joke} \n\n State: ${JSON.stringify(config.context)} \n\n Current Task Input: ${JSON.stringify(currentTaskInput)}`;
@@ -449,10 +449,322 @@ const welsome = tool(
 
 Schema不仅可以声明参数的数据类型，也可以通过格式验证来确保AI生成正确的数据结构，带有`joke: z.string()`声明的字段只会是字符串类型，但`joke: z.any()`有可能是字符串数组，因此明确schema定义是确保AI工具正确调用的底线，理论上z.any()或者typescript自带的any类型是不允许在项目里使用的。
 
-> 我在代码库里留了不少any类型的参数，方便大家看完文档后用作练习素材。
+~~我在代码库里留了不少any类型的参数，方便大家看完文档后用作练习素材。~~
 
 Description和系统提示词是AI获取认知的主要来源，模型的大部分行为都可以通过这两种文本描述来进行引导，这里不需要太多说明。
-# Query/Mutation函数
+
+
+## Query/Mutation函数
+
+功能函数只用于实现一个功能（查询/修改特定数据）而不会针对上层分支做任何附加功能的优化，可以说功能函数唯一的设计要点在于确保自身参数友好、功能简洁，功能函数的规范是代码工程的规范，不是前端函数或AI工具的规范。
+
+这种设计意味着功能函数会有意无视上层函数的需求，比如前端数据查询函数的需求：
+1. 定时刷新数据；
+2. 查询失败后自动重试；
+3. 报错展示和处理逻辑。
+
+以及前端数据修改函数的需求：
+1. 修改数据后触发附加逻辑，如更改devbox名称后，广播通知其他组件查询最新数据；
+
+功能函数不会提供这些功能（甚至连try...catch也没有），所有前端需要的附加功能需要在前端内部实现，Brain使用[Tanstack Query(TQ)](https://tanstack.com/query/latest/docs/framework/react/overview) & [TRPC](https://trpc.io/docs)来组织所有功能函数，而在TQ中，函数分为两类：
+
+1. Query：具备定时刷新、错误重试等附加功能的数据查询函数，API函数GET /api/v1/devbox在封装为功能函数后，在前端里会被继续封装为Query函数。
+2. Mutation：具备Hook（生命周期副作用，比如在数据修改成功后/失败后触发console.log）等附加功能的数据修改函数，API函数POST /api/v1/devbox的功能函数在前端中会被封装为Mutation函数。
+
+TQ的作用是针对这两种函数提供附加功能，而TRPC的作用在于用特定的结构组织这些函数并提供完备的类型安全性（但其实在开发时有点碍事）TQ中Query函数的使用方式如下：
+
+```tsx
+import { useQuery } from '@tanstack/react-query'
+
+const { isPending, isError, data, error } = useQuery({
+	queryKey: ['todos'],
+	queryFn: fetchTodoList,
+})
+```
+
+1. useQuery：从TQ中导入的函数，用来接收用于数据查询的功能函数；
+2. queryKey：手动附加给功能函数的Id，作用和数据库中每个条目的Id类似，用于标注和查询特定的Query函数，如果有Mutation函数需要刷新这个Query函数的数据，可以通过queryKey来定位；
+3. queryFn：需要转换为Query的功能函数；
+4. isPending, isError, data, error：useQuery返回的对象中包含了所有前端数据查询函数需要的信息，isPending表示是否在拉取新数据，isError和error望文生义，data的数据会定时刷新（或者被mutation手动重置）
+
+Mutation函数的使用方式如下：
+
+```tsx
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
+const queryClient = useQueryClient()
+
+const { isPending, submittedAt, variables, mutate, isError } = useMutation({
+  mutationFn: addTodo,
+  onMutate: (variables, context) => {
+    // A mutation is about to happen!
+
+    // Optionally return a result containing data to use when for example rolling back
+    return { id: 1 }
+  },
+  onError: (error, variables, onMutateResult, context) => {
+    // An error happened!
+    console.log(`rolling back optimistic update with id ${onMutateResult.id}`)
+    toast("Mutation Failed!");
+  },
+  onSuccess: (data, variables, onMutateResult, context) => {
+    // Boom baby!
+    queryClient.invalidateQueries({ queryKey: ['todos'] })
+  },
+  onSettled: (data, error, variables, onMutateResult, context) => {
+    // Error or success... doesn't matter!
+  },
+})
+```
+
+1. useMutation：从TQ中导入的函数，用来接收用于数据修改的功能函数；
+2. mutationFn：需要转换为Mutation的功能函数；
+3. onMutate：修改前触发的逻辑；
+4. onError：报错后触发的逻辑，Brain通常会在这里触发一个toast；
+5. onSuccess：成功后触发的逻辑，大部分Mutation都需要在这里刷新特定Query的数据，比如`queryClient.invalidateQueries({ queryKey: ['todos'] })`就可以刷新queryKey为'todos'的数据；
+6. onSettled：Mutation执行完成（无论是否成功）后触发的逻辑。
+
+Query和Mutation可以直接在React组件中调用，但为了避免Query/Mutation引入太多代码和重复逻辑，Brain里会进一步封装它们为React Hook.
+
+```tsx title="Query Hook"
+"use client";
+
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
+
+export const useDevboxObject = (target: CustomResourceTarget) => {
+	const { devbox } = useTRPCClients();
+
+	const query = useQuery(devbox.get.queryOptions(target));
+
+	return {
+		data: query.data,
+		isLoading: query.isLoading,
+		isError: query.isError,
+		error: query.error,
+	};
+};
+
+```
+
+```tsx title="调用Query Hook的组件"
+export function DevboxNodeBlock({ data }: DevboxNodeBlockProps) {
+	const { id, target } = data;
+	const { data: object } = useDevboxObject(target);
+}
+```
+
+`const { data: object } = useDevboxObject(target); `可以在所有前端组件中调用且共享逻辑和数据，减少了各个组件的代码量，也有助于同步后续的改动。
+
+Mutation Hook也是一样的结构，不过涉及到Mutation调用和生命周期Hook（和React Hook不同，Mutation函数的Hook只作用于功能函数自己的生命周期，虽然都叫Hook，但别混淆了）的地方在开发文档里用实际代码详细说明更好，这里只展示一下Mutation Hook的样子（Brain重构前的代码，不代表最终品质）。
+
+```tsx title="Mutation Hook"
+export const useDevboxUpdate = ({
+  onSuccess,
+  onError,
+}: UseDevboxUpdateOptions = {}) => {
+  const { devbox } = useTRPCClients();
+  const { invalidateQueries } = useInvalidateQueries();
+
+  const mutation = useMutation({
+    ...devbox.update.mutationOptions(),
+    onSuccess: (data) => {
+      toast.success("Devbox updated successfully!");
+      onSuccess?.(data);
+      const target = convertResourceTypeToTarget("devbox", data.name);
+      invalidateQueries([
+        devbox.get.queryKey(),
+        devbox.releases.queryKey(data.name),
+      ]);
+    },
+    onError: (error: any) => {
+      console.error("Devbox update error:", error);
+      toast.error(error.message || "Failed to update devbox");
+      onError?.(error);
+    },
+  });
+
+  const updateDevbox = async (data: DevboxUpdateFormData) => {
+    await mutation.mutateAsync(data);
+  };
+
+  return {
+    updateDevbox,
+    isLoading: mutation.isPending,
+  };
+};
+```
+
+Hook是组织Query/Mutation的第一个方法，第二个是[TRPC](https://trpc.io/docs)，由六个部件组成：
+
+1. context：附加在每次Query/Mutation调用中的context信息，比如KC.
+2. error handler：错误处理逻辑。
+3. router：收录所有Query/Mutation函数并规范它们的输入输出的类型。
+4. route：在服务器端传递请求。
+5. config：在客户端传入context信息、设置请求地址。
+6. client：在客户端组件内部提供直接访问router的方法。
+
+我知道你在想什么，但Brain引入额外的复杂度是有理由的，在需要同时对接k8s, devbox,数据库,launchpad,langgraph,对象存储,ai proxy...以及未来一系列其他API函数的情况下，用router来划分不同归属的API，用context来定义不同API需要的context，同时借助Zod来确保所有API函数类型安全是降低复杂度的最佳选择，没人会想接手50个分散在不同文件夹里充斥着各种类型冲突和不规范命名的不同应用的API的，对吧😊
+
+TRPC的不同部件存放在项目的特定目录中：
+1. context, error, router：*.trpc.ts，如devbox.trpc.ts, cluster.trpc.ts（数据库在brain里用cluster表示）所有trpc.ts都存放在apps/frontend/src/trpc/routers下
+2. route：route.ts，不同应用的route用同一个名字但是放在不同文件夹中，如devbox的route在apps/frontend/src/app/(frontend)/api/trpc/devbox/[trpc]/route.ts里。
+3. config，client：apps/frontend/src/configs/query-trpc.config.tsx文件里会同时导入所有应用的router，然后创建client和config.
+
+为应用搭建TRPC有一个固定流程：功能函数 -> *.trpc.ts -> route.ts -> config & client -> hook，最后这个hook就是之前封装了Query/Mutation的hook.
+
+```tsx title="未引入trpc的hook"
+"use client";
+
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
+import { useQuery } from "@tanstack/react-query";
+import { getDevboxObject } from "@sealos-brain/sealos/devbox/api";
+
+export const useDevboxObject = (target: CustomResourceTarget) => {
+	const query = useQuery({
+		queryKey: ['devbox'],
+		queryFn: getDevboxObject,
+	})
+	
+	return {
+		data: query.data,
+		isLoading: query.isLoading,
+		isError: query.isError,
+		error: query.error,
+	};
+};
+```
+
+```tsx title="引入trpc的hook"
+"use client";
+
+import type { CustomResourceTarget } from "@sealos-brain/k8s/shared/models";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPCClients } from "@/hooks/trpc/use-trpc-clients";
+
+export const useDevboxObject = (target: CustomResourceTarget) => {
+	const { devbox } = useTRPCClients();
+
+	const query = useQuery(devbox.get.queryOptions(target));
+
+	return {
+		data: query.data,
+		isLoading: query.isLoading,
+		isError: query.isError,
+		error: query.error,
+	};
+};
+```
+
+useQuery里的queryKey不再是硬编码的字符串，而是由trpc client自动生成并提供，不妨想象一下项目里同时有42个硬编码queryKey的Query，而你需要在每次mutation完成后凭记忆填入需要被刷新的queryKey，这是Brain重构的一个原因。
+
+## Hook
+Hook的核心理念在于“封装”，这个理念的应用场景很宽泛，过于冗长的Query函数体可以封装，需要复用的逻辑也可以封装，用Brain里将项目资源转化为节点的hook举例:
+
+```tsx
+export const useFlow = (instance: CustomResourceTarget) => {
+	const { data: resources } = useInstanceResources(instance);
+
+	const { data: objects, isLoading: isLoadingObjects } = useResourceObjects(
+		resources || [],
+	);
+
+	const { nodes, edges } = useMemo(() => {
+		if (!objects || isLoadingObjects) return { nodes: [], edges: [] };
+
+		const baseNodes = convertObjectsToNodes(objects);
+
+		const reliances = inferObjectsReliances(objects);
+
+		const baseEdges = convertReliancesToEdges(reliances, objects);
+
+		const { nodes: networkNodes, edges: networkEdges } =
+			deriveNetworkNodesAndEdges(objects);
+
+		const groupedNodes = createDevGroup([...baseNodes, ...networkNodes]);
+
+		const allEdges = [...baseEdges, ...networkEdges];
+
+		const layoutedNodes = applyLayout(groupedNodes, allEdges);
+
+		return { nodes: layoutedNodes, edges: allEdges };
+	}, [objects, isLoadingObjects]);
+
+	// console.log("useFlowNodes", { nodes, edges });
+
+	return { nodes, edges };
+};
+```
+
+这个hook同时负责获取资源、转换资源格式、根据资源生成节点和连线、自动布局等所有展示节点前需要执行的环节，前端在调用这个函数时，只需要`const { nodes, edges } = useFlow(instance); `就能从项目名称拿到所有节点。
+
+这里进行了两层封装，hook是一层，hook中调用的函数是第二层，如果不做这些封装，page.tsx里的代码会超过一千行，而且不可避免的会出现无关功能相互依赖的情况导致开发难度提高，封装的过程也是梳理不同功能依赖关系的过程。
+
+理想情况下Brain里每个文件的代码应该控制在200行以内，一些特殊文件（比如X.utils.ts，提供通用功能）可以长一些，但也不应超过300行，文件太长的时候记得考虑用hook或函数来封装。
+
+需要注意的是Hook和函数是不同的封装方式，参考下面两个文件：
+
+```tsx title="Hook封装"
+export const useFlow = (instance: CustomResourceTarget) => {
+	const { data: resources } = useInstanceResources(instance);
+
+	const { data: objects, isLoading: isLoadingObjects } = useResourceObjects(
+		resources || [],
+	);
+
+	const { nodes, edges } = useMemo(() => {
+		if (!objects || isLoadingObjects) return { nodes: [], edges: [] };
+
+		const baseNodes = convertObjectsToNodes(objects);
+
+		const reliances = inferObjectsReliances(objects);
+
+		const baseEdges = convertReliancesToEdges(reliances, objects);
+
+		const { nodes: networkNodes, edges: networkEdges } =
+			deriveNetworkNodesAndEdges(objects);
+
+		const groupedNodes = createDevGroup([...baseNodes, ...networkNodes]);
+
+		const allEdges = [...baseEdges, ...networkEdges];
+
+		const layoutedNodes = applyLayout(groupedNodes, allEdges);
+
+		return { nodes: layoutedNodes, edges: allEdges };
+	}, [objects, isLoadingObjects]);
+
+	// console.log("useFlowNodes", { nodes, edges });
+
+	return { nodes, edges };
+};
+```
+
+```tsx title="函数封装"
+export const convertObjectsToNodes = (objects: ResourceObject[]): Node[] =>
+	_.map(objects, ({ name, resourceType }) => ({
+		id: `${resourceType.toLowerCase()}-${name}`,
+		type: ["deployment", "statefulset"].includes(resourceType.toLowerCase())
+			? "launchpad"
+			: resourceType.toLowerCase(),
+		position: { x: 0, y: 0 },
+		data: {
+			id: `${resourceType.toLowerCase()}-${name}`,
+			target: resourceParser.toTarget({ resourceType, name }),
+		},
+	}));
+```
+
+useFlow是Hook（名称开头为’use’代表Hook）而convertObjectsToNodes是函数，它们之间的区别在于useFlow通过另一个hook `useInstanceResources ` 和React context产生了依赖，useFlow因此只能在React前端组件里执行，而convertObjectsToNodes只要输入的参数符合类型要求就可以执行。
+
+简单来说，一个函数成为Hook的标准是：
+1. 它依赖了React Context相关的hook，如useState, useContext, useEffect...所有React提供的Hook(‘use’开头的函数)，只要出现在一个函数中，都会将它转变为Hook，意味着该函数无法脱离React执行；
+2. 基于第一个标准，所有依赖了第三方库提供的以’use’开头的Hook的函数，也会被转变为Hook，比如TQ提供的useQuery，虽然不是React官方提供，但通过名称可以判断它内部依赖了React，因此调用useQuery的函数也会转变为Hook.
+
+相比于函数，Hook可以自由访问和修改React的context信息，而不需要从外部获取context，Hook只能在前端组件内复用，而函数可以在所有场景里复用。
+
+开发时注意不要混淆Hook和函数，虽然两者性质不同，但即使不小心把一个Hook命名为’getDevboxObject’（正确名称是useDevboxObject）编辑器也不会提醒你改名，换句话说，Hook的命名完全由开发者自己决定，因此开发者的意识是Hook命名规范的唯一保障（把Hook用错地方后出现的报错应该也算）
+
 
 
 

@@ -3,4 +3,76 @@ title: 技术栈
 description: 这是Brain的开发文档，正在施工中...
 ---
 
-Hello
+## 主要依赖（库）
+
+前端依赖：
+- [Next.js](https://nextjs.org/docs): 应用框架
+- [Shadcn/ui(Shadcn)](https://ui.shadcn.com/docs/installation) & [Tailwindcss](https://tailwindcss.com/docs/installation/using-vite)：UI组件
+- [Tanstack Query](https://tanstack.com/query/latest/docs/framework/react/overview) & [TRPC](https://trpc.io/docs)：数据查询/变更
+- [XState](https://stately.ai/docs/xstate)：状态管理
+- [Zod](https://zod.dev/)：类型定义/验证
+
+AI依赖:
+- [Langgraph.js](https://docs.langchain.com/oss/javascript/langgraph/overview)：Agent框架
+
+项目依赖是在开发前就需要确定好的，开发过程中要避免变更，比如Brain的UI组件依赖是Shadcn，那么开发过程中不应再引入其他UI库（比如[MaterialUI](https://mui.com/material-ui/getting-started/)），即使MaterialUI刚好有一个Shadcn缺失的组件。
+
+如果不清楚每个依赖的作用，那在开发过程中就很难意识到“这个功能需要用XState定义状态，Zod定义数据类型，最后用Shadcn的Form和Button组成UI”，这个开发文档里会有每种主要依赖的设计文档和开发文档，但这些文档的目的在于展示Brain使用这些依赖的方式，不能涵盖它们的设计理念和所有功能要点，所以有空的话可以去看看官方文档。
+
+在调用库的时候需要时刻注意每种库的设计模式和开发模式，简短地说，设计模式是指一个库的对应的思维模型（怎么理解它的作用和优缺点），开发模式是指一个库的最佳实践（怎么通过代码充分发挥它的作用）这些模式会影响文件命名、代码风格以及各种细节，所以记得去看设计和开发模式的文档，因为~~我花了很多时间来写~~它们真的很重要。
+
+## Monorepo
+Brain主要由两部分组成：前端和AI，在初版Brain里这两个程序是分在两个仓库里的，现在它们同时保存在Brain的[Monorepo](https://github.com/Svring/sealos-brain)里。
+
+Monorepo用于协调不同项目代码库间的协作，Brain的Monorepo是用[Turborepo(Turbo)](https://turborepo.com/docs)和[Bun](https://bun.com/)搭建的，这两个工具的共同特征是快💨而且操作也相对简单，这里会简单介绍Brain monorepo的结构和使用方法（安装流程在下一篇文档里）。
+
+component: tree
+
+在Turbo仓库中，app存放项目前后端、文档之类的应用，package存放所有应用共享的内部依赖，内部依赖配置好后可以和shadcn这类外部依赖一样在应用里直接调用。
+
+Brain的app文件夹中包含:
+- frontend：前端应用
+- ai：Langgraph服务器
+- doc：文档，就是你正在看的这个
+
+package文件夹中包含：
+- k8s：通过k8s sdk直接操作集群
+- sealos：调用Sealos的Openapi
+- langgraph：操作langgraph服务
+- shared：通用功能
+- 以及等等
+
+app中的应用可以通过添加类似`"@sealos-brain/k8s": "workspace:*" `的声明到package.json中来引用特定的内部库。
+
+package.json是由应用或库自己定义的，每个package.json都可以声明不同的依赖，执行bun install时只会安装自己声明的库，但如果不同的应用声明了同一依赖的不同版本，如app/frontend依赖zod4，而package/sealos依赖zod3，那么将sealos导入到frontend中会引发冲突。
+
+在Turbo仓库的根目录有一个turbo.json文件，负责定义monorepo级别的任务（类似package.json中的npm run dev，但作用在app和package下的所有目录里）
+
+``` json title="Brain的turbo.json"
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**, dist/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
+
+```
+
+Brain在turbo.json中定义了lint, build, dev三个任务，在项目根目录执行bun dev/build/lint时，monorepo所有子目录的同名任务都会触发，brain中app文件夹下的应用都定义了dev任务，因此执行`bun dev`会启动三个进程：
+- frontend：3000端口
+- ai：2024端口
+- doc：3001端口
+
+这样就可以启动brain的测试进程，配置好环境变量后，brain应该就能正常使用了。启动命令简单是monorepo带来的第一个优势。
