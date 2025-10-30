@@ -93,10 +93,8 @@ export const getInstance = async (
 	};
 	const instanceResource = await getResource(context, target);
 
-	// Validate and parse the instance using our schema
 	const validatedInstance = InstanceResourceSchema.parse(instanceResource);
 
-	// Convert to instance object using parser
 	return instanceParser.toObject(validatedInstance);
 };
 
@@ -142,7 +140,6 @@ export const getInstanceResources = async (
 
 	const selectedResources = await selectResources(context, targets);
 
-	// Convert resources to items
 	return selectedResources.map((resource) => ({
 		name: resource.metadata?.name || "unknown",
 		uid: resource.metadata?.uid || "",
@@ -155,18 +152,21 @@ export const getInstanceResources = async (
  */
 export const deleteInstance = async (
 	context: K8sContext,
-	instanceName: string,
+	params: { path: { name: string } },
 ) => {
 	const api = await createInstanceAxios(context);
 
-	const instanceResource = await getInstanceResources(context, instanceName);
+	const instanceResource = await getInstanceResources(
+		context,
+		params.path.name,
+	);
 	for (const resource of instanceResource) {
 		if (resource.resourceType === "devbox") {
 			await deleteDevbox(context, { path: { name: resource.name } });
 		}
 	}
 
-	const response = await api.delete(`/${instanceName}`, {});
+	const response = await api.delete(`/${params.path.name}`, {});
 	return response.data;
 };
 
@@ -178,7 +178,6 @@ export const addResourcesToInstance = async (
 	name: string,
 	resources: ResourceTarget[],
 ): Promise<{ success: boolean }> => {
-	// Add labels to all resources
 	for (const resource of resources) {
 		if (resource.type === "custom") {
 			await patchCustomResourceMetadata(
@@ -243,11 +242,10 @@ export const updateInstanceName = async (
 	name: string;
 	newDisplayName: string;
 }> => {
-	const { name, displayName } = input;
 	const target = {
 		type: "custom" as const,
 		resourceType: "instance" as const,
-		name,
+		name: input.name,
 	};
 
 	await patchCustomResourceMetadata(
@@ -255,12 +253,12 @@ export const updateInstanceName = async (
 		target,
 		"annotations",
 		INSTANCE_ANNOTATIONS.DISPLAY_NAME,
-		displayName,
+		input.displayName,
 	);
 
 	return {
-		name,
-		newDisplayName: displayName,
+		name: input.name,
+		newDisplayName: input.displayName,
 	};
 };
 
@@ -271,20 +269,19 @@ export const createInstance = async (
 	context: K8sContext,
 	input: { name: string },
 ): Promise<InstanceObject> => {
-	const { name } = input;
 	const target = {
 		type: "custom" as const,
 		resourceType: "instance" as const,
-		name,
+		name: input.name,
 	};
 
 	const resourceBody = {
 		apiVersion: "app.sealos.io/v1",
 		kind: "Instance",
 		metadata: {
-			name,
+			name: input.name,
 			labels: {
-				[INSTANCE_LABELS.DEPLOY_ON_SEALOS]: name,
+				[INSTANCE_LABELS.DEPLOY_ON_SEALOS]: input.name,
 			},
 		},
 		spec: {
@@ -292,10 +289,10 @@ export const createInstance = async (
 			defaults: {
 				app_name: {
 					type: "string",
-					value: name,
+					value: input.name,
 				},
 			},
-			title: name,
+			title: input.name,
 		},
 	};
 
@@ -305,6 +302,5 @@ export const createInstance = async (
 		resourceBody,
 	);
 
-	// Convert to instance object using parser
 	return instanceParser.toObject(instanceResource);
 };

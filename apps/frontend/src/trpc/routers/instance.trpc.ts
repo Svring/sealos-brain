@@ -79,7 +79,7 @@ export const instanceRouter = t.router({
 	delete: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ ctx, input }) => {
-			return await deleteInstance(ctx, input.name);
+			return await deleteInstance(ctx, { path: { name: input.name } });
 		}),
 
 	// Instance Configuration

@@ -1,7 +1,7 @@
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import {
-	createAiProxyToken,
-	deleteAiProxyToken,
+	createToken,
+	deleteToken,
 	listTokens,
 } from "@sealos-brain/sealos/ai-proxy/api";
 import { AiProxyTokenSchema } from "@sealos-brain/sealos/ai-proxy/models";
@@ -57,13 +57,13 @@ export const aiProxyRouter = t.router({
 	create: t.procedure
 		.input(z.object({ name: z.string() }))
 		.mutation(async ({ input, ctx }) => {
-			return await createAiProxyToken(ctx, input);
+			return await createToken(ctx, { body: input });
 		}),
 
 	delete: t.procedure
 		.input(z.object({ id: z.number() }))
 		.mutation(async ({ input, ctx }) => {
-			return await deleteAiProxyToken(ctx, input);
+			return await deleteToken(ctx, { path: input });
 		}),
 });
 
