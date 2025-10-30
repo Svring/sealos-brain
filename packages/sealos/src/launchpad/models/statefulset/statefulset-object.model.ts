@@ -14,7 +14,7 @@ export const PortSchema = z.object({
 	publicHost: z.string().optional(),
 });
 
-export const StatefulsetResourceSchema = z.object({
+export const StatefulsetQuotaSchema = z.object({
 	replicas: z.number(),
 	cpu: z.number(),
 	memory: z.number(),
@@ -70,7 +70,7 @@ export const StatefulsetObjectSchema = z.object({
 	uid: z.string(),
 	resourceType: z.literal("statefulset"),
 	image: ImageSchema,
-	resource: StatefulsetResourceSchema,
+	quota: StatefulsetQuotaSchema,
 	status: z.string().nullable(),
 	launchCommand: z
 		.object({
@@ -89,7 +89,7 @@ export const StatefulsetObjectSchema = z.object({
 
 // Type exports
 export type Port = z.infer<typeof PortSchema>;
-export type StatefulsetResource = z.infer<typeof StatefulsetResourceSchema>;
+export type StatefulsetQuota = z.infer<typeof StatefulsetQuotaSchema>;
 export type Pod = z.infer<typeof PodSchema>;
 export type Threshold = z.infer<typeof ThresholdSchema>;
 export type Strategy = z.infer<typeof StrategySchema>;

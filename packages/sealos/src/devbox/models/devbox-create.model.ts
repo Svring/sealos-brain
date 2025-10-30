@@ -10,7 +10,7 @@ import { DEVBOX_RUNTIMES } from "../constants/devbox-runtime.constant";
 // Component schemas
 export const DevboxRuntimeSchema = z.enum(DEVBOX_RUNTIMES);
 
-export const DevboxCreateResourceSchema = z.object({
+export const DevboxCreateQuotaSchema = z.object({
 	cpu: z.literal(DEVBOX_CPU_OPTIONS),
 	memory: z.literal(DEVBOX_MEMORY_OPTIONS),
 });
@@ -25,7 +25,7 @@ export const DevboxPortCreateSchema = z.object({
 export const devboxCreateSchema = z.object({
 	name: NameSchema.default(() => `devbox-${nanoid()}`),
 	runtime: DevboxRuntimeSchema.default("next.js"),
-	resource: DevboxCreateResourceSchema.default({
+	quota: DevboxCreateQuotaSchema.default({
 		cpu: 1,
 		memory: 2,
 	}),

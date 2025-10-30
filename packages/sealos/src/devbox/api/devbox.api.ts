@@ -74,7 +74,7 @@ export const getDevboxReleases = async (
 /**
  * Get deployed devbox releases
  */
-export const getDeployedDevboxReleases = async (
+export const getDevboxDeploys = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
@@ -97,18 +97,6 @@ export const getDevboxMonitorData = async (
 	const response = await api.get(`/${params.path.name}/monitor`, {
 		params: params.search,
 	});
-	return response.data.data;
-};
-
-/**
- * Get SSH private key
- */
-export const getDevboxPrivateKey = async (
-	context: K8sContext,
-	params: { path: { name: string } },
-) => {
-	const api = await createDevboxAxios(context);
-	const response = await api.get(`/${params.path.name}/privatekey`);
 	return response.data.data;
 };
 

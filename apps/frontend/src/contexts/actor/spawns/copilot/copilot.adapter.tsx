@@ -7,7 +7,6 @@ import { useQueryState } from "nuqs";
 import type { ReactNode } from "react";
 import { createContext, use, useState } from "react";
 import { useLangGraphState } from "@/contexts/langgraph/langgraph.context";
-import { useCopilotMount } from "@/hooks/copilot/use-copilot-mount";
 import { useCreateThread } from "@/hooks/langgraph/use-create-thread";
 import { useSearchThreads } from "@/hooks/langgraph/use-search-threads";
 import { useStreamContext } from "@/hooks/langgraph/use-stream-context";

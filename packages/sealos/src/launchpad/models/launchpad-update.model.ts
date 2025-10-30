@@ -13,8 +13,8 @@ import {
 	StorageSchema,
 } from "./launchpad-create.model";
 
-// Launchpad resource update schema (all fields optional for updates)
-export const LaunchpadResourceUpdateSchema = z.object({
+// Launchpad quota update schema (all fields optional for updates)
+export const LaunchpadQuotaUpdateSchema = z.object({
 	replicas: z.literal(LAUNCHPAD_REPLICAS_OPTIONS).optional(),
 	cpu: z.literal(LAUNCHPAD_CPU_OPTIONS).optional(),
 	memory: z.literal(LAUNCHPAD_MEMORY_OPTIONS).optional(),
@@ -25,7 +25,7 @@ export const launchpadUpdateSchema = z.object({
 	name: NameSchema,
 	image: ImageSchema.optional(),
 	launchCommand: LaunchCommandSchema.optional(),
-	resource: LaunchpadResourceUpdateSchema.optional(),
+	quota: LaunchpadQuotaUpdateSchema.optional(),
 	ports: z
 		.array(LaunchpadPortCreateSchema)
 		.refine(

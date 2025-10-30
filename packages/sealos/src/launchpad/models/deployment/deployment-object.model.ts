@@ -14,7 +14,7 @@ export const PortSchema = z.object({
 	publicHost: z.string().optional(),
 });
 
-export const ResourceSchema = z.object({
+export const QuotaSchema = z.object({
 	replicas: z.number(),
 	cpu: z.number(),
 	memory: z.number(),
@@ -64,7 +64,7 @@ export const DeploymentObjectSchema = z.object({
 	uid: z.string(),
 	resourceType: z.literal("deployment"),
 	image: ImageSchema,
-	resource: ResourceSchema,
+	quota: QuotaSchema,
 	status: z.string().nullable().optional(),
 	launchCommand: z
 		.object({
@@ -82,7 +82,7 @@ export const DeploymentObjectSchema = z.object({
 
 // Type exports
 export type Port = z.infer<typeof PortSchema>;
-export type Resource = z.infer<typeof ResourceSchema>;
+export type Quota = z.infer<typeof QuotaSchema>;
 export type Pod = z.infer<typeof PodSchema>;
 export type Threshold = z.infer<typeof ThresholdSchema>;
 export type Strategy = z.infer<typeof StrategySchema>;

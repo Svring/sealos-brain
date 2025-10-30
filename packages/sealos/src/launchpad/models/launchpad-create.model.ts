@@ -24,7 +24,7 @@ export const ImageSchema = z.object({
 	imageRegistry: ImageRegistrySchema.nullable().optional(),
 });
 
-export const LaunchpadCreateResourceSchema = z.object({
+export const LaunchpadCreateQuotaSchema = z.object({
 	replicas: z.literal(LAUNCHPAD_REPLICAS_OPTIONS),
 	cpu: z.literal(LAUNCHPAD_CPU_OPTIONS),
 	memory: z.literal(LAUNCHPAD_MEMORY_OPTIONS),
@@ -53,7 +53,7 @@ export const launchpadCreateSchema = z.object({
 		imageName: "nginx",
 	}),
 	launchCommand: LaunchCommandSchema.optional(),
-	resource: LaunchpadCreateResourceSchema.default({
+	quota: LaunchpadCreateQuotaSchema.default({
 		replicas: 1,
 		cpu: 0.5,
 		memory: 0.5,

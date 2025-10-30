@@ -6,8 +6,8 @@ import {
 } from "../constants/devbox-resource.constant";
 import { DevboxPortCreateSchema } from "./devbox-create.model";
 
-// Devbox resource update schema (all fields optional for updates)
-export const DevboxResourceUpdateSchema = z.object({
+// Devbox quota update schema (all fields optional for updates)
+export const DevboxQuotaUpdateSchema = z.object({
 	cpu: z.literal(DEVBOX_CPU_OPTIONS).optional(),
 	memory: z.literal(DEVBOX_MEMORY_OPTIONS).optional(),
 });
@@ -15,7 +15,7 @@ export const DevboxResourceUpdateSchema = z.object({
 // Update form schema (all fields optional for partial updates)
 export const devboxUpdateSchema = z.object({
 	name: NameSchema,
-	resource: DevboxResourceUpdateSchema.optional(),
+	quota: DevboxQuotaUpdateSchema.optional(),
 	ports: z
 		.array(DevboxPortCreateSchema)
 		.refine(

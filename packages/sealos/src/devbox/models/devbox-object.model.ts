@@ -1,7 +1,7 @@
 import { EnvSchema } from "@sealos-brain/k8s/shared/models";
 import { z } from "zod";
 
-export const DevboxObjectResourceSchema = z.object({
+export const DevboxObjectQuotaSchema = z.object({
 	cpu: z.number(),
 	memory: z.number(),
 });
@@ -39,7 +39,7 @@ export const DevboxObjectSchema = z.object({
 	runtime: z.string(),
 	image: z.string(),
 	status: z.string(),
-	resource: DevboxObjectResourceSchema,
+	quota: DevboxObjectQuotaSchema,
 	ssh: SshSchema,
 	env: z.array(EnvSchema).optional(),
 	ports: z.array(DevboxObjectPortSchema),
@@ -47,7 +47,7 @@ export const DevboxObjectSchema = z.object({
 	operationalStatus: z.any().optional(),
 });
 
-export type DevboxObjectResource = z.infer<typeof DevboxObjectResourceSchema>;
+export type DevboxObjectQuota = z.infer<typeof DevboxObjectQuotaSchema>;
 export type Ssh = z.infer<typeof SshSchema>;
 export type DevboxObjectPort = z.infer<typeof DevboxObjectPortSchema>;
 export type DevboxObject = z.infer<typeof DevboxObjectSchema>;

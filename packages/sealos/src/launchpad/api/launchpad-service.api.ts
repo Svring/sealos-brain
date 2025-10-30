@@ -137,7 +137,9 @@ export const getLaunchpadNetwork = async (
 	target: BuiltinResourceTarget,
 ) => {
 	// Get the launchpad object first
-	const launchpad = await getLaunchpad(context, target);
+	const launchpad = await getLaunchpad(context, {
+		path: { name: target.name },
+	});
 
 	// Extract ports from the launchpad object
 	const ports = launchpad.ports || [];

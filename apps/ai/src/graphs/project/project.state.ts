@@ -4,7 +4,7 @@ import { registry } from "@langchain/langgraph/zod";
 import { z } from "zod/v4-mini";
 
 export const State = z.object({
-	kubeconfig: z.string(),
+	kubeconfigEncoded: z.string(),
 	apiKey: z.string(),
 	baseURL: z.string(),
 	modelName: z.string(),

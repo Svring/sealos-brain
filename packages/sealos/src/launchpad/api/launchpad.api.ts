@@ -45,49 +45,9 @@ async function createLaunchpadAxios(context: K8sContext) {
 // ============================================================================
 
 /**
- * Get launchpad by BuiltinResourceTarget
- */
-export const getLaunchpad = async (
-	context: K8sContext,
-	target: BuiltinResourceTarget,
-) => {
-	// Choose the appropriate schema based on resource type
-	const bridgeSchema =
-		target.resourceType === "deployment"
-			? DeploymentBridgeMetaSchema
-			: target.resourceType === "statefulset"
-				? StatefulsetBridgeMetaSchema
-				: DeploymentBridgeMetaSchema; // Default to deployment
-
-	const transformSchema =
-		target.resourceType === "deployment"
-			? DeploymentBridgeTransSchema
-			: target.resourceType === "statefulset"
-				? StatefulsetBridgeTransSchema
-				: DeploymentBridgeTransSchema;
-
-	const objectSchema =
-		target.resourceType === "deployment"
-			? DeploymentObjectSchema
-			: target.resourceType === "statefulset"
-				? StatefulsetObjectSchema
-				: DeploymentObjectSchema;
-
-	const launchpadObject = await composeObjectFromTarget(
-		context,
-		target,
-		bridgeSchema,
-		transformSchema,
-		objectSchema,
-	);
-
-	return LaunchpadObjectSchema.parse(launchpadObject);
-};
-
-/**
  * Get application details by name
  */
-export const getLaunchpadByName = async (
+export const getLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
 ) => {
