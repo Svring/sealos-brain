@@ -1,5 +1,4 @@
 import { EnvSchema, NameSchema } from "@sealos-brain/k8s/shared/models";
-import { createNumberUnionSchema } from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	LAUNCHPAD_CPU_OPTIONS,
@@ -16,9 +15,9 @@ import {
 
 // Launchpad resource update schema (all fields optional for updates)
 export const LaunchpadResourceUpdateSchema = z.object({
-	replicas: createNumberUnionSchema(LAUNCHPAD_REPLICAS_OPTIONS).optional(),
-	cpu: createNumberUnionSchema(LAUNCHPAD_CPU_OPTIONS).optional(),
-	memory: createNumberUnionSchema(LAUNCHPAD_MEMORY_OPTIONS).optional(),
+	replicas: z.literal(LAUNCHPAD_REPLICAS_OPTIONS).optional(),
+	cpu: z.literal(LAUNCHPAD_CPU_OPTIONS).optional(),
+	memory: z.literal(LAUNCHPAD_MEMORY_OPTIONS).optional(),
 });
 
 // Update form schema (all fields optional for partial updates)

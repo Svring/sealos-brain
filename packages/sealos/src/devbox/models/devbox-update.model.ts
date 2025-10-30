@@ -1,14 +1,21 @@
 import { NameSchema } from "@sealos-brain/k8s/shared/models";
 import { z } from "zod";
 import {
-	DevboxCreateResourceSchema,
-	DevboxPortCreateSchema,
-} from "./devbox-create.model";
+	DEVBOX_CPU_OPTIONS,
+	DEVBOX_MEMORY_OPTIONS,
+} from "../constants/devbox-resource.constant";
+import { DevboxPortCreateSchema } from "./devbox-create.model";
+
+// Devbox resource update schema (all fields optional for updates)
+export const DevboxResourceUpdateSchema = z.object({
+	cpu: z.literal(DEVBOX_CPU_OPTIONS).optional(),
+	memory: z.literal(DEVBOX_MEMORY_OPTIONS).optional(),
+});
 
 // Update form schema (all fields optional for partial updates)
 export const devboxUpdateSchema = z.object({
 	name: NameSchema,
-	resource: DevboxCreateResourceSchema.optional(),
+	resource: DevboxResourceUpdateSchema.optional(),
 	ports: z
 		.array(DevboxPortCreateSchema)
 		.refine(

@@ -1,8 +1,5 @@
 import { NameSchema } from "@sealos-brain/k8s/shared/models";
-import {
-	createNumberUnionSchema,
-	nanoid,
-} from "@sealos-brain/shared/misc/utils";
+import { nanoid } from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	CLUSTER_CPU_OPTIONS,
@@ -20,10 +17,10 @@ export const ClusterVersionSchema = z
 	.min(1, "Cluster version is required");
 
 export const ClusterCreateResourceSchema = z.object({
-	replicas: createNumberUnionSchema(CLUSTER_REPLICAS_OPTIONS),
-	cpu: createNumberUnionSchema(CLUSTER_CPU_OPTIONS),
-	memory: createNumberUnionSchema(CLUSTER_MEMORY_OPTIONS),
-	storage: createNumberUnionSchema(CLUSTER_STORAGE_OPTIONS),
+	replicas: z.literal(CLUSTER_REPLICAS_OPTIONS),
+	cpu: z.literal(CLUSTER_CPU_OPTIONS),
+	memory: z.literal(CLUSTER_MEMORY_OPTIONS),
+	storage: z.literal(CLUSTER_STORAGE_OPTIONS),
 });
 
 export const ClusterTerminationPolicySchema = z.enum(["Delete", "WipeOut"]);

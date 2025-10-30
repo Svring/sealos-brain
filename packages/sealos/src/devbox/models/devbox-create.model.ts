@@ -1,8 +1,5 @@
 import { EnvSchema, NameSchema } from "@sealos-brain/k8s/shared/models";
-import {
-	createNumberUnionSchema,
-	nanoid,
-} from "@sealos-brain/shared/misc/utils";
+import { nanoid } from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	DEVBOX_CPU_OPTIONS,
@@ -14,8 +11,8 @@ import { DEVBOX_RUNTIMES } from "../constants/devbox-runtime.constant";
 export const DevboxRuntimeSchema = z.enum(DEVBOX_RUNTIMES);
 
 export const DevboxCreateResourceSchema = z.object({
-	cpu: createNumberUnionSchema(DEVBOX_CPU_OPTIONS),
-	memory: createNumberUnionSchema(DEVBOX_MEMORY_OPTIONS),
+	cpu: z.literal(DEVBOX_CPU_OPTIONS),
+	memory: z.literal(DEVBOX_MEMORY_OPTIONS),
 });
 
 export const DevboxPortCreateSchema = z.object({

@@ -1,8 +1,5 @@
 import { EnvSchema, NameSchema } from "@sealos-brain/k8s/shared/models";
-import {
-	createNumberUnionSchema,
-	nanoid,
-} from "@sealos-brain/shared/misc/utils";
+import { nanoid } from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	LAUNCHPAD_CPU_OPTIONS,
@@ -28,9 +25,9 @@ export const ImageSchema = z.object({
 });
 
 export const LaunchpadCreateResourceSchema = z.object({
-	replicas: createNumberUnionSchema(LAUNCHPAD_REPLICAS_OPTIONS),
-	cpu: createNumberUnionSchema(LAUNCHPAD_CPU_OPTIONS),
-	memory: createNumberUnionSchema(LAUNCHPAD_MEMORY_OPTIONS),
+	replicas: z.literal(LAUNCHPAD_REPLICAS_OPTIONS),
+	cpu: z.literal(LAUNCHPAD_CPU_OPTIONS),
+	memory: z.literal(LAUNCHPAD_MEMORY_OPTIONS),
 });
 
 export const LaunchpadPortCreateSchema = z.object({
