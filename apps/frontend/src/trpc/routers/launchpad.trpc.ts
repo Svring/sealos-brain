@@ -3,7 +3,7 @@ import { BuiltinResourceTargetSchema } from "@sealos-brain/k8s/shared/models";
 import {
 	createLaunchpad,
 	deleteLaunchpad,
-	getLaunchpadByTarget,
+	getLaunchpad,
 	getLaunchpadNetwork,
 	getLaunchpadResources,
 	pauseLaunchpad,
@@ -44,7 +44,7 @@ export const launchpadRouter = t.router({
 	get: t.procedure
 		.input(BuiltinResourceTargetSchema)
 		.query(async ({ ctx, input }) => {
-			return await getLaunchpadByTarget(ctx, input);
+			return await getLaunchpad(ctx, { path: { name: input.name } });
 		}),
 
 	network: t.procedure

@@ -1,5 +1,4 @@
 import { EnvSchema, NameSchema } from "@sealos-brain/k8s/shared/models";
-import { nanoid } from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	DEVBOX_CPU_OPTIONS,
@@ -23,7 +22,7 @@ export const DevboxPortCreateSchema = z.object({
 
 // Main devbox create form schema
 export const devboxCreateSchema = z.object({
-	name: NameSchema.default(() => `devbox-${nanoid()}`),
+	name: NameSchema,
 	runtime: DevboxRuntimeSchema.default("next.js"),
 	quota: DevboxCreateQuotaSchema.default({
 		cpu: 1,

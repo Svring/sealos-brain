@@ -14,27 +14,20 @@ export const ClusterComponentSchema = z.object({
 });
 
 export const ClusterConnectionSchema = z.object({
-	privateConnection: z
-		.object({
-			endpoint: z.string().nullable().optional(),
-			host: z.string().nullable().optional(),
-			port: z.string().nullable().optional(),
-			username: z.string().nullable().optional(),
-			password: z.string().nullable().optional(),
-			connectionString: z.string().nullable().optional(),
-		})
-		.nullable()
-		.optional(),
+	privateConnection: z.object({
+		endpoint: z.string(),
+		host: z.string(),
+		port: z.string(),
+		username: z.string(),
+		password: z.string(),
+		connectionString: z.string(),
+	}),
 	publicConnection: z
-		.union([
-			z.object({
-				port: z.number().nullable().optional(),
-				connectionString: z.string().nullable().optional(),
-			}),
-			z.array(z.any()),
-		])
-		.nullable()
-		.optional(),
+		.object({
+			port: z.number(),
+			connectionString: z.string(),
+		})
+		.nullable(),
 });
 
 export const ClusterBackupSchema = z

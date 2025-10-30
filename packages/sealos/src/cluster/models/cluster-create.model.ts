@@ -1,5 +1,4 @@
 import { NameSchema } from "@sealos-brain/k8s/shared/models";
-import { nanoid } from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	CLUSTER_CPU_OPTIONS,
@@ -27,7 +26,7 @@ export const ClusterTerminationPolicySchema = z.enum(["Delete", "WipeOut"]);
 
 // Main cluster create form schema
 export const clusterCreateSchema = z.object({
-	name: NameSchema.default(() => `cluster-${nanoid()}`),
+	name: NameSchema,
 	type: ClusterTypeSchema.default("postgresql"),
 	version: ClusterVersionSchema.default("postgresql-14.8.0"),
 	quota: ClusterCreateQuotaSchema.default({

@@ -1,5 +1,4 @@
 import { EnvSchema, NameSchema } from "@sealos-brain/k8s/shared/models";
-import { nanoid } from "@sealos-brain/shared/misc/utils";
 import { z } from "zod";
 import {
 	LAUNCHPAD_CPU_OPTIONS,
@@ -48,7 +47,7 @@ export const ConfigMapSchema = z.object({
 
 // Main launchpad create form schema
 export const launchpadCreateSchema = z.object({
-	name: NameSchema.default(() => `launchpad-${nanoid()}`),
+	name: NameSchema,
 	image: ImageSchema.default({
 		imageName: "nginx",
 	}),
