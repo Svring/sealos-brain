@@ -13,6 +13,11 @@ import type {
 	ResourceTypeTarget,
 } from "@sealos-brain/k8s/shared/models";
 import { checkPorts } from "@sealos-brain/shared/network/api";
+import {
+	errAsync,
+	fromPromise,
+	type ResultAsync,
+} from "neverthrow";
 import type { MonitorData } from "#resource/models/resource-monitor.model";
 import { transformMonitorData } from "#resource/utils/resource.utils";
 import { DEVBOX_LABELS } from "../constants/devbox-labels.constant";
@@ -29,16 +34,25 @@ import { getDevbox, getDevboxMonitorData } from "./devbox.api";
 export const getDevboxMonitor = async (
 	context: K8sContext,
 	target: CustomResourceTarget,
-) => {
-	const [cpuResult, memoryResult] = await Promise.allSettled([
-		getDevboxMonitorData(context, { path: { name: target.name } }),
-		getDevboxMonitorData(context, { path: { name: target.name } }),
+): Promise<ResultAsync<ReturnType<typeof transformMonitorData>, Error>> => {
+	const cpuResultAsync = getDevboxMonitorData(context, {
+		path: { name: target.name },
+	});
+	const memoryResultAsync = getDevboxMonitorData(context, {
+		path: { name: target.name },
+	});
+
+	const [cpuResult, memoryResult] = await Promise.all([
+		cpuResultAsync,
+		memoryResultAsync,
 	]);
 
-	const cpuData =
-		cpuResult.status === "fulfilled" ? cpuResult.value : undefined;
-	const memoryData =
-		memoryResult.status === "fulfilled" ? memoryResult.value : undefined;
+	if (cpuResult.isErr() && memoryResult.isErr()) {
+		return errAsync(cpuResult.error);
+	}
+
+	const cpuData = cpuResult.isOk() ? cpuResult.value : undefined;
+	const memoryData = memoryResult.isOk() ? memoryResult.value : undefined;
 
 	// Transform combined monitor data
 	const monitorData: MonitorData = {
@@ -46,7 +60,10 @@ export const getDevboxMonitor = async (
 		memory: memoryData ? { data: memoryData } : undefined,
 	};
 
-	return transformMonitorData(monitorData);
+	return fromPromise(
+		Promise.resolve(transformMonitorData(monitorData)),
+		(error) => error as Error,
+	);
 };
 
 /**
@@ -67,7 +84,7 @@ export const getDevboxResources = async (
 		"issuers",
 		"certificates",
 	],
-): Promise<K8sResource[]> => {
+): Promise<ResultAsync<K8sResource[], Error>> => {
 	const devboxName = target.name;
 
 	// Resources that use APP_KUBERNETES_NAME label
@@ -133,7 +150,7 @@ export const getDevboxResources = async (
 		);
 	}
 
-	return selectResources(context, targets);
+	return fromPromise(selectResources(context, targets), (error) => error as Error);
 };
 
 /**
@@ -145,9 +162,23 @@ export const getDevboxResources = async (
 export const getDevboxNetwork = async (
 	context: K8sContext,
 	target: CustomResourceTarget,
-) => {
+): Promise<
+	ResultAsync<
+		Array<{
+			port: DevboxObjectPort;
+			publicReachable?: boolean;
+			privateReachable?: boolean;
+		}>,
+		Error
+	>
+> => {
 	// Get the devbox object first
-	const devbox = await getDevbox(context, { path: { name: target.name } });
+	const devboxResult = await getDevbox(context, { path: { name: target.name } });
+	if (devboxResult.isErr()) {
+		return errAsync(devboxResult.error);
+	}
+
+	const devbox = devboxResult.value;
 
 	// Extract ports from the devbox object
 	const ports: DevboxObjectPort[] = devbox.ports || [];
@@ -201,7 +232,7 @@ export const getDevboxNetwork = async (
 		}),
 	);
 
-	return portChecks;
+	return fromPromise(Promise.resolve(portChecks), (error) => error as Error);
 };
 
 /**
@@ -210,7 +241,7 @@ export const getDevboxNetwork = async (
 export const getDevboxDeployments = async (
 	context: K8sContext,
 	devboxName: string,
-): Promise<K8sItem[]> => {
+): Promise<ResultAsync<K8sItem[], Error>> => {
 	const targets: ResourceTypeTarget[] = [
 		{
 			type: "builtin",
@@ -226,12 +257,12 @@ export const getDevboxDeployments = async (
 		},
 	];
 
-	const selectedResources = await selectResources(context, targets);
-
-	// Convert resources to items
-	return selectedResources.map((resource) => ({
-		name: resource.metadata?.name || "unknown",
-		uid: resource.metadata?.uid || "",
-		resourceType: resource.kind?.toLowerCase() || "unknown",
-	}));
+	return fromPromise(selectResources(context, targets), (error) => error as Error).map(
+		(selectedResources) =>
+			selectedResources.map((resource) => ({
+				name: resource.metadata?.name || "unknown",
+				uid: resource.metadata?.uid || "",
+				resourceType: resource.kind?.toLowerCase() || "unknown",
+			})),
+	);
 };

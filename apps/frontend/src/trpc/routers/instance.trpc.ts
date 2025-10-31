@@ -49,21 +49,33 @@ export const instanceRouter = t.router({
 		.input(z.string().optional().default("instances"))
 		.output(z.array(InstanceObjectSchema))
 		.query(async ({ ctx }) => {
-			return await listInstances(ctx);
+			const result = await listInstances(ctx);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
 		}),
 
 	get: t.procedure
 		.input(CustomResourceTargetSchema)
 		.output(InstanceObjectSchema)
 		.query(async ({ ctx, input }) => {
-			return await getInstance(ctx, input.name);
+			const result = await getInstance(ctx, input.name);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
 		}),
 
 	resources: t.procedure
 		.input(CustomResourceTargetSchema)
 		.output(z.array(K8sItemSchema))
 		.query(async ({ ctx, input }) => {
-			return await getInstanceResources(ctx, input.name);
+			const result = await getInstanceResources(ctx, input.name);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
 		}),
 
 	// ===== MUTATION PROCEDURES =====
@@ -73,13 +85,21 @@ export const instanceRouter = t.router({
 		.input(InstanceCreateSchema)
 		.output(InstanceObjectSchema)
 		.mutation(async ({ ctx, input }) => {
-			return await createInstance(ctx, input);
+			const result = await createInstance(ctx, input);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
 		}),
 
 	delete: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ ctx, input }) => {
-			return await deleteInstance(ctx, { path: { name: input.name } });
+			const result = await deleteInstance(ctx, { path: { name: input.name } });
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
 		}),
 
 	// Instance Configuration
@@ -91,7 +111,11 @@ export const instanceRouter = t.router({
 				name: input.name,
 				displayName: input.displayName,
 			});
-			return { name: result.name, displayName: result.newDisplayName };
+			if (result.isErr()) {
+				throw result.error;
+			}
+			const value = result.value;
+			return { name: value.name, displayName: value.newDisplayName };
 		}),
 
 	// Resource Management
@@ -104,11 +128,15 @@ export const instanceRouter = t.router({
 		)
 		.output(z.object({ success: z.boolean() }))
 		.mutation(async ({ ctx, input }) => {
-			return await addResourcesToInstance(
+			const result = await addResourcesToInstance(
 				ctx,
 				input.target.name,
 				input.resources,
 			);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
 		}),
 
 	removeResources: t.procedure
@@ -119,7 +147,11 @@ export const instanceRouter = t.router({
 		)
 		.output(z.object({ success: z.boolean() }))
 		.mutation(async ({ ctx, input }) => {
-			return await removeResourcesFromInstance(ctx, input.resources);
+			const result = await removeResourcesFromInstance(ctx, input.resources);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
 		}),
 });
 

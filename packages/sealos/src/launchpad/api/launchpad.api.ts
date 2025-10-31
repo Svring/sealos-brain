@@ -7,6 +7,15 @@ import type {
 } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import { createAxiosClient } from "@sealos-brain/shared/network/utils";
+import type { AxiosInstance } from "axios";
+import {
+	err,
+	errAsync,
+	fromPromise,
+	ok,
+	type Result,
+	type ResultAsync,
+} from "neverthrow";
 import {
 	DeploymentBridgeMetaSchema,
 	DeploymentBridgeTransSchema,
@@ -24,20 +33,39 @@ import type { LaunchpadUpdate } from "../models/launchpad-update.model";
 /**
  * Creates axios instance for launchpad API calls
  */
-async function createLaunchpadAxios(context: K8sContext) {
-	const regionUrl = await getRegionUrlFromKubeconfig(context.kubeconfig);
+async function createLaunchpadAxios(
+	context: K8sContext,
+): Promise<Result<AxiosInstance, Error>> {
+	const regionUrlResultAsync = fromPromise(
+		getRegionUrlFromKubeconfig(context.kubeconfig),
+		(error) => error as Error,
+	);
+
+	const regionUrlResult = await regionUrlResultAsync;
+
+	if (regionUrlResult.isErr()) {
+		return err(
+			new Error("Failed to extract region URL from kubeconfig", {
+				cause: regionUrlResult.error,
+			}),
+		);
+	}
+
+	const regionUrl = regionUrlResult.value;
 	if (!regionUrl) {
-		throw new Error("Failed to extract region URL from kubeconfig");
+		return err(new Error("Failed to extract region URL from kubeconfig"));
 	}
 
 	const baseURL = `http://applaunchpad.${regionUrl}/api/v1`;
 
-	return createAxiosClient({
-		baseURL,
-		headers: {
-			Authorization: encodeURIComponent(context.kubeconfig),
-		},
-	});
+	return ok(
+		createAxiosClient({
+			baseURL,
+			headers: {
+				Authorization: encodeURIComponent(context.kubeconfig),
+			},
+		}),
+	);
 }
 
 // ============================================================================
@@ -50,10 +78,17 @@ async function createLaunchpadAxios(context: K8sContext) {
 export const getLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-) => {
-	const api = await createLaunchpadAxios(context);
-	const response = await api.get(`/app/${params.path.name}`);
-	return response.data.data;
+): Promise<ResultAsync<unknown, Error>> => {
+	const apiResult = await createLaunchpadAxios(context);
+	if (apiResult.isErr()) {
+		return errAsync(apiResult.error);
+	}
+
+	const api = apiResult.value;
+	return fromPromise(
+		api.get(`/app/${params.path.name}`),
+		(error) => error as Error,
+	).map((response) => response.data.data);
 };
 
 // ============================================================================
@@ -66,10 +101,16 @@ export const getLaunchpad = async (
 export const createLaunchpad = async (
 	context: K8sContext,
 	params: { body: LaunchpadCreate },
-) => {
-	const api = await createLaunchpadAxios(context);
-	const response = await api.post("/app", params.body);
-	return response.data;
+): Promise<ResultAsync<unknown, Error>> => {
+	const apiResult = await createLaunchpadAxios(context);
+	if (apiResult.isErr()) {
+		return errAsync(apiResult.error);
+	}
+
+	const api = apiResult.value;
+	return fromPromise(api.post("/app", params.body), (error) => error as Error).map(
+		(response) => response.data,
+	);
 };
 
 /**
@@ -81,10 +122,17 @@ export const updateLaunchpad = async (
 		path: { name: string };
 		body?: Omit<LaunchpadUpdate, "name">;
 	},
-) => {
-	const api = await createLaunchpadAxios(context);
-	const response = await api.patch(`/app/${params.path.name}`, params.body);
-	return response.data;
+): Promise<ResultAsync<unknown, Error>> => {
+	const apiResult = await createLaunchpadAxios(context);
+	if (apiResult.isErr()) {
+		return errAsync(apiResult.error);
+	}
+
+	const api = apiResult.value;
+	return fromPromise(
+		api.patch(`/app/${params.path.name}`, params.body),
+		(error) => error as Error,
+	).map((response) => response.data);
 };
 
 /**
@@ -93,10 +141,17 @@ export const updateLaunchpad = async (
 export const deleteLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-) => {
-	const api = await createLaunchpadAxios(context);
-	const response = await api.delete(`/app/${params.path.name}`);
-	return response.data;
+): Promise<ResultAsync<unknown, Error>> => {
+	const apiResult = await createLaunchpadAxios(context);
+	if (apiResult.isErr()) {
+		return errAsync(apiResult.error);
+	}
+
+	const api = apiResult.value;
+	return fromPromise(
+		api.delete(`/app/${params.path.name}`),
+		(error) => error as Error,
+	).map((response) => response.data);
 };
 
 /**
@@ -105,10 +160,17 @@ export const deleteLaunchpad = async (
 export const startLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-) => {
-	const api = await createLaunchpadAxios(context);
-	const response = await api.post(`/app/${params.path.name}/start`, {});
-	return response.data;
+): Promise<ResultAsync<unknown, Error>> => {
+	const apiResult = await createLaunchpadAxios(context);
+	if (apiResult.isErr()) {
+		return errAsync(apiResult.error);
+	}
+
+	const api = apiResult.value;
+	return fromPromise(
+		api.post(`/app/${params.path.name}/start`, {}),
+		(error) => error as Error,
+	).map((response) => response.data);
 };
 
 /**
@@ -117,10 +179,17 @@ export const startLaunchpad = async (
 export const pauseLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-) => {
-	const api = await createLaunchpadAxios(context);
-	const response = await api.post(`/app/${params.path.name}/pause`, {});
-	return response.data;
+): Promise<ResultAsync<unknown, Error>> => {
+	const apiResult = await createLaunchpadAxios(context);
+	if (apiResult.isErr()) {
+		return errAsync(apiResult.error);
+	}
+
+	const api = apiResult.value;
+	return fromPromise(
+		api.post(`/app/${params.path.name}/pause`, {}),
+		(error) => error as Error,
+	).map((response) => response.data);
 };
 
 /**
@@ -129,8 +198,15 @@ export const pauseLaunchpad = async (
 export const restartLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-) => {
-	const api = await createLaunchpadAxios(context);
-	const response = await api.post(`/app/${params.path.name}/restart`, {});
-	return response.data;
+): Promise<ResultAsync<unknown, Error>> => {
+	const apiResult = await createLaunchpadAxios(context);
+	if (apiResult.isErr()) {
+		return errAsync(apiResult.error);
+	}
+
+	const api = apiResult.value;
+	return fromPromise(
+		api.post(`/app/${params.path.name}/restart`, {}),
+		(error) => error as Error,
+	).map((response) => response.data);
 };

@@ -5,13 +5,6 @@ import { cn } from "@sealos-brain/shared/misc/utils";
 import { cva } from "class-variance-authority";
 import type { ComponentProps } from "react";
 import { createContext, useContext, useState } from "react";
-import { CopilotAdapter } from "@/contexts/actor/spawns/copilot/copilot.adapter";
-
-export * from "./chat/chat-content.comp";
-export * from "./chat/chat-footer.comp";
-// Re-export from split files
-export * from "./chat/chat-header.comp";
-export * from "./chat/chat-messages.comp";
 
 // Chat Input Context
 interface ChatInputContextValue {

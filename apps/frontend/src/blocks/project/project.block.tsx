@@ -19,11 +19,6 @@ export function ProjectBlock() {
 		setSearchTerm(e.target.value);
 	};
 
-	const handleCreateProject = () => {
-		// TODO: Implement project creation logic
-		console.log("Create project clicked");
-	};
-
 	const handleDeleteProject = async (projectName: string) => {
 		if (
 			window.confirm(
@@ -56,7 +51,6 @@ export function ProjectBlock() {
 								searchValue={searchTerm}
 								onSearchChange={handleSearchChange}
 							/>
-							<Project.DashboardHeaderNew onCreateClick={handleCreateProject} />
 						</div>
 					</Project.DashboardHeader>
 
@@ -69,7 +63,7 @@ export function ProjectBlock() {
 							) : (
 								<Project.Empty
 									type="no-projects"
-									onCreateProject={handleCreateProject}
+									onCreateProject={() => router.push("/new")}
 								/>
 							)
 						) : (

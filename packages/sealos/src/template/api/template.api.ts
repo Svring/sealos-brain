@@ -3,25 +3,53 @@
 import type { K8sContext } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import { createAxiosClient } from "@sealos-brain/shared/network/utils";
+import type { AxiosInstance } from "axios";
+import {
+	err,
+	errAsync,
+	fromPromise,
+	ok,
+	type Result,
+	type ResultAsync,
+} from "neverthrow";
 import { TemplateObjectSchema } from "../models/template-object.model";
 
 /**
  * Creates axios instance for template API calls
  */
-async function createTemplateAxios(context: K8sContext) {
-	const regionUrl = await getRegionUrlFromKubeconfig(context.kubeconfig);
+async function createTemplateAxios(
+	context: K8sContext,
+): Promise<Result<AxiosInstance, Error>> {
+	const regionUrlResultAsync = fromPromise(
+		getRegionUrlFromKubeconfig(context.kubeconfig),
+		(error) => error as Error,
+	);
+
+	const regionUrlResult = await regionUrlResultAsync;
+
+	if (regionUrlResult.isErr()) {
+		return err(
+			new Error("Failed to extract region URL from kubeconfig", {
+				cause: regionUrlResult.error,
+			}),
+		);
+	}
+
+	const regionUrl = regionUrlResult.value;
 	if (!regionUrl) {
-		throw new Error("Failed to extract region URL from kubeconfig");
+		return err(new Error("Failed to extract region URL from kubeconfig"));
 	}
 
 	const baseURL = `http://template.${regionUrl}/api/v1/template`;
 
-	return createAxiosClient({
-		baseURL,
-		headers: {
-			Authorization: encodeURIComponent(context.kubeconfig),
-		},
-	});
+	return ok(
+		createAxiosClient({
+			baseURL,
+			headers: {
+				Authorization: encodeURIComponent(context.kubeconfig),
+			},
+		}),
+	);
 }
 
 // ============================================================================
@@ -31,10 +59,18 @@ async function createTemplateAxios(context: K8sContext) {
 /**
  * List all templates
  */
-export const listTemplates = async (context: K8sContext) => {
-	const api = await createTemplateAxios(context);
-	const response = await api.get("/");
-	return response.data.data;
+export const listTemplates = async (
+	context: K8sContext,
+): Promise<ResultAsync<unknown, Error>> => {
+	const apiResult = await createTemplateAxios(context);
+	if (apiResult.isErr()) {
+		return errAsync(apiResult.error);
+	}
+
+	const api = apiResult.value;
+	return fromPromise(api.get("/"), (error) => error as Error).map(
+		(response) => response.data.data,
+	);
 };
 
 /**
@@ -43,8 +79,17 @@ export const listTemplates = async (context: K8sContext) => {
 export const getTemplate = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-) => {
-	const api = await createTemplateAxios(context);
-	const response = await api.get(`/${params.path.name}`);
-	return TemplateObjectSchema.parse(response.data.data);
+): Promise<
+	ResultAsync<ReturnType<typeof TemplateObjectSchema.parse>, Error>
+> => {
+	const apiResult = await createTemplateAxios(context);
+	if (apiResult.isErr()) {
+		return errAsync(apiResult.error);
+	}
+
+	const api = apiResult.value;
+	return fromPromise(
+		api.get(`/${params.path.name}`),
+		(error) => error as Error,
+	).map((response) => TemplateObjectSchema.parse(response.data.data));
 };

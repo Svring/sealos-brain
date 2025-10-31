@@ -5,7 +5,7 @@ import { cn } from "@sealos-brain/shared/misc/utils";
 import { SendHorizonal } from "lucide-react";
 import type { ComponentProps } from "react";
 import { useEffect, useRef } from "react";
-import { useChatInput } from "@/components/copilot/chat.comp";
+import { useChatInput } from "@/components/copilot/chat";
 
 // Footer section
 export const Footer = ({

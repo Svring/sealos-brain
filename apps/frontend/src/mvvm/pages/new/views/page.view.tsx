@@ -4,7 +4,7 @@ import type { Message } from "@langchain/langgraph-sdk";
 import { motion } from "framer-motion";
 import { LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Hero } from "@/components/ui/hero";
+import { HeroParticles } from "@/components/ui/hero-particles";
 import { MessagesView } from "@/mvvm/copilot/views/messages.view";
 import { InputBox } from "@/mvvm/copilot/vms/input-box.vm";
 import { OverlayControl } from "@/mvvm/pages/new/vms/overlay-control.vm";
@@ -39,12 +39,11 @@ export const PageView = ({
 							transition={{ duration: 0.5, ease: "easeOut" }}
 							className="flex-shrink-0"
 						>
-							<Hero
-								heroTitle="Sealos Brain"
+							<HeroParticles
+								text="Sealos Brain"
 								subtitle="Let development get back to basics - focus on writing code, and let the cloud handle the rest."
 								titleClassName="text-4xl md:text-5xl font-extrabold"
 								subtitleClassName="text-md md:text-lg max-w-[600px]"
-								actionsClassName="mt-2"
 							/>
 						</motion.div>
 					)}

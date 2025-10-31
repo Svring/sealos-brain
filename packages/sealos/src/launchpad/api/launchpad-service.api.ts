@@ -12,6 +12,11 @@ import type {
 	ResourceTypeTarget,
 } from "@sealos-brain/k8s/shared/models";
 import { checkPorts } from "@sealos-brain/shared/network/api";
+import {
+	errAsync,
+	fromPromise,
+	type ResultAsync,
+} from "neverthrow";
 import { LAUNCHPAD_LABELS } from "../constants/launchpad-labels.constant";
 import { getLaunchpad } from "./launchpad.api";
 
@@ -38,7 +43,7 @@ export const getLaunchpadResources = async (
 		"issuer",
 		"certificate",
 	],
-): Promise<K8sResource[]> => {
+): Promise<ResultAsync<K8sResource[], Error>> => {
 	const launchpadName = target.name;
 
 	// Type guards
@@ -96,13 +101,23 @@ export const getLaunchpadResources = async (
 		];
 
 		// Get resources from both label strategies
-		const [mainResources, podResources] = await Promise.all([
-			selectResources(context, mainTargets),
-			selectResources(context, podTargets),
+		const [mainResourcesResult, podResourcesResult] = await Promise.all([
+			fromPromise(selectResources(context, mainTargets), (error) => error as Error),
+			fromPromise(selectResources(context, podTargets), (error) => error as Error),
 		]);
 
+		if (mainResourcesResult.isErr()) {
+			return errAsync(mainResourcesResult.error);
+		}
+		if (podResourcesResult.isErr()) {
+			return errAsync(podResourcesResult.error);
+		}
+
 		// Merge and return both results
-		return [...mainResources, ...podResources];
+		return fromPromise(
+			Promise.resolve([...mainResourcesResult.value, ...podResourcesResult.value]),
+			(error) => error as Error,
+		);
 	} else {
 		// Original behavior when pod is not included
 		const targets: ResourceTypeTarget[] = [
@@ -122,7 +137,7 @@ export const getLaunchpadResources = async (
 			})),
 		];
 
-		return selectResources(context, targets);
+		return fromPromise(selectResources(context, targets), (error) => error as Error);
 	}
 };
 
@@ -135,18 +150,32 @@ export const getLaunchpadResources = async (
 export const getLaunchpadNetwork = async (
 	context: K8sContext,
 	target: BuiltinResourceTarget,
-) => {
+): Promise<
+	ResultAsync<
+		Array<{
+			port: unknown;
+			publicReachable?: boolean;
+			privateReachable?: boolean;
+		}>,
+		Error
+	>
+> => {
 	// Get the launchpad object first
-	const launchpad = await getLaunchpad(context, {
+	const launchpadResult = await getLaunchpad(context, {
 		path: { name: target.name },
 	});
+	if (launchpadResult.isErr()) {
+		return errAsync(launchpadResult.error);
+	}
+
+	const launchpad = launchpadResult.value;
 
 	// Extract ports from the launchpad object
-	const ports = launchpad.ports || [];
+	const ports = (launchpad as { ports?: unknown[] })?.ports || [];
 
 	// Check reachability for each port
 	const portChecks = await Promise.all(
-		ports.map(async (port) => {
+		ports.map(async (port: { publicHost?: string; privateHost?: string; number: number; publicAddress?: string; privateAddress?: string }) => {
 			const results: {
 				port: typeof port;
 				publicReachable?: boolean;
@@ -165,7 +194,7 @@ export const getLaunchpadNetwork = async (
 					results.publicReachable = publicResults[0]?.reachable || false;
 				} catch (error) {
 					console.error(
-						`Error checking public address ${port.publicHost}:`,
+						`Error checking public address ${port.publicAddress}:`,
 						error,
 					);
 					results.publicReachable = false;
@@ -182,7 +211,7 @@ export const getLaunchpadNetwork = async (
 					results.privateReachable = privateResults[0]?.reachable || false;
 				} catch (error) {
 					console.error(
-						`Error checking private address ${port.privateHost}:`,
+						`Error checking private address ${port.privateAddress}:`,
 						error,
 					);
 					results.privateReachable = false;
@@ -193,5 +222,5 @@ export const getLaunchpadNetwork = async (
 		}),
 	);
 
-	return portChecks;
+	return fromPromise(Promise.resolve(portChecks), (error) => error as Error);
 };

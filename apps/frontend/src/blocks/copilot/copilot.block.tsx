@@ -1,6 +1,6 @@
 "use client";
 
-import * as Chat from "@/components/copilot/chat.comp";
+import * as Chat from "@/components/copilot/chat";
 import * as Copilot from "@/components/copilot/copilot.comp";
 import { CopilotAdapter } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 import {

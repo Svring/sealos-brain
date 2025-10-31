@@ -2,7 +2,7 @@
 
 import { useMount } from "@reactuses/core";
 import { useState } from "react";
-import * as Chat from "@/components/copilot/chat.comp";
+import * as Chat from "@/components/copilot/chat";
 import { Spinner } from "@/components/ui/spinner";
 import { useCopilotAdapterContext } from "@/contexts/actor/spawns/copilot/copilot.adapter";
 
