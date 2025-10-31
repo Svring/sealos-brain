@@ -20,15 +20,7 @@ import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import { createAxiosClient } from "@sealos-brain/shared/network/utils";
 import type { AxiosInstance } from "axios";
 import _ from "lodash";
-import {
-	err,
-	errAsync,
-	fromPromise,
-	ok,
-	okAsync,
-	type Result,
-	type ResultAsync,
-} from "neverthrow";
+import { err, fromPromise, ok, type Result } from "neverthrow";
 import { deleteDevbox } from "#devbox/api";
 import {
 	INSTANCE_ANNOTATIONS,
@@ -86,13 +78,13 @@ async function createInstanceAxios(
  */
 export const listInstances = async (
 	context: K8sContext,
-): Promise<ResultAsync<InstanceObject[], Error>> => {
+): Promise<InstanceObject[]> => {
 	const instanceTarget: CustomResourceTypeTarget = {
 		type: "custom",
 		resourceType: "instance",
 	};
 
-	return fromPromise(
+	const resultAsync = fromPromise(
 		listResources(context, instanceTarget),
 		(error) => error as Error,
 	).map((instanceList) => {
@@ -112,6 +104,14 @@ export const listInstances = async (
 
 		return [];
 	});
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -120,20 +120,28 @@ export const listInstances = async (
 export const getInstance = async (
 	context: K8sContext,
 	name: string,
-): Promise<ResultAsync<InstanceObject, Error>> => {
+): Promise<InstanceObject> => {
 	const target: CustomResourceTarget = {
 		type: "custom",
 		resourceType: "instance",
 		name,
 	};
 
-	return fromPromise(
+	const resultAsync = fromPromise(
 		getResource(context, target),
 		(error) => error as Error,
 	).map((instanceResource) => {
 		const validatedInstance = InstanceResourceSchema.parse(instanceResource);
 		return instanceParser.toObject(validatedInstance);
 	});
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -142,7 +150,7 @@ export const getInstance = async (
 export const getInstanceResources = async (
 	context: K8sContext,
 	name: string,
-): Promise<ResultAsync<K8sItem[], Error>> => {
+): Promise<K8sItem[]> => {
 	const targets = [
 		{
 			type: "builtin" as const,
@@ -176,7 +184,7 @@ export const getInstanceResources = async (
 		},
 	];
 
-	return fromPromise(
+	const resultAsync = fromPromise(
 		selectResources(context, targets),
 		(error) => error as Error,
 	).map((selectedResources) =>
@@ -186,6 +194,14 @@ export const getInstanceResources = async (
 			resourceType: resource.kind?.toLowerCase() || "unknown",
 		})),
 	);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -194,39 +210,39 @@ export const getInstanceResources = async (
 export const deleteInstance = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createInstanceAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
-	const instanceResourcesResult = await getInstanceResources(
+	const instanceResources = await getInstanceResources(
 		context,
 		params.path.name,
 	);
-	if (instanceResourcesResult.isErr()) {
-		return errAsync(instanceResourcesResult.error);
-	}
-
-	const instanceResources = instanceResourcesResult.value;
 
 	// Delete devbox resources sequentially
 	for (const resource of instanceResources) {
 		if (resource.resourceType === "devbox") {
-			const deleteResult = await deleteDevbox(context, {
+			await deleteDevbox(context, {
 				path: { name: resource.name },
 			});
-			if (deleteResult.isErr()) {
-				return errAsync(deleteResult.error);
-			}
 		}
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.delete(`/${params.path.name}`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -236,9 +252,7 @@ export const addResourcesToInstance = async (
 	context: K8sContext,
 	name: string,
 	resources: ResourceTarget[],
-): Promise<ResultAsync<{ success: boolean }, Error>> => {
-	let lastError: Error | null = null;
-
+): Promise<{ success: boolean }> => {
 	for (const resource of resources) {
 		if (resource.type === "custom") {
 			const result = await fromPromise(
@@ -252,8 +266,7 @@ export const addResourcesToInstance = async (
 				(error) => error as Error,
 			);
 			if (result.isErr()) {
-				lastError = result.error;
-				break;
+				throw result.error;
 			}
 		} else {
 			const result = await fromPromise(
@@ -267,17 +280,12 @@ export const addResourcesToInstance = async (
 				(error) => error as Error,
 			);
 			if (result.isErr()) {
-				lastError = result.error;
-				break;
+				throw result.error;
 			}
 		}
 	}
 
-	if (lastError) {
-		return errAsync(lastError);
-	}
-
-	return okAsync({ success: true });
+	return { success: true };
 };
 
 /**
@@ -286,9 +294,7 @@ export const addResourcesToInstance = async (
 export const removeResourcesFromInstance = async (
 	context: K8sContext,
 	resources: ResourceTarget[],
-): Promise<ResultAsync<{ success: boolean }, Error>> => {
-	let lastError: Error | null = null;
-
+): Promise<{ success: boolean }> => {
 	// Remove instance label from all resources
 	for (const resource of resources) {
 		if (resource.type === "custom") {
@@ -302,8 +308,7 @@ export const removeResourcesFromInstance = async (
 				(error) => error as Error,
 			);
 			if (result.isErr()) {
-				lastError = result.error;
-				break;
+				throw result.error;
 			}
 		} else {
 			// Type assertion for builtin resources
@@ -318,17 +323,12 @@ export const removeResourcesFromInstance = async (
 				(error) => error as Error,
 			);
 			if (result.isErr()) {
-				lastError = result.error;
-				break;
+				throw result.error;
 			}
 		}
 	}
 
-	if (lastError) {
-		return errAsync(lastError);
-	}
-
-	return okAsync({ success: true });
+	return { success: true };
 };
 
 /**
@@ -337,22 +337,17 @@ export const removeResourcesFromInstance = async (
 export const updateInstanceName = async (
 	context: K8sContext,
 	input: { name: string; displayName: string },
-): Promise<
-	ResultAsync<
-		{
-			name: string;
-			newDisplayName: string;
-		},
-		Error
-	>
-> => {
+): Promise<{
+	name: string;
+	newDisplayName: string;
+}> => {
 	const target = {
 		type: "custom" as const,
 		resourceType: "instance" as const,
 		name: input.name,
 	};
 
-	return fromPromise(
+	const resultAsync = fromPromise(
 		patchCustomResourceMetadata(
 			context,
 			target,
@@ -365,6 +360,14 @@ export const updateInstanceName = async (
 		name: input.name,
 		newDisplayName: input.displayName,
 	}));
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -373,7 +376,7 @@ export const updateInstanceName = async (
 export const createInstance = async (
 	context: K8sContext,
 	input: { name: string },
-): Promise<ResultAsync<InstanceObject, Error>> => {
+): Promise<InstanceObject> => {
 	const target = {
 		type: "custom" as const,
 		resourceType: "instance" as const,
@@ -401,8 +404,16 @@ export const createInstance = async (
 		},
 	};
 
-	return fromPromise(
+	const resultAsync = fromPromise(
 		upsertCustomResource(context, target, resourceBody),
 		(error) => error as Error,
 	).map((instanceResource) => instanceParser.toObject(instanceResource));
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };

@@ -2,13 +2,7 @@
 
 import { createAxiosClient } from "@sealos-brain/shared/network/utils";
 import type { AxiosInstance } from "axios";
-import {
-	errAsync,
-	fromPromise,
-	ok,
-	type Result,
-	type ResultAsync,
-} from "neverthrow";
+import { fromPromise, ok, type Result } from "neverthrow";
 import { composeAiProxyBaseUrl } from "../utils/ai-proxy-utils";
 
 /**
@@ -38,19 +32,27 @@ async function createAiProxyAxios(context: {
 export const listTokens = async (
 	context: { regionUrl: string; authorization: string },
 	params?: { search?: { page?: number; perPage?: number } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createAiProxyAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.get("/user/token", {
 			params: params?.search,
 		}),
 		(error) => error as Error,
 	).map((response) => response.data.data.tokens);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 // ============================================================================
@@ -63,17 +65,25 @@ export const listTokens = async (
 export const createToken = async (
 	context: { regionUrl: string; authorization: string },
 	params: { body: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createAiProxyAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post("/user/token", params.body),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -82,15 +92,23 @@ export const createToken = async (
 export const deleteToken = async (
 	context: { regionUrl: string; authorization: string },
 	params: { path: { id: number } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createAiProxyAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.delete(`/user/token/${params.path.id}`),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };

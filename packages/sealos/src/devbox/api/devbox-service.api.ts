@@ -13,58 +13,17 @@ import type {
 	ResourceTypeTarget,
 } from "@sealos-brain/k8s/shared/models";
 import { checkPorts } from "@sealos-brain/shared/network/api";
-import {
-	errAsync,
-	fromPromise,
-	type ResultAsync,
-} from "neverthrow";
-import type { MonitorData } from "#resource/models/resource-monitor.model";
-import { transformMonitorData } from "#resource/utils/resource.utils";
+import { fromPromise } from "neverthrow";
 import { DEVBOX_LABELS } from "../constants/devbox-labels.constant";
-import type { DevboxObjectPort } from "../models/devbox-object.model";
-import { getDevbox, getDevboxMonitorData } from "./devbox.api";
+import type {
+	DevboxObject,
+	DevboxObjectPort,
+} from "../models/devbox-object.model";
+import { getDevbox } from "./devbox.api";
 
 // ============================================================================
 // DevBox Service Functions (Higher-level business logic)
 // ============================================================================
-
-/**
- * Get devbox combined monitor
- */
-export const getDevboxMonitor = async (
-	context: K8sContext,
-	target: CustomResourceTarget,
-): Promise<ResultAsync<ReturnType<typeof transformMonitorData>, Error>> => {
-	const cpuResultAsync = getDevboxMonitorData(context, {
-		path: { name: target.name },
-	});
-	const memoryResultAsync = getDevboxMonitorData(context, {
-		path: { name: target.name },
-	});
-
-	const [cpuResult, memoryResult] = await Promise.all([
-		cpuResultAsync,
-		memoryResultAsync,
-	]);
-
-	if (cpuResult.isErr() && memoryResult.isErr()) {
-		return errAsync(cpuResult.error);
-	}
-
-	const cpuData = cpuResult.isOk() ? cpuResult.value : undefined;
-	const memoryData = memoryResult.isOk() ? memoryResult.value : undefined;
-
-	// Transform combined monitor data
-	const monitorData: MonitorData = {
-		cpu: cpuData ? { data: cpuData } : undefined,
-		memory: memoryData ? { data: memoryData } : undefined,
-	};
-
-	return fromPromise(
-		Promise.resolve(transformMonitorData(monitorData)),
-		(error) => error as Error,
-	);
-};
 
 /**
  * Get devbox related resources based on the devbox relevance logic
@@ -84,7 +43,7 @@ export const getDevboxResources = async (
 		"issuers",
 		"certificates",
 	],
-): Promise<ResultAsync<K8sResource[], Error>> => {
+): Promise<K8sResource[]> => {
 	const devboxName = target.name;
 
 	// Resources that use APP_KUBERNETES_NAME label
@@ -150,7 +109,17 @@ export const getDevboxResources = async (
 		);
 	}
 
-	return fromPromise(selectResources(context, targets), (error) => error as Error);
+	const resultAsync = fromPromise(
+		selectResources(context, targets),
+		(error) => error as Error,
+	);
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -163,22 +132,16 @@ export const getDevboxNetwork = async (
 	context: K8sContext,
 	target: CustomResourceTarget,
 ): Promise<
-	ResultAsync<
-		Array<{
-			port: DevboxObjectPort;
-			publicReachable?: boolean;
-			privateReachable?: boolean;
-		}>,
-		Error
-	>
+	Array<{
+		port: DevboxObjectPort;
+		publicReachable?: boolean;
+		privateReachable?: boolean;
+	}>
 > => {
 	// Get the devbox object first
-	const devboxResult = await getDevbox(context, { path: { name: target.name } });
-	if (devboxResult.isErr()) {
-		return errAsync(devboxResult.error);
-	}
-
-	const devbox = devboxResult.value;
+	const devbox = (await getDevbox(context, {
+		path: { name: target.name },
+	})) as DevboxObject;
 
 	// Extract ports from the devbox object
 	const ports: DevboxObjectPort[] = devbox.ports || [];
@@ -232,7 +195,7 @@ export const getDevboxNetwork = async (
 		}),
 	);
 
-	return fromPromise(Promise.resolve(portChecks), (error) => error as Error);
+	return portChecks;
 };
 
 /**
@@ -241,7 +204,7 @@ export const getDevboxNetwork = async (
 export const getDevboxDeployments = async (
 	context: K8sContext,
 	devboxName: string,
-): Promise<ResultAsync<K8sItem[], Error>> => {
+): Promise<K8sItem[]> => {
 	const targets: ResourceTypeTarget[] = [
 		{
 			type: "builtin",
@@ -257,12 +220,22 @@ export const getDevboxDeployments = async (
 		},
 	];
 
-	return fromPromise(selectResources(context, targets), (error) => error as Error).map(
-		(selectedResources) =>
-			selectedResources.map((resource) => ({
-				name: resource.metadata?.name || "unknown",
-				uid: resource.metadata?.uid || "",
-				resourceType: resource.kind?.toLowerCase() || "unknown",
-			})),
+	const resultAsync = fromPromise(
+		selectResources(context, targets),
+		(error) => error as Error,
+	).map((selectedResources) =>
+		selectedResources.map((resource) => ({
+			name: resource.metadata?.name || "unknown",
+			uid: resource.metadata?.uid || "",
+			resourceType: resource.kind?.toLowerCase() || "unknown",
+		})),
 	);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };

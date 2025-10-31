@@ -4,14 +4,7 @@ import type { K8sContext } from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import { createAxiosClient } from "@sealos-brain/shared/network/utils";
 import type { AxiosInstance } from "axios";
-import {
-	err,
-	errAsync,
-	fromPromise,
-	ok,
-	type Result,
-	type ResultAsync,
-} from "neverthrow";
+import { err, fromPromise, ok, type Result } from "neverthrow";
 import type { ClusterCreate } from "../models/cluster-create.model";
 import type { ClusterUpdate } from "../models/cluster-update.model";
 
@@ -60,18 +53,24 @@ async function createClusterAxios(
 /**
  * List all databases
  */
-export const listClusters = async (
-	context: K8sContext,
-): Promise<ResultAsync<unknown, Error>> => {
+export const listClusters = async (context: K8sContext): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(api.get("/"), (error) => error as Error).map(
+	const resultAsync = fromPromise(api.get("/"), (error) => error as Error).map(
 		(response) => response.data.data,
 	);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -80,17 +79,25 @@ export const listClusters = async (
 export const getCluster = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.get(`/${params.path.databaseName}`),
 		(error) => error as Error,
 	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -98,16 +105,25 @@ export const getCluster = async (
  */
 export const getClusterVersions = async (
 	context: K8sContext,
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(api.get("/version/list"), (error) => error as Error).map(
-		(response) => response.data.data,
-	);
+	const resultAsync = fromPromise(
+		api.get("/version/list"),
+		(error) => error as Error,
+	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -125,19 +141,27 @@ export const getClusterLogsData = async (
 			pageSize?: number;
 		};
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.get("/logs/data", {
 			params: params.search,
 		}),
 		(error) => error as Error,
 	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -152,19 +176,27 @@ export const listClusterLogFiles = async (
 			logType: string;
 		};
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.get("/logs/files", {
 			params: params.search,
 		}),
 		(error) => error as Error,
 	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 // ============================================================================
@@ -194,16 +226,25 @@ export const createCluster = async (
 			};
 		};
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(api.post("/", params.body), (error) => error as Error).map(
-		(response) => response.data,
-	);
+	const resultAsync = fromPromise(
+		api.post("/", params.body),
+		(error) => error as Error,
+	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -215,17 +256,25 @@ export const updateCluster = async (
 		path: { databaseName: string };
 		body: Omit<ClusterUpdate, "name">;
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.patch(`/${params.path.databaseName}`, params.body),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -234,17 +283,25 @@ export const updateCluster = async (
 export const deleteCluster = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.delete(`/${params.path.databaseName}`),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -253,17 +310,25 @@ export const deleteCluster = async (
 export const startCluster = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.databaseName}/start`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -272,17 +337,25 @@ export const startCluster = async (
 export const pauseCluster = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.databaseName}/pause`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -291,17 +364,25 @@ export const pauseCluster = async (
 export const restartCluster = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.databaseName}/restart`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -313,17 +394,25 @@ export const createClusterBackup = async (
 		path: { databaseName: string };
 		body?: { remark?: string };
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.databaseName}/backup`, params.body),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -335,20 +424,28 @@ export const restoreClusterBackup = async (
 		path: { databaseName: string; backupName: string };
 		body: { newDbName: string };
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(
 			`/${params.path.databaseName}/backup/${params.path.backupName}`,
 			params.body,
 		),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -357,19 +454,25 @@ export const restoreClusterBackup = async (
 export const deleteClusterBackup = async (
 	context: K8sContext,
 	params: { path: { databaseName: string; backupName: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
-		api.delete(
-			`/${params.path.databaseName}/backup/${params.path.backupName}`,
-		),
+	const resultAsync = fromPromise(
+		api.delete(`/${params.path.databaseName}/backup/${params.path.backupName}`),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -378,17 +481,25 @@ export const deleteClusterBackup = async (
 export const enableClusterPublicAccess = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.databaseName}/enablePublic`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -397,15 +508,23 @@ export const enableClusterPublicAccess = async (
 export const disableClusterPublicAccess = async (
 	context: K8sContext,
 	params: { path: { databaseName: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createClusterAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.databaseName}/disablePublic`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };

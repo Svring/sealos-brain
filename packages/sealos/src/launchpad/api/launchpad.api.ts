@@ -10,11 +10,9 @@ import { createAxiosClient } from "@sealos-brain/shared/network/utils";
 import type { AxiosInstance } from "axios";
 import {
 	err,
-	errAsync,
 	fromPromise,
 	ok,
 	type Result,
-	type ResultAsync,
 } from "neverthrow";
 import {
 	DeploymentBridgeMetaSchema,
@@ -78,17 +76,25 @@ async function createLaunchpadAxios(
 export const getLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createLaunchpadAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.get(`/app/${params.path.name}`),
 		(error) => error as Error,
 	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 // ============================================================================
@@ -101,16 +107,24 @@ export const getLaunchpad = async (
 export const createLaunchpad = async (
 	context: K8sContext,
 	params: { body: LaunchpadCreate },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createLaunchpadAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(api.post("/app", params.body), (error) => error as Error).map(
+	const resultAsync = fromPromise(api.post("/app", params.body), (error) => error as Error).map(
 		(response) => response.data,
 	);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -122,17 +136,25 @@ export const updateLaunchpad = async (
 		path: { name: string };
 		body?: Omit<LaunchpadUpdate, "name">;
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createLaunchpadAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.patch(`/app/${params.path.name}`, params.body),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -141,17 +163,25 @@ export const updateLaunchpad = async (
 export const deleteLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createLaunchpadAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.delete(`/app/${params.path.name}`),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -160,17 +190,25 @@ export const deleteLaunchpad = async (
 export const startLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createLaunchpadAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/app/${params.path.name}/start`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -179,17 +217,25 @@ export const startLaunchpad = async (
 export const pauseLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createLaunchpadAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/app/${params.path.name}/pause`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -198,15 +244,23 @@ export const pauseLaunchpad = async (
 export const restartLaunchpad = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createLaunchpadAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/app/${params.path.name}/restart`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };

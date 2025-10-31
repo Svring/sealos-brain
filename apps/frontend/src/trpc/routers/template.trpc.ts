@@ -33,7 +33,7 @@ export const templateRouter = t.router({
 	get: t.procedure
 		.input(z.string().min(1, "Template name is required"))
 		.query(async ({ input, ctx }) => {
-			return await getTemplate(ctx, input);
+			return await getTemplate(ctx, { path: { name: input } });
 		}),
 });
 

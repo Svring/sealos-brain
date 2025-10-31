@@ -16,18 +16,18 @@ export function ProxyAdapter({ children }: { children: ReactNode }) {
 	const createProxy = useProxyCreate();
 
 	useMount(() => {
-		void listTokens({
-			regionUrl: auth.regionUrl,
-			authorization: auth.appToken,
-		})
-			.then((data) => {
+		void (async () => {
+			try {
+				const data = (await listTokens({
+					regionUrl: auth.regionUrl,
+					authorization: auth.appToken,
+				})) as Array<{ name: string; key: string }>;
+
 				// Look for a token with name 'brain'
 				const brainToken = data.find(
 					(token: { name: string; key: string }) => token.name === "brain",
 				);
-				return brainToken;
-			})
-			.then((brainToken) => {
+
 				console.log("brainToken", brainToken);
 				if (brainToken) {
 					console.log("Using existing 'brain' token");
@@ -51,7 +51,10 @@ export function ProxyAdapter({ children }: { children: ReactNode }) {
 						},
 					);
 				}
-			});
+			} catch (error) {
+				console.error("Failed to list tokens:", error);
+			}
+		})();
 	});
 
 	if (state.matches("initializing") || !state.matches("ready")) {

@@ -4,7 +4,7 @@ import type {
 	CustomResourceTarget,
 	K8sContext,
 } from "@sealos-brain/k8s/shared/models";
-import { errAsync, type ResultAsync } from "neverthrow";
+import { err, type Result } from "neverthrow";
 
 // ============================================================================
 // OSB API Functions
@@ -15,9 +15,9 @@ import { errAsync, type ResultAsync } from "neverthrow";
  */
 export const listOsbBuckets = async (
 	_context: K8sContext,
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	// TODO: Implement list OSB buckets
-	return errAsync(new Error("Not implemented"));
+	throw new Error("Not implemented");
 };
 
 /**
@@ -26,7 +26,7 @@ export const listOsbBuckets = async (
 export const getOsbBucket = async (
 	_context: K8sContext,
 	_target: CustomResourceTarget,
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	// TODO: Implement get OSB bucket
-	return errAsync(new Error("Not implemented"));
+	throw new Error("Not implemented");
 };

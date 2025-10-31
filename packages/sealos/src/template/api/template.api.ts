@@ -6,11 +6,9 @@ import { createAxiosClient } from "@sealos-brain/shared/network/utils";
 import type { AxiosInstance } from "axios";
 import {
 	err,
-	errAsync,
 	fromPromise,
 	ok,
 	type Result,
-	type ResultAsync,
 } from "neverthrow";
 import { TemplateObjectSchema } from "../models/template-object.model";
 
@@ -61,16 +59,24 @@ async function createTemplateAxios(
  */
 export const listTemplates = async (
 	context: K8sContext,
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createTemplateAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(api.get("/"), (error) => error as Error).map(
+	const resultAsync = fromPromise(api.get("/"), (error) => error as Error).map(
 		(response) => response.data.data,
 	);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -79,17 +85,23 @@ export const listTemplates = async (
 export const getTemplate = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<
-	ResultAsync<ReturnType<typeof TemplateObjectSchema.parse>, Error>
-> => {
+): Promise<ReturnType<typeof TemplateObjectSchema.parse>> => {
 	const apiResult = await createTemplateAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.get(`/${params.path.name}`),
 		(error) => error as Error,
 	).map((response) => TemplateObjectSchema.parse(response.data.data));
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };

@@ -13,9 +13,9 @@ import type {
 } from "@sealos-brain/k8s/shared/models";
 import { checkPorts } from "@sealos-brain/shared/network/api";
 import {
-	errAsync,
+	err,
 	fromPromise,
-	type ResultAsync,
+	type Result,
 } from "neverthrow";
 import { LAUNCHPAD_LABELS } from "../constants/launchpad-labels.constant";
 import { getLaunchpad } from "./launchpad.api";
@@ -43,7 +43,7 @@ export const getLaunchpadResources = async (
 		"issuer",
 		"certificate",
 	],
-): Promise<ResultAsync<K8sResource[], Error>> => {
+): Promise<K8sResource[]> => {
 	const launchpadName = target.name;
 
 	// Type guards
@@ -101,23 +101,29 @@ export const getLaunchpadResources = async (
 		];
 
 		// Get resources from both label strategies
+		const mainResourcesResultAsync = fromPromise(
+			selectResources(context, mainTargets),
+			(error) => error as Error,
+		);
+		const podResourcesResultAsync = fromPromise(
+			selectResources(context, podTargets),
+			(error) => error as Error,
+		);
+
 		const [mainResourcesResult, podResourcesResult] = await Promise.all([
-			fromPromise(selectResources(context, mainTargets), (error) => error as Error),
-			fromPromise(selectResources(context, podTargets), (error) => error as Error),
+			mainResourcesResultAsync,
+			podResourcesResultAsync,
 		]);
 
 		if (mainResourcesResult.isErr()) {
-			return errAsync(mainResourcesResult.error);
+			throw mainResourcesResult.error;
 		}
 		if (podResourcesResult.isErr()) {
-			return errAsync(podResourcesResult.error);
+			throw podResourcesResult.error;
 		}
 
 		// Merge and return both results
-		return fromPromise(
-			Promise.resolve([...mainResourcesResult.value, ...podResourcesResult.value]),
-			(error) => error as Error,
-		);
+		return [...mainResourcesResult.value, ...podResourcesResult.value];
 	} else {
 		// Original behavior when pod is not included
 		const targets: ResourceTypeTarget[] = [
@@ -137,7 +143,14 @@ export const getLaunchpadResources = async (
 			})),
 		];
 
-		return fromPromise(selectResources(context, targets), (error) => error as Error);
+		const resultAsync = fromPromise(selectResources(context, targets), (error) => error as Error);
+		const result = await resultAsync;
+
+		if (result.isErr()) {
+			throw result.error;
+		}
+
+		return result.value;
 	}
 };
 
@@ -151,24 +164,16 @@ export const getLaunchpadNetwork = async (
 	context: K8sContext,
 	target: BuiltinResourceTarget,
 ): Promise<
-	ResultAsync<
-		Array<{
-			port: unknown;
-			publicReachable?: boolean;
-			privateReachable?: boolean;
-		}>,
-		Error
-	>
+	Array<{
+		port: unknown;
+		publicReachable?: boolean;
+		privateReachable?: boolean;
+	}>
 > => {
 	// Get the launchpad object first
-	const launchpadResult = await getLaunchpad(context, {
+	const launchpad = await getLaunchpad(context, {
 		path: { name: target.name },
 	});
-	if (launchpadResult.isErr()) {
-		return errAsync(launchpadResult.error);
-	}
-
-	const launchpad = launchpadResult.value;
 
 	// Extract ports from the launchpad object
 	const ports = (launchpad as { ports?: unknown[] })?.ports || [];
@@ -222,5 +227,5 @@ export const getLaunchpadNetwork = async (
 		}),
 	);
 
-	return fromPromise(Promise.resolve(portChecks), (error) => error as Error);
+	return portChecks;
 };

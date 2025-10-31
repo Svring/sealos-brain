@@ -1,17 +1,15 @@
 "use server";
 
-import type { K8sContext } from "@sealos-brain/k8s/shared/models";
+import type {
+	CustomResourceTarget,
+	K8sContext,
+} from "@sealos-brain/k8s/shared/models";
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
 import { createAxiosClient } from "@sealos-brain/shared/network/utils";
 import type { AxiosInstance } from "axios";
-import {
-	err,
-	errAsync,
-	fromPromise,
-	ok,
-	type Result,
-	type ResultAsync,
-} from "neverthrow";
+import { err, fromPromise, ok, type Result } from "neverthrow";
+import type { MonitorData } from "#resource/models/resource-monitor.model";
+import { transformMonitorData } from "#resource/utils/resource.utils";
 import type { DevboxCreate } from "../models/devbox-create.model";
 import type { DevboxUpdate } from "../models/devbox-update.model";
 
@@ -60,18 +58,24 @@ async function createDevboxAxios(
 /**
  * List all devboxes
  */
-export const listDevboxes = async (
-	context: K8sContext,
-): Promise<ResultAsync<unknown, Error>> => {
+export const listDevboxes = async (context: K8sContext): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(api.get("/"), (error) => error as Error).map(
+	const resultAsync = fromPromise(api.get("/"), (error) => error as Error).map(
 		(response) => response.data.data,
 	);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -80,17 +84,25 @@ export const listDevboxes = async (
 export const getDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.get(`/${params.path.name}`),
 		(error) => error as Error,
 	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -98,16 +110,25 @@ export const getDevbox = async (
  */
 export const getDevboxTemplates = async (
 	context: K8sContext,
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(api.get("/templates"), (error) => error as Error).map(
-		(response) => response.data.data,
-	);
+	const resultAsync = fromPromise(
+		api.get("/templates"),
+		(error) => error as Error,
+	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -116,17 +137,25 @@ export const getDevboxTemplates = async (
 export const getDevboxReleases = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.get(`/${params.path.name}/release`),
 		(error) => error as Error,
 	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -135,17 +164,25 @@ export const getDevboxReleases = async (
 export const getDevboxDeploys = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.get(`/${params.path.name}/deploy`),
 		(error) => error as Error,
 	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -157,19 +194,56 @@ export const getDevboxMonitorData = async (
 		path: { name: string };
 		search?: { start?: string; end?: string; step?: string };
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.get(`/${params.path.name}/monitor`, {
 			params: params.search,
 		}),
 		(error) => error as Error,
 	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
+};
+
+/**
+ * Get devbox combined monitor
+ */
+export const getDevboxMonitor = async (
+	context: K8sContext,
+	target: CustomResourceTarget,
+): Promise<ReturnType<typeof transformMonitorData>> => {
+	const apiResult = await createDevboxAxios(context);
+	if (apiResult.isErr()) {
+		throw apiResult.error;
+	}
+
+	const api = apiResult.value;
+	const resultAsync = fromPromise(
+		api.get(`/${target.name}/monitor`),
+		(error) => error as Error,
+	).map((response) => response.data.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	const monitorData = result.value as MonitorData;
+
+	return transformMonitorData(monitorData);
 };
 
 // ============================================================================
@@ -182,16 +256,19 @@ export const getDevboxMonitorData = async (
 export const createDevbox = async (
 	context: K8sContext,
 	params: { body: DevboxCreate },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(api.post("/", params.body), (error) => error as Error).map(
-		(response) => response.data,
-	);
+	const resultAsync = fromPromise(
+		api.post("/", params.body),
+		(error) => error as Error,
+	).map((response) => response.data);
+
+	return await resultAsync;
 };
 
 /**
@@ -203,17 +280,25 @@ export const updateDevbox = async (
 		path: { name: string };
 		body?: Omit<DevboxUpdate, "name">;
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.patch(`/${params.path.name}`, params.body),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -222,17 +307,25 @@ export const updateDevbox = async (
 export const deleteDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.delete(`/${params.path.name}`),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -241,17 +334,25 @@ export const deleteDevbox = async (
 export const startDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.name}/start`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -260,17 +361,25 @@ export const startDevbox = async (
 export const pauseDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.name}/pause`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -279,17 +388,25 @@ export const pauseDevbox = async (
 export const shutdownDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.name}/shutdown`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -298,17 +415,25 @@ export const shutdownDevbox = async (
 export const restartDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.name}/restart`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -320,17 +445,25 @@ export const autostartDevbox = async (
 		path: { name: string };
 		body?: { execCommand?: string };
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.name}/autostart`, params.body),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -342,17 +475,25 @@ export const releaseDevbox = async (
 		path: { name: string };
 		body: { tag: string; releaseDes?: string };
 	},
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.name}/release`, params.body),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -361,17 +502,25 @@ export const releaseDevbox = async (
 export const deleteDevboxRelease = async (
 	context: K8sContext,
 	params: { path: { name: string; tag: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.delete(`/${params.path.name}/release/${params.path.tag}`),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };
 
 /**
@@ -380,15 +529,23 @@ export const deleteDevboxRelease = async (
 export const deployDevbox = async (
 	context: K8sContext,
 	params: { path: { name: string; tag: string } },
-): Promise<ResultAsync<unknown, Error>> => {
+): Promise<unknown> => {
 	const apiResult = await createDevboxAxios(context);
 	if (apiResult.isErr()) {
-		return errAsync(apiResult.error);
+		throw apiResult.error;
 	}
 
 	const api = apiResult.value;
-	return fromPromise(
+	const resultAsync = fromPromise(
 		api.post(`/${params.path.name}/release/${params.path.tag}/deploy`, {}),
 		(error) => error as Error,
 	).map((response) => response.data);
+
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };

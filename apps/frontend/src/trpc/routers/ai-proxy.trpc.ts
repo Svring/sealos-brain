@@ -47,8 +47,7 @@ export const aiProxyRouter = t.router({
 		.input(z.string().optional().default("tokens"))
 		.output(z.array(AiProxyTokenSchema))
 		.query(async ({ ctx, input: _input }) => {
-			const result = await listTokens(ctx);
-			return result;
+			return (await listTokens(ctx)) as z.infer<typeof AiProxyTokenSchema>[];
 		}),
 
 	// ===== MUTATION PROCEDURES =====

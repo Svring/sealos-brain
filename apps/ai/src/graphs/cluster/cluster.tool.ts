@@ -32,9 +32,13 @@ const createContext = (currentTaskInput: State) => ({
 // Query Operations
 const listClustersTool = tool(
 	async () => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await listClusters(createContext(currentTaskInput));
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await listClusters(createContext(currentTaskInput));
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "listClusters",
@@ -45,11 +49,15 @@ const listClustersTool = tool(
 
 const getClusterTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await getCluster(createContext(currentTaskInput), {
-			path: { databaseName: params.databaseName },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await getCluster(createContext(currentTaskInput), {
+				path: { databaseName: params.databaseName },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "getCluster",
@@ -62,9 +70,13 @@ const getClusterTool = tool(
 
 const getClusterVersionsTool = tool(
 	async () => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await getClusterVersions(createContext(currentTaskInput));
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await getClusterVersions(createContext(currentTaskInput));
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "getClusterVersions",
@@ -75,11 +87,15 @@ const getClusterVersionsTool = tool(
 
 const getClusterLogsDataTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await getClusterLogsData(createContext(currentTaskInput), {
-			search: params.search,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await getClusterLogsData(createContext(currentTaskInput), {
+				search: params.search,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "getClusterLogsData",
@@ -101,11 +117,15 @@ const getClusterLogsDataTool = tool(
 
 const listClusterLogFilesTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await listClusterLogFiles(createContext(currentTaskInput), {
-			search: params.search,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await listClusterLogFiles(createContext(currentTaskInput), {
+				search: params.search,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "listClusterLogFiles",
@@ -148,11 +168,15 @@ const createClusterSchema = clusterCreateSchema.extend({
 
 const createClusterTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await createCluster(createContext(currentTaskInput), {
-			body: params,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await createCluster(createContext(currentTaskInput), {
+				body: params,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "createCluster",
@@ -164,13 +188,17 @@ const createClusterTool = tool(
 
 const updateClusterTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const { name, ...body } = params;
-		const result = await updateCluster(createContext(currentTaskInput), {
-			path: { databaseName: name },
-			body,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const { name, ...body } = params;
+			const data = await updateCluster(createContext(currentTaskInput), {
+				path: { databaseName: name },
+				body,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "updateCluster",
@@ -181,11 +209,15 @@ const updateClusterTool = tool(
 
 const deleteClusterTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await deleteCluster(createContext(currentTaskInput), {
-			path: { databaseName: params.databaseName },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await deleteCluster(createContext(currentTaskInput), {
+				path: { databaseName: params.databaseName },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "deleteCluster",
@@ -200,11 +232,15 @@ const deleteClusterTool = tool(
 
 const startClusterTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await startCluster(createContext(currentTaskInput), {
-			path: { databaseName: params.databaseName },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await startCluster(createContext(currentTaskInput), {
+				path: { databaseName: params.databaseName },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "startCluster",
@@ -219,11 +255,15 @@ const startClusterTool = tool(
 
 const pauseClusterTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await pauseCluster(createContext(currentTaskInput), {
-			path: { databaseName: params.databaseName },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await pauseCluster(createContext(currentTaskInput), {
+				path: { databaseName: params.databaseName },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "pauseCluster",
@@ -238,11 +278,15 @@ const pauseClusterTool = tool(
 
 const restartClusterTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await restartCluster(createContext(currentTaskInput), {
-			path: { databaseName: params.databaseName },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await restartCluster(createContext(currentTaskInput), {
+				path: { databaseName: params.databaseName },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "restartCluster",
@@ -257,12 +301,16 @@ const restartClusterTool = tool(
 
 const createClusterBackupTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await createClusterBackup(createContext(currentTaskInput), {
-			path: { databaseName: params.databaseName },
-			body: params.remark ? { remark: params.remark } : undefined,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await createClusterBackup(createContext(currentTaskInput), {
+				path: { databaseName: params.databaseName },
+				body: params.remark ? { remark: params.remark } : undefined,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "createClusterBackup",
@@ -276,15 +324,19 @@ const createClusterBackupTool = tool(
 
 const restoreClusterBackupTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await restoreClusterBackup(createContext(currentTaskInput), {
-			path: {
-				databaseName: params.databaseName,
-				backupName: params.backupName,
-			},
-			body: { newDbName: params.newDbName },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await restoreClusterBackup(createContext(currentTaskInput), {
+				path: {
+					databaseName: params.databaseName,
+					backupName: params.backupName,
+				},
+				body: { newDbName: params.newDbName },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "restoreClusterBackup",
@@ -299,14 +351,18 @@ const restoreClusterBackupTool = tool(
 
 const deleteClusterBackupTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await deleteClusterBackup(createContext(currentTaskInput), {
-			path: {
-				databaseName: params.databaseName,
-				backupName: params.backupName,
-			},
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await deleteClusterBackup(createContext(currentTaskInput), {
+				path: {
+					databaseName: params.databaseName,
+					backupName: params.backupName,
+				},
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "deleteClusterBackup",
@@ -320,14 +376,18 @@ const deleteClusterBackupTool = tool(
 
 const enableClusterPublicAccessTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await enableClusterPublicAccess(
-			createContext(currentTaskInput),
-			{
-				path: { databaseName: params.databaseName },
-			},
-		);
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await enableClusterPublicAccess(
+				createContext(currentTaskInput),
+				{
+					path: { databaseName: params.databaseName },
+				},
+			);
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "enableClusterPublicAccess",
@@ -340,14 +400,18 @@ const enableClusterPublicAccessTool = tool(
 
 const disableClusterPublicAccessTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await disableClusterPublicAccess(
-			createContext(currentTaskInput),
-			{
-				path: { databaseName: params.databaseName },
-			},
-		);
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await disableClusterPublicAccess(
+				createContext(currentTaskInput),
+				{
+					path: { databaseName: params.databaseName },
+				},
+			);
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "disableClusterPublicAccess",

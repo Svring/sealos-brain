@@ -33,9 +33,17 @@ const createContext = (currentTaskInput: State) => ({
 // Query Operations
 const listDevboxesTool = tool(
 	async () => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await listDevboxes(createContext(currentTaskInput));
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await listDevboxes(createContext(currentTaskInput));
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "listDevboxes",
@@ -46,11 +54,19 @@ const listDevboxesTool = tool(
 
 const getDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await getDevbox(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await getDevbox(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "getDevbox",
@@ -63,9 +79,17 @@ const getDevboxTool = tool(
 
 const getDevboxTemplatesTool = tool(
 	async () => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await getDevboxTemplates(createContext(currentTaskInput));
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await getDevboxTemplates(createContext(currentTaskInput));
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "getDevboxTemplates",
@@ -76,11 +100,19 @@ const getDevboxTemplatesTool = tool(
 
 const getDevboxReleasesTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await getDevboxReleases(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await getDevboxReleases(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "getDevboxReleases",
@@ -93,11 +125,19 @@ const getDevboxReleasesTool = tool(
 
 const getDevboxDeploysTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await getDevboxDeploys(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await getDevboxDeploys(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "getDevboxDeploys",
@@ -110,12 +150,20 @@ const getDevboxDeploysTool = tool(
 
 const getDevboxMonitorDataTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await getDevboxMonitorData(createContext(currentTaskInput), {
-			path: { name: params.name },
-			search: params.search,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await getDevboxMonitorData(createContext(currentTaskInput), {
+				path: { name: params.name },
+				search: params.search,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "getDevboxMonitorData",
@@ -137,11 +185,19 @@ const getDevboxMonitorDataTool = tool(
 // Mutation Operations
 const createDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await createDevbox(createContext(currentTaskInput), {
-			body: params,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await createDevbox(createContext(currentTaskInput), {
+				body: params,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "createDevbox",
@@ -153,13 +209,21 @@ const createDevboxTool = tool(
 
 const updateDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const { name, ...body } = params;
-		const result = await updateDevbox(createContext(currentTaskInput), {
-			path: { name },
-			body,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const { name, ...body } = params;
+			const data = await updateDevbox(createContext(currentTaskInput), {
+				path: { name },
+				body,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "updateDevbox",
@@ -171,11 +235,19 @@ const updateDevboxTool = tool(
 
 const deleteDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await deleteDevbox(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await deleteDevbox(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "deleteDevbox",
@@ -188,11 +260,19 @@ const deleteDevboxTool = tool(
 
 const startDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await startDevbox(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await startDevbox(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "startDevbox",
@@ -205,11 +285,19 @@ const startDevboxTool = tool(
 
 const pauseDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await pauseDevbox(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await pauseDevbox(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "pauseDevbox",
@@ -222,11 +310,19 @@ const pauseDevboxTool = tool(
 
 const shutdownDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await shutdownDevbox(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await shutdownDevbox(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "shutdownDevbox",
@@ -239,11 +335,19 @@ const shutdownDevboxTool = tool(
 
 const restartDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await restartDevbox(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await restartDevbox(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "restartDevbox",
@@ -256,14 +360,22 @@ const restartDevboxTool = tool(
 
 const autostartDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await autostartDevbox(createContext(currentTaskInput), {
-			path: { name: params.name },
-			body: params.execCommand
-				? { execCommand: params.execCommand }
-				: undefined,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await autostartDevbox(createContext(currentTaskInput), {
+				path: { name: params.name },
+				body: params.execCommand
+					? { execCommand: params.execCommand }
+					: undefined,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "autostartDevbox",
@@ -281,15 +393,23 @@ const autostartDevboxTool = tool(
 
 const releaseDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await releaseDevbox(createContext(currentTaskInput), {
-			path: { name: params.name },
-			body: {
-				tag: params.tag,
-				releaseDes: params.releaseDes,
-			},
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await releaseDevbox(createContext(currentTaskInput), {
+				path: { name: params.name },
+				body: {
+					tag: params.tag,
+					releaseDes: params.releaseDes,
+				},
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "releaseDevbox",
@@ -308,11 +428,19 @@ const releaseDevboxTool = tool(
 
 const deleteDevboxReleaseTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await deleteDevboxRelease(createContext(currentTaskInput), {
-			path: { name: params.name, tag: params.tag },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await deleteDevboxRelease(createContext(currentTaskInput), {
+				path: { name: params.name, tag: params.tag },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "deleteDevboxRelease",
@@ -326,11 +454,19 @@ const deleteDevboxReleaseTool = tool(
 
 const deployDevboxTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await deployDevbox(createContext(currentTaskInput), {
-			path: { name: params.name, tag: params.tag },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await deployDevbox(createContext(currentTaskInput), {
+				path: { name: params.name, tag: params.tag },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify(
+				{ error: error instanceof Error ? error.message : String(error) },
+				null,
+				2,
+			);
+		}
 	},
 	{
 		name: "deployDevbox",

@@ -23,11 +23,15 @@ const createContext = (currentTaskInput: State) => ({
 // Query Operations
 const getLaunchpadTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await getLaunchpad(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await getLaunchpad(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "getLaunchpad",
@@ -41,11 +45,15 @@ const getLaunchpadTool = tool(
 // Mutation Operations
 const createLaunchpadTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await createLaunchpad(createContext(currentTaskInput), {
-			body: params,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await createLaunchpad(createContext(currentTaskInput), {
+				body: params,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "createLaunchpad",
@@ -57,13 +65,17 @@ const createLaunchpadTool = tool(
 
 const updateLaunchpadTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const { name, ...body } = params;
-		const result = await updateLaunchpad(createContext(currentTaskInput), {
-			path: { name },
-			body,
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const { name, ...body } = params;
+			const data = await updateLaunchpad(createContext(currentTaskInput), {
+				path: { name },
+				body,
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "updateLaunchpad",
@@ -75,11 +87,15 @@ const updateLaunchpadTool = tool(
 
 const deleteLaunchpadTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await deleteLaunchpad(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await deleteLaunchpad(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "deleteLaunchpad",
@@ -92,11 +108,15 @@ const deleteLaunchpadTool = tool(
 
 const startLaunchpadTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await startLaunchpad(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await startLaunchpad(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "startLaunchpad",
@@ -109,11 +129,15 @@ const startLaunchpadTool = tool(
 
 const pauseLaunchpadTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await pauseLaunchpad(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await pauseLaunchpad(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "pauseLaunchpad",
@@ -126,11 +150,15 @@ const pauseLaunchpadTool = tool(
 
 const restartLaunchpadTool = tool(
 	async (params) => {
-		const currentTaskInput = getCurrentTaskInput() as State;
-		const result = await restartLaunchpad(createContext(currentTaskInput), {
-			path: { name: params.name },
-		});
-		return JSON.stringify(result, null, 2);
+		try {
+			const currentTaskInput = getCurrentTaskInput() as State;
+			const data = await restartLaunchpad(createContext(currentTaskInput), {
+				path: { name: params.name },
+			});
+			return JSON.stringify(data, null, 2);
+		} catch (error) {
+			return JSON.stringify({ error: error instanceof Error ? error.message : String(error) }, null, 2);
+		}
 	},
 	{
 		name: "restartLaunchpad",

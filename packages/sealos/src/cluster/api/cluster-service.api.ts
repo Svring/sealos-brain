@@ -11,7 +11,7 @@ import type {
 	K8sResource,
 	ResourceTypeTarget,
 } from "@sealos-brain/k8s/shared/models";
-import { fromPromise, type ResultAsync } from "neverthrow";
+import { fromPromise, type Result } from "neverthrow";
 import { CLUSTER_LABELS } from "#cluster/constants/cluster-labels.constant";
 
 // ============================================================================
@@ -37,7 +37,7 @@ export const getClusterResources = async (
 		"cronjob",
 		"backup",
 	],
-): Promise<ResultAsync<K8sResource[], Error>> => {
+): Promise<K8sResource[]> => {
 	const clusterName = target.name;
 
 	// Type guards
@@ -77,5 +77,12 @@ export const getClusterResources = async (
 		})),
 	];
 
-	return fromPromise(selectResources(context, targets), (error) => error as Error);
+	const resultAsync = fromPromise(selectResources(context, targets), (error) => error as Error);
+	const result = await resultAsync;
+
+	if (result.isErr()) {
+		throw result.error;
+	}
+
+	return result.value;
 };

@@ -50,7 +50,9 @@ export const clusterRouter = t.router({
 	get: t.procedure
 		.input(CustomResourceTargetSchema)
 		.query(async ({ input, ctx }) => {
-			return await getCluster(ctx, { path: { databaseName: input.name } });
+			return await getCluster(ctx, {
+				path: { databaseName: input.name },
+			});
 		}),
 
 	list: t.procedure
@@ -82,7 +84,11 @@ export const clusterRouter = t.router({
 			}),
 		)
 		.query(async ({ input, ctx }) => {
-			return await getClusterResources(ctx, input.target, input.resources);
+			return await getClusterResources(
+				ctx,
+				input.target,
+				input.resources,
+			);
 		}),
 
 	// ===== MUTATION PROCEDURES =====
@@ -97,26 +103,35 @@ export const clusterRouter = t.router({
 	start: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await startCluster(ctx, { path: { databaseName: input.name } });
+			return await startCluster(ctx, {
+				path: { databaseName: input.name },
+			});
 		}),
 
 	pause: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await pauseCluster(ctx, { path: { databaseName: input.name } });
+			return await pauseCluster(ctx, {
+				path: { databaseName: input.name },
+			});
 		}),
 
 	restart: t.procedure
 		.input(CustomResourceTargetSchema)
 		.mutation(async ({ input, ctx }) => {
-			return await restartCluster(ctx, { path: { databaseName: input.name } });
+			return await restartCluster(ctx, {
+				path: { databaseName: input.name },
+			});
 		}),
 
 	update: t.procedure
 		.input(clusterUpdateSchema)
 		.mutation(async ({ input, ctx }) => {
 			const { name, ...body } = input;
-			return await updateCluster(ctx, { path: { databaseName: name }, body });
+			return await updateCluster(ctx, {
+				path: { databaseName: name },
+				body,
+			});
 		}),
 
 	delete: t.procedure
