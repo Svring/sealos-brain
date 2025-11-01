@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthEvents } from "@/contexts/auth/auth.context";
-import { useEnvState } from "@/contexts/env/env.context";
+import { useModeState } from "@/contexts/mode/mode.context";
 import { useQuota } from "@/hooks/k8s/use-quota";
 import { logoutUser } from "@/payload/operations/users-operation";
 
@@ -44,7 +44,7 @@ export function AppSidebar() {
 	const router = useRouter();
 	const pathname = usePathname();
 	const { data: quotaObject, isLoading } = useQuota();
-	const { mode } = useEnvState();
+	const { isDev } = useModeState();
 
 	return (
 		<Sidebar variant="inset" collapsible="icon">
@@ -151,7 +151,7 @@ export function AppSidebar() {
 							</PopoverContent>
 						</Popover>
 					</SidebarMenuItem>
-					{mode === "development" && (
+					{isDev && (
 						<SidebarMenuItem>
 							<SidebarMenuButton
 								onClick={async () => {

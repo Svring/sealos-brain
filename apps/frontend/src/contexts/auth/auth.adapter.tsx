@@ -1,42 +1,24 @@
 "use client";
 
-import { useMount } from "@reactuses/core";
 import { useMachine } from "@xstate/react";
-import { createSealosApp, sealosApp } from "@zjy365/sealos-desktop-sdk/app";
-import { type ReactNode, use, useEffect } from "react";
-import { handleAuthComputation } from "@/lib/auth/auth.utils";
+import type { ReactNode } from "react";
+import { useModeState } from "@/contexts/mode/mode.context";
+import { useDevAuth } from "@/hooks/auth/use-dev-auth";
+import { useProdAuth } from "@/hooks/auth/use-prod-auth";
+import { useTrialAuth } from "@/hooks/auth/use-trial-auth";
 import { SelectUserView } from "@/mvvm/auth/views/select-user.view";
 import { useSelectUserViewModel } from "@/mvvm/auth/vms/select-user.vm";
-import type { User } from "@/payload-types";
 import { authMachineContext } from "./auth.context";
 import { authMachine } from "./auth.state";
 
-export function AuthPayloadAdapter({
-	children,
-	userPromise,
-	usersPromise,
-}: {
-	children: ReactNode;
-	userPromise: Promise<User | null>;
-	usersPromise: Promise<User[]>;
-}) {
+export function AuthDevAdapter({ children }: { children: ReactNode }) {
 	const [state, send] = useMachine(authMachine);
-	const users = use(usersPromise);
-	const user = use(userPromise);
-
-	// Handle auth state updates in useEffect to avoid setState during render
-	useEffect(() => {
-		if (user) {
-			handleAuthComputation(user.kubeconfigEncoded, user.appToken || "", send);
-		} else {
-			send({ type: "FAIL" });
-		}
-	}, [user, send]);
+	const { users } = useDevAuth(send);
 
 	const { handleUserSelect } = useSelectUserViewModel({ send });
 
 	// If no user found, show user selection
-	if (!user) {
+	if (users) {
 		return <SelectUserView users={users} onUserSelect={handleUserSelect} />;
 	}
 
@@ -53,24 +35,10 @@ export function AuthPayloadAdapter({
 	);
 }
 
-export function AuthDesktopAdapter({ children }: { children: ReactNode }) {
+export function AuthProdAdapter({ children }: { children: ReactNode }) {
 	const [state, send] = useMachine(authMachine);
 
-	// Get session data on mount
-	useMount(async () => {
-		createSealosApp();
-		const sessionData = await sealosApp.getSession();
-
-		if (sessionData?.kubeconfig) {
-			await handleAuthComputation(
-				sessionData.kubeconfig,
-				sessionData.token || "",
-				send,
-			);
-		} else {
-			send({ type: "FAIL" });
-		}
-	});
+	useProdAuth(send);
 
 	// Block children until auth is ready
 	if (state.matches("initializing") || !state.matches("ready")) {
@@ -84,4 +52,40 @@ export function AuthDesktopAdapter({ children }: { children: ReactNode }) {
 			{children}
 		</authMachineContext.Provider>
 	);
+}
+
+export function AuthTrialAdapter({ children }: { children: ReactNode }) {
+	const [state, send] = useMachine(authMachine);
+
+	useTrialAuth(send);
+
+	// Block children until auth is ready
+	if (state.matches("initializing") || !state.matches("ready")) {
+		return null;
+	}
+
+	return (
+		<authMachineContext.Provider
+			value={{ auth: state.context.auth, state, send }}
+		>
+			{children}
+		</authMachineContext.Provider>
+	);
+}
+
+export function AuthAdapter({ children }: { children: ReactNode }) {
+	// Read mode from context to decide which adapter to use
+	const { isDev, isTrial } = useModeState();
+
+	// Route to appropriate adapter based on mode
+	if (isTrial) {
+		return <AuthTrialAdapter>{children}</AuthTrialAdapter>;
+	}
+
+	if (isDev) {
+		return <AuthDevAdapter>{children}</AuthDevAdapter>;
+	}
+
+	// Default to prod adapter for prod or demo mode
+	return <AuthProdAdapter>{children}</AuthProdAdapter>;
 }

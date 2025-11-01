@@ -13,6 +13,7 @@ import { ProjectProvider } from "@/contexts/actor/spawns/project/project.provide
 import { AuthProvider } from "@/contexts/auth/auth.provider";
 import { EnvProvider } from "@/contexts/env/env.provider";
 import { LangGraphProvider } from "@/contexts/langgraph/langgraph.provider";
+import { ModeProvider } from "@/contexts/mode/mode.provider";
 import { ProxyProvider } from "@/contexts/proxy/proxy.provider";
 
 import "@/styles/globals.css";
@@ -42,34 +43,36 @@ export default function RootLayout({
 					disableTransitionOnChange
 				>
 					<NuqsAdapter>
-						<EnvProvider>
-							<AuthProvider>
-								<QueryConfig>
-									<DevboxToolConfig>
-										<ProxyProvider>
-											<LangGraphProvider>
-												<ActorProvider>
-													<CopilotProvider>
-														<ProjectProvider>
-															<FlowProvider>
-																<SidebarProvider defaultOpen={false}>
-																	<AppSidebar />
-																	<SidebarInset>
-																		<main className="h-full w-full">
-																			{children}
-																		</main>
-																	</SidebarInset>
-																</SidebarProvider>
-															</FlowProvider>
-														</ProjectProvider>
-													</CopilotProvider>
-												</ActorProvider>
-											</LangGraphProvider>
-										</ProxyProvider>
-									</DevboxToolConfig>
-								</QueryConfig>
-							</AuthProvider>
-						</EnvProvider>
+						<ModeProvider>
+							<EnvProvider>
+								<AuthProvider>
+									<QueryConfig>
+										<DevboxToolConfig>
+											<ProxyProvider>
+												<LangGraphProvider>
+													<ActorProvider>
+														<CopilotProvider>
+															<ProjectProvider>
+																<FlowProvider>
+																	<SidebarProvider defaultOpen={false}>
+																		<AppSidebar />
+																		<SidebarInset>
+																			<main className="h-full w-full">
+																				{children}
+																			</main>
+																		</SidebarInset>
+																	</SidebarProvider>
+																</FlowProvider>
+															</ProjectProvider>
+														</CopilotProvider>
+													</ActorProvider>
+												</LangGraphProvider>
+											</ProxyProvider>
+										</DevboxToolConfig>
+									</QueryConfig>
+								</AuthProvider>
+							</EnvProvider>
+						</ModeProvider>
 					</NuqsAdapter>
 				</ThemeProvider>
 			</body>

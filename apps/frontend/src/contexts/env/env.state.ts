@@ -8,14 +8,12 @@ export interface EnvVariables {
 }
 
 export interface EnvContext {
-	mode: "development" | "production" | null;
 	variables: EnvVariables | null;
 }
 
 export type EnvEvent =
 	| {
 			type: "SET_ENV";
-			mode: "development" | "production";
 			variables: EnvVariables;
 	  }
 	| { type: "FAIL" }
@@ -43,6 +41,11 @@ export const envMachine = createMachine({
 		},
 		ready: {
 			on: {
+				SET_ENV: {
+					actions: assign({
+						variables: ({ event }) => event.variables,
+					}),
+				},
 				FAIL: {
 					target: "failed",
 				},

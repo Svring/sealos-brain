@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { Auth } from "@/contexts/auth/auth.state";
-import { handleAuthComputation } from "@/lib/auth/auth.utils";
+import { deriveAuth } from "@/lib/auth/auth.utils";
 import { loginUser } from "@/payload/operations/users-operation";
 import type { User } from "@/payload-types";
 
@@ -17,12 +18,20 @@ export function useSelectUserViewModel({ send }: SelectUserViewModelProps) {
 		try {
 			const result = await loginUser(selectedUser.username, "123");
 			if (result.success && result.user) {
-				await handleAuthComputation(
+				const authResult = await deriveAuth(
 					result.user.kubeconfigEncoded,
 					result.user.appToken || "",
-					send,
 				);
-				router.refresh();
+				authResult.match(
+					(auth) => {
+						send({ type: "SET_AUTH", auth });
+						router.refresh();
+					},
+					(error) => {
+						toast.error(`Failed to compute regionUrl: ${error.message}`);
+						send({ type: "FAIL" });
+					},
+				);
 			} else {
 				console.error("Login failed:", result.error);
 				send({ type: "FAIL" });

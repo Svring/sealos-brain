@@ -40,7 +40,6 @@ export function useEnvState() {
 
 	// Directly expose the data fields
 	return {
-		mode: state.context.mode,
 		variables: state.context.variables,
 		isInitializing: state.matches("initializing"),
 		isReady: state.matches("ready"),
@@ -52,10 +51,11 @@ export function useEnvEvents() {
 	const { send } = useEnvContext();
 
 	return {
-		setEnv: useCallback((
-			mode: "development" | "production",
-			variables: Record<string, string | undefined>,
-		) => send({ type: "SET_ENV", mode, variables }), [send]),
+		setEnv: useCallback(
+			(variables: Record<string, string | undefined>) =>
+				send({ type: "SET_ENV", variables }),
+			[send],
+		),
 		fail: useCallback(() => send({ type: "FAIL" }), [send]),
 		retry: useCallback(() => send({ type: "RETRY" }), [send]),
 	};

@@ -1,24 +1,21 @@
 import { getRegionUrlFromKubeconfig } from "@sealos-brain/k8s/shared/utils";
+import { err, ok, ResultAsync } from "neverthrow";
 import type { Auth } from "@/contexts/auth/auth.state";
 
-// Helper function to handle auth computation and state updates
-export async function handleAuthComputation(
+// Helper function to derive auth from kubeconfig
+export function deriveAuth(
 	kubeconfigEncoded: string,
 	appToken: string,
-	send: (event: { type: "SET_AUTH"; auth: Auth } | { type: "FAIL" }) => void,
-) {
-	try {
-		const regionUrl = await getRegionUrlFromKubeconfig(
-			decodeURIComponent(kubeconfigEncoded),
-		);
+): ResultAsync<Auth, Error> {
+	return ResultAsync.fromPromise(
+		getRegionUrlFromKubeconfig(decodeURIComponent(kubeconfigEncoded)),
+		(error) =>
+			new Error(`Failed to extract regionUrl from kubeconfig: ${error}`),
+	).andThen((regionUrl) => {
 		if (!regionUrl) {
-			throw new Error("Failed to extract regionUrl from kubeconfig");
+			return err(new Error("Failed to extract regionUrl from kubeconfig"));
 		}
-
 		const auth: Auth = { kubeconfigEncoded, appToken, regionUrl };
-		send({ type: "SET_AUTH", auth });
-	} catch (error) {
-		console.error("Failed to compute regionUrl:", error);
-		send({ type: "FAIL" });
-	}
+		return ok(auth);
+	});
 }
