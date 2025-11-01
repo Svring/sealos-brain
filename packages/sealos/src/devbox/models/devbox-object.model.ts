@@ -1,44 +1,40 @@
-import { EnvSchema } from "@sealos-brain/k8s/shared/models";
+import { EnvSchema, NameSchema } from "@sealos-brain/k8s/shared/models";
 import { z } from "zod";
 
 export const DevboxObjectQuotaSchema = z.object({
-	cpu: z.number(),
-	memory: z.number(),
+	cpu: z.number().min(0.5).max(32),
+	memory: z.number().min(0.5).max(32),
 });
 
 export const SshSchema = z.object({
-	host: z.string().nullable(),
-	port: z.number().nullable(),
-	user: z.string().nullable(),
-	workingDir: z.string().nullable(),
-	privateKey: z.string().nullable().optional(),
+	host: z.hostname(),
+	port: z.int().min(1).max(65535),
+	user: z.string().check(z.maxLength(16)),
+	workingDir: z.string(),
+	privateKey: z.base64(),
 });
 
 export const DevboxObjectPortSchema = z.object({
-	number: z.number(),
-	portName: z.string().optional(),
-	protocol: z.string().optional(),
-	serviceName: z.string().optional(),
-	privateAddress: z.string().optional(),
-	privateHost: z.string().optional(),
-	networkName: z.string().optional(),
-	publicHost: z.string().optional(),
-	publicAddress: z.string().optional(),
-	customDomain: z.string().optional(),
+	number: z.int().min(1).max(65535),
+	portName: NameSchema,
+	protocol: z.enum(["http", "trpc", "ws"]),
+	privateHost: z.hostname(),
+	publicHost: z.hostname(),
+	customDomain: z.hostname(),
 });
 
 const PodSchema = z.object({
-	name: z.string(),
-	status: z.string(),
+	name: NameSchema,
+	status: z.enum(["running", "stopped", "pending", "deleting", "error"]),
 });
 
 export const DevboxObjectSchema = z.object({
-	name: z.string(),
-	uid: z.string(),
-	resourceType: z.string().default("devbox"),
-	runtime: z.string(),
-	image: z.string(),
-	status: z.string(),
+	name: NameSchema,
+	uid: z.uuid(),
+	resourceType: z.literal("devbox"),
+	runtime: z.string().check(z.minLength(1), z.maxLength(16)),
+	image: z.string().check(z.minLength(1), z.maxLength(128)),
+	status: z.enum(["running", "stopped", "pending", "deleting", "error"]),
 	quota: DevboxObjectQuotaSchema,
 	ssh: SshSchema,
 	env: z.array(EnvSchema).optional(),

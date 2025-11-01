@@ -49,7 +49,6 @@
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@radix-ui/react-visually-hidden": "^1.2.3",
     "@reactuses/core": "^6.1.0",
-    "@sealos-brain/bridge": "workspace:*",
     "@sealos-brain/k8s": "workspace:*",
     "@sealos-brain/langgraph": "workspace:*",
     "@sealos-brain/sealos": "workspace:*",
